@@ -7,10 +7,18 @@ inductive Identifier where
   | name (s : String) (is : List Identifier)
   | ref (n : Nat)
   deriving Repr
--- TODO add `Nat` constants inside the pointy brackets
+-- TODO add `Nat` (and other?) constants inside the pointy brackets
 
-instance : ToString Identifier where
-  toString x := toString $ repr x
+instance : ToString Identifier where toString x := toString $ repr x
+
+structure SierraFile where
+  (typedefs : List (Identifier × Identifier))
+  (statements : List (Identifier × List Nat × List Nat))
+  (declarations : List (Identifier × Nat × List (Nat × Identifier) × List Identifier))
+  deriving Repr
+-- TODO add a better printer
+
+instance : ToString SierraFile where toString x:= toString $ repr x
 
 abbrev P := Parsec Char String Unit  -- TODO replace the `Unit` by a proper error type
 
@@ -109,9 +117,16 @@ def declarationLineP : P (Identifier × Nat × List (Nat × Identifier) × List 
   semicolonP
   return (ident, n, args, retTypes)
 
-def parseGrammar (code : String) : Except String (Identifier × List Nat × List Nat) :=
-  Except.mapError toString $ parse statementLineP code
+def sierraFileP : P SierraFile := do
+  blanksP
+  let typedefs ← many' typedefLineP
+  let statements ← many' statementLineP
+  let declarations ← many' declarationLineP
+  return ⟨typedefs, statements, declarations⟩
 
-def code := "foo([1]) -> ([2], [3]);"
+def parseGrammar (code : String) : Except String SierraFile :=
+  Except.mapError toString $ parse sierraFileP code
+
+def code := "foo@42([1]: felt) -> ([2], [3]);"
 
 #eval parseGrammar code
