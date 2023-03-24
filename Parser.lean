@@ -20,8 +20,11 @@ def numP : P Nat := do return String.toNat! <| String.mk <| ← some' (satisfy C
 -- Discard whitespace and line breaks
 def blanksP : P Unit := discard $ many' (satisfy <| ([' ', '\n', '\t'].contains ·))
 
--- Discard a single `,`
-def commaP : P Unit := discard (single ',')
+-- Discard a single `,` and blanks
+def commaP : P Unit := do
+  blanksP
+  discard (single ',')
+  blanksP
 
 -- Discard a single `;`
 def semicolonP : P Unit := discard (single ';')
@@ -48,6 +51,7 @@ partial def identifierP := nameP <|> refIdentifierP
 
 end
 
+-- Parses a type definition line
 def typedefLineP : P (Identifier × Identifier) := do
   discard <| string "type "
   blanksP
@@ -59,9 +63,21 @@ def typedefLineP : P (Identifier × Identifier) := do
   semicolonP
   return (lhs, rhs)
 
-def parseGrammar (code : String) : Except String Identifier :=
-  Except.mapError toString $ parse identifierP code
+-- Parses tuples of references, as in `([0], [1])`
+def refTupleP : P (List Nat) := between '(' ')' <| sepEndBy' refP commaP
 
-def code := "felt252_do::foo<[15]>"
+def statementLineP : P (Identifier × List Nat × List Nat) := do
+  let ident ← identifierP
+  let args ← refTupleP
+  blanksP
+  discard <| string "->"
+  blanksP
+  let rets ← refTupleP
+  return (ident, args, rets)
+
+def parseGrammar (code : String) : Except String (Identifier × List Nat × List Nat) :=
+  Except.mapError toString $ parse statementLineP code
+
+def code := "foo([1]) -> ([2], [3]);"
 
 #eval parseGrammar code
