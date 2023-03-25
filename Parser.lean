@@ -12,9 +12,10 @@ inductive Identifier where
   | ref (n : Nat)
   deriving Repr
 
-inductive Parameter where  -- find what the stuff in the pointy brackets is called
+inductive Parameter where  -- find out what the stuff in the pointy brackets is called
   | identifier (i : Identifier)
   | const (n : Nat)
+  | at (i j : Identifier)  -- find out what the `@` means
   deriving Repr
 
 end
@@ -58,7 +59,7 @@ def atomP : P String := do
 def refP : P Nat := between '[' ']' numP
 
 /-- Wraps a refernce into an identifier -/
-def refIdentifierP : P Identifier := do return .ref (← refP)
+def refIdentifierP : P Identifier := .ref <$> refP
 
 mutual
 
@@ -73,7 +74,14 @@ partial def nameP : P Identifier := do
 partial def identifierP := nameP <|> refIdentifierP
 
 /-- Parses a parameter, i.e. a constant or an identifier -/
-partial def parameterP := (Parameter.const <$> numP) <|> (Parameter.identifier <$> identifierP)
+partial def parameterP : P Parameter :=
+  (.const <$> numP)
+  <|> attempt (do 
+          let i ← identifierP
+          discard <| single '@'
+          let j ← identifierP
+          return Parameter.at i j)
+  <|> (.identifier <$> identifierP)
 
 end
 
@@ -157,16 +165,13 @@ def sierraFileP : P SierraFile := do
 def parseGrammar (code : String) : Except String SierraFile :=
   Except.mapError toString $ parse sierraFileP code
 
-def code := "type [0] = felt252_const<0>;
-
-libfunc [0] = felt252_const<0>;
-libfunc [1] = store_temp<[0]>;
-
-[0]() -> ([0]);
-[1]([0]) -> ([1]);
-return([1]);
-
-[0]@0() -> ([0]);
-"
+def code := "
+type core::option::Option::<core::integer::u128> = Enum<ut@core::option::Option::<core::integer::u128>, u128, Unit>;
+type Tuple<u128> = Struct<ut@Tuple, u128>;
+type Tuple<wad_ray::wad_ray::Wad> = Struct<ut@Tuple, wad_ray::wad_ray::Wad>;
+type wad_ray::wad_ray::Ray = Struct<ut@wad_ray::wad_ray::Ray, u128>;
+type Tuple<wad_ray::wad_ray::Ray> = Struct<ut@Tuple, wad_ray::wad_ray::Ray>;
+type Tuple<u128, u128> = Struct<ut@Tuple, u128, u128>;
+"  -- TODO any bigger than this and we run out of stack space, not sure what to do about it
 
 #eval parseGrammar code
