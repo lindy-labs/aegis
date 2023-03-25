@@ -37,7 +37,7 @@ def commaP : P Unit := do
   blanksP
 
 /-- Discard a single `;` -/
-def semicolonP : P Unit := discard (single ';')
+def semicolonP : P Unit := discard (single ';') *> blanksP
 
 /-- The name is maybe a bit misleading, this parses a whole identifier, including namespace ids -/
 def atomP : P String := do
@@ -84,12 +84,13 @@ def refTupleP : P (List Nat) := between '(' ')' <| sepEndBy' refP commaP
 def statementLineP : P (Identifier × List Nat × List Nat) := do
   let ident ← identifierP
   let args ← refTupleP
-  blanksP
-  discard <| string "->"
-  blanksP
-  let rets ← refTupleP
+  let rets? ← option (do 
+    blanksP
+    discard <| string "->"
+    blanksP
+    refTupleP)
   semicolonP
-  return (ident, args, rets)
+  return (ident, args, rets?.getD [])
 
 /-- Parses a tuple of identifiers -/
 def identifierTupleP : P (List Identifier) := between '(' ')' <| sepEndBy' identifierP commaP
@@ -134,6 +135,7 @@ def sierraFileP : P SierraFile := do
 def parseGrammar (code : String) : Except String SierraFile :=
   Except.mapError toString $ parse sierraFileP code
 
-def code := "call_this_shit([25]) -> ([25]); call_this_shit([25]) -> ([25]); foo@42([1]: felt) -> ([2], [3]);" -- foo@42([1]: felt) -> ([2], [3]);
+def code := "[0]() -> ([0]);
+[1]([0]) -> ([1]);"
 
 #eval parseGrammar code
