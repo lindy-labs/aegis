@@ -15,6 +15,7 @@ instance : ToString Identifier where toString x := toString $ repr x
 
 structure SierraFile where
   (typedefs : List (Identifier × Identifier))
+  (libfuncs : List (Identifier × Identifier))
   (statements : List (Identifier × List Nat × List Nat))
   (declarations : List (Identifier × Nat × List (Nat × Identifier) × List Identifier))
   deriving Repr
@@ -65,10 +66,7 @@ partial def identifierP := nameP <|> refIdentifierP
 
 end
 
-/-- Parses a type definition line -/
-def typedefLineP : P (Identifier × Identifier) := do
-  discard <| string "type "
-  blanksP
+def identifierEqualityP : P (Identifier × Identifier) := do
   let lhs ← identifierP
   blanksP
   discard <| single '='
@@ -76,6 +74,18 @@ def typedefLineP : P (Identifier × Identifier) := do
   let rhs ← nameP
   semicolonP
   return (lhs, rhs)
+
+/-- Parses a type definition line -/
+def typedefLineP : P (Identifier × Identifier) := do
+  discard <| string "type "
+  blanksP
+  identifierEqualityP
+
+/-- Parses a libfunc reference line -/
+def libfuncLineP : P (Identifier × Identifier) := do
+  discard <| string "libfunc "
+  blanksP
+  identifierEqualityP
 
 /-- Parses tuples of references, as in `([0], [1])` -/
 def refTupleP : P (List Nat) := between '(' ')' <| sepEndBy' refP commaP
@@ -126,16 +136,27 @@ def sierraFileP : P SierraFile := do
   blanksP
   let typedefs ← many' (attempt typedefLineP)
   blanksP
+  let libfuncs ← many' (attempt libfuncLineP)
+  blanksP
   let statements ← many' (attempt statementLineP)
   blanksP
   let declarations ← many' declarationLineP
   blanksP
-  return ⟨typedefs, statements, declarations⟩
+  return ⟨typedefs, libfuncs, statements, declarations⟩
 
 def parseGrammar (code : String) : Except String SierraFile :=
   Except.mapError toString $ parse sierraFileP code
 
-def code := "[0]() -> ([0]);
-[1]([0]) -> ([1]);"
+def code := "type [0] = felt252_const<x0>;
+
+libfunc [0] = felt252_const<x0>;
+libfunc [1] = store_temp<[0]>;
+
+[0]() -> ([0]);
+[1]([0]) -> ([1]);
+return([1]);
+
+[0]@0() -> ([0]);
+"
 
 #eval parseGrammar code
