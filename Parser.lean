@@ -5,13 +5,19 @@ import Megaparsec.Char
 
 open MonadParsec Megaparsec Megaparsec.Char Megaparsec.Parsec Megaparsec.Common
 
+mutual
+
 inductive Identifier where
-  | name (s : String) (is : List Identifier)
+  | name (s : String) (is : List Parameter)
   | ref (n : Nat)
   deriving Repr
--- TODO add `Nat` (and other?) constants inside the pointy brackets
 
-instance : ToString Identifier where toString x := toString $ repr x
+inductive Parameter where  -- find what the stuff in the pointy brackets is called
+  | identifier (i : Identifier)
+  | const (n : Nat)
+  deriving Repr
+
+end
 
 structure SierraFile where
   (typedefs : List (Identifier × Identifier))
@@ -19,8 +25,10 @@ structure SierraFile where
   (statements : List (Identifier × List Nat × List Nat))
   (declarations : List (Identifier × Nat × List (Nat × Identifier) × List Identifier))
   deriving Repr
--- TODO add a better printer
 
+-- TODO add a better printer
+instance : ToString Identifier where toString x := toString $ repr x
+instance : ToString Parameter where toString x := toString $ repr x
 instance : ToString SierraFile where toString x := toString $ repr x
 
 abbrev P := Parsec Char String Unit  -- TODO replace the `Unit` by a proper error type
@@ -58,11 +66,14 @@ mutual
 partial def nameP : P Identifier := do
   blanksP
   let s ← atomP
-  let is ← (between '<' '>' <| sepEndBy' identifierP commaP) <|> (pure [])
+  let is ← (between '<' '>' <| sepEndBy' parameterP commaP) <|> (pure [])
   return .name s is
 
 /-- Parses a reference-based identifier -/
 partial def identifierP := nameP <|> refIdentifierP
+
+/-- Parses a parameter, i.e. a constant or an identifier -/
+partial def parameterP := (Parameter.const <$> numP) <|> (Parameter.identifier <$> identifierP)
 
 end
 
@@ -115,8 +126,7 @@ def declarationArgP : P (Nat × Identifier) := do
   return (n, ident)
 
 /-- Parses a list of declaration arguments -/
-def declarationArgListP : P (List (Nat × Identifier)) :=
-  between '(' ')' <| sepEndBy' declarationArgP commaP
+def declarationArgListP := between '(' ')' <| sepEndBy' declarationArgP commaP
 
 /-- Parses a function declaration line -/
 def declarationLineP : P (Identifier × Nat × List (Nat × Identifier) × List Identifier) := do
@@ -131,7 +141,7 @@ def declarationLineP : P (Identifier × Nat × List (Nat × Identifier) × List 
   semicolonP
   return (ident, n, args, retTypes)
 
-set_option pp.universes true
+/-- Parses a Sierra file -/
 def sierraFileP : P SierraFile := do
   blanksP
   let typedefs ← many' (attempt typedefLineP)
@@ -147,9 +157,9 @@ def sierraFileP : P SierraFile := do
 def parseGrammar (code : String) : Except String SierraFile :=
   Except.mapError toString $ parse sierraFileP code
 
-def code := "type [0] = felt252_const<x0>;
+def code := "type [0] = felt252_const<0>;
 
-libfunc [0] = felt252_const<x0>;
+libfunc [0] = felt252_const<0>;
 libfunc [1] = store_temp<[0]>;
 
 [0]() -> ([0]);
