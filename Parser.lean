@@ -3,20 +3,7 @@ import Megaparsec.MonadParsec
 import Megaparsec.Common
 import Megaparsec.Char
 
-open MonadParsec Megaparsec.Char Megaparsec.Parsec
-
-namespace Megaparsec.Common
-
--- TODO fix this
--- TODO make this universe polymorphic
-partial def manyAttempts {m : Type → Type v} {℘ α E β : Type}
-    [MonadParsec m ℘ α E β] [Monad m] [Alternative m] {γ : Type} (a : m γ) : 
-    m (List γ) := do
-  match ← @option m ℘ α E β γ _ _ _ a with
-  | .some x => return x :: (← @manyAttempts m ℘ α E β _ _ _ γ a)
-  | _       => return []
-
-namespace Sierra
+open MonadParsec Megaparsec Megaparsec.Char Megaparsec.Parsec Megaparsec.Common
 
 inductive Identifier where
   | name (s : String) (is : List Identifier)
