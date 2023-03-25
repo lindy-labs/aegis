@@ -1,7 +1,22 @@
-import Megaparsec
+import Megaparsec.Parsec
+import Megaparsec.MonadParsec
+import Megaparsec.Common
 import Megaparsec.Char
 
-open Megaparsec Parsec Common Char
+open MonadParsec Megaparsec.Char Megaparsec.Parsec
+
+namespace Megaparsec.Common
+
+-- TODO fix this
+-- TODO make this universe polymorphic
+partial def manyAttempts {m : Type → Type v} {℘ α E β : Type}
+    [MonadParsec m ℘ α E β] [Monad m] [Alternative m] {γ : Type} (a : m γ) : 
+    m (List γ) := do
+  match ← @option m ℘ α E β γ _ _ _ a with
+  | .some x => return x :: (← @manyAttempts m ℘ α E β _ _ _ γ a)
+  | _       => return []
+
+namespace Sierra
 
 inductive Identifier where
   | name (s : String) (is : List Identifier)
@@ -18,7 +33,7 @@ structure SierraFile where
   deriving Repr
 -- TODO add a better printer
 
-instance : ToString SierraFile where toString x:= toString $ repr x
+instance : ToString SierraFile where toString x := toString $ repr x
 
 abbrev P := Parsec Char String Unit  -- TODO replace the `Unit` by a proper error type
 
@@ -86,6 +101,7 @@ def statementLineP : P (Identifier × List Nat × List Nat) := do
   discard <| string "->"
   blanksP
   let rets ← refTupleP
+  semicolonP
   return (ident, args, rets)
 
 /-- Parses a tuple of identifiers -/
@@ -117,16 +133,20 @@ def declarationLineP : P (Identifier × Nat × List (Nat × Identifier) × List 
   semicolonP
   return (ident, n, args, retTypes)
 
+set_option pp.universes true
 def sierraFileP : P SierraFile := do
   blanksP
-  let typedefs ← many' typedefLineP
-  let statements ← many' statementLineP
+  let typedefs ← many' (attempt typedefLineP)
+  blanksP
+  let statements ← many' (attempt statementLineP)
+  blanksP
   let declarations ← many' declarationLineP
+  blanksP
   return ⟨typedefs, statements, declarations⟩
 
 def parseGrammar (code : String) : Except String SierraFile :=
   Except.mapError toString $ parse sierraFileP code
 
-def code := "foo@42([1]: felt) -> ([2], [3]);"
+def code := "call_this_shit([25]) -> ([25]); call_this_shit([25]) -> ([25]); foo@42([1]: felt) -> ([2], [3]);" -- foo@42([1]: felt) -> ([2], [3]);
 
 #eval parseGrammar code
