@@ -10,7 +10,7 @@ mutual
 inductive Identifier where
   | name (s : String) (is : List Parameter)
   | ref (n : Nat)
-  deriving Repr
+  deriving Repr, Hashable
 
 inductive Parameter where  -- find out what the stuff in the pointy brackets is called
   | identifier (i : Identifier)
@@ -77,7 +77,7 @@ partial def identifierP := nameP <|> refIdentifierP
 partial def parameterP : P Parameter :=
   (.const <$> numP)
   <|> attempt (do 
-          let i ← identifierP
+          let i ← nameP
           discard <| single '@'
           let j ← identifierP
           return Parameter.at i j)
@@ -173,5 +173,3 @@ type wad_ray::wad_ray::Ray = Struct<ut@wad_ray::wad_ray::Ray, u128>;
 type Tuple<wad_ray::wad_ray::Ray> = Struct<ut@Tuple, wad_ray::wad_ray::Ray>;
 type Tuple<u128, u128> = Struct<ut@Tuple, u128, u128>;
 "  -- TODO any bigger than this and we run out of stack space, not sure what to do about it
-
-#eval parseGrammar code
