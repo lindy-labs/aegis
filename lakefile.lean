@@ -5,10 +5,11 @@ package «sierra-lean» {
   -- add package configuration options here
 }
 
+require mathlib from git
+  "https://github.com/leanprover-community/mathlib4" @ "1b816f73febb09913b30c973d6fa08f5c6462eb0"
 
 require Megaparsec from git
   "https://github.com/yatima-inc/Megaparsec.lean" @ "8859f129d199d5be82962140e9b886c0fd49e89c"
-
 
 lean_lib SierraLean {
   -- add library configuration options here
