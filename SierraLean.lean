@@ -34,7 +34,10 @@ class FuncData (i : Identifier) where
   (refsChange : OfInputs (RefTable → RefTable) (inputTypes ++ outputTypes) := OfInputs.const id)
   (pcChange : OfInputs (Nat → Nat) (inputTypes ++ outputTypes) := OfInputs.const (· + 1))
   
-def spec_felt252_add (a b ρ : F) : Prop := ρ = a + b
+instance : FuncData (.name "felt252_const" [.const n]) where
+  inputTypes := []
+  outputTypes := [F]
+  condition := fun a => a = (n : F)
 
 instance : FuncData (.name "felt252_add" []) where
   condition := fun a b ρ => ρ = a + b

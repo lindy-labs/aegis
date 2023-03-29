@@ -10,13 +10,18 @@ mutual
 inductive Identifier where
   | name (s : String) (is : List Parameter)
   | ref (n : Nat)
-  deriving Repr, Hashable
+  deriving Repr, Hashable, BEq
 
 inductive Parameter where  -- find out what the stuff in the pointy brackets is called
   | identifier (i : Identifier)
   | const (n : Nat)
-  | at (i j : Identifier)  -- find out what the `@` means
+  | usertype (i : Identifier)
+  | userfunc (i : Identifier)
+  | libfunc (i : Identifier)
   deriving Repr
+
+-- TODO differentiate functions and types, or even better, builtin types, user types,
+-- libfuncs, and user functions
 
 end
 
@@ -76,11 +81,9 @@ partial def identifierP := nameP <|> refIdentifierP
 /-- Parses a parameter, i.e. a constant or an identifier -/
 partial def parameterP : P Parameter :=
   (.const <$> numP)
-  <|> attempt (do 
-          let i ← nameP
-          discard <| single '@'
-          let j ← identifierP
-          return Parameter.at i j)
+  <|> attempt (do discard <| string "ut@"; return .usertype (← identifierP))
+  <|> attempt (do discard <| string "user@"; return .userfunc (← identifierP))
+  <|> attempt (do discard <| string "lib@"; return .libfunc (← identifierP))
   <|> (.identifier <$> identifierP)
 
 end
@@ -173,3 +176,17 @@ type wad_ray::wad_ray::Ray = Struct<ut@wad_ray::wad_ray::Ray, u128>;
 type Tuple<wad_ray::wad_ray::Ray> = Struct<ut@Tuple, wad_ray::wad_ray::Ray>;
 type Tuple<u128, u128> = Struct<ut@Tuple, u128, u128>;
 "  -- TODO any bigger than this and we run out of stack space, not sure what to do about it
+#eval parseGrammar code
+
+def code' := "type [0] = felt252;
+
+libfunc [0] = felt252_const<0>;
+libfunc [1] = store_temp<[0]>;
+
+[0]() -> ([0]);
+[1]([0]) -> ([1]);
+return([1]);
+
+[0]@0() -> ([0]);
+"
+#eval parseGrammar code'
