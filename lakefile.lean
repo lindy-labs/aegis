@@ -9,7 +9,7 @@ require mathlib from git
   "https://github.com/leanprover-community/mathlib4" @ "1b816f73febb09913b30c973d6fa08f5c6462eb0"
 
 require Megaparsec from git
-  "https://github.com/yatima-inc/Megaparsec.lean" @ "7331b206ce132746ff7653ac63d1ff9491c8f8c9"
+  "https://github.com/yatima-inc/Megaparsec.lean" @ "93b28d0ee4be435b6b395d8b6f816fabfc085166"
 
 lean_lib SierraLean {
   -- add library configuration options here

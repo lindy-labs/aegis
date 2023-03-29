@@ -1,4 +1,4 @@
---import SierraLean.Parser
+import SierraLean.Parser
 import Mathlib.Data.ZMod.Basic
 
 open Lean
@@ -27,7 +27,7 @@ structure state
   (refTypes : HashMap Nat Expr)
   (conditions : List Expr)
 
-class FuncData (name : String) where
+class FuncData (i : Identifier) where
   (inputTypes : List Type := [])
   (outputTypes : List Type := [])
   (condition : OfInputs Prop (inputTypes ++ outputTypes) := OfInputs.const True)
@@ -36,17 +36,29 @@ class FuncData (name : String) where
   
 def spec_felt252_add (a b ρ : F) : Prop := ρ = a + b
 
-instance : FuncData "felt252_add" where
+instance : FuncData (.name "felt252_add" []) where
   condition := fun a b ρ => ρ = a + b
   inputTypes := [F, F]
   outputTypes := [F]
 
-instance : FuncData "felt252_sub" where
+instance : FuncData (.name "felt252_sub" []) where
   condition := fun a b ρ => ρ = a - b
   inputTypes := [F, F]
   outputTypes := [F]
 
-instance : FuncData "rename" where
+instance : FuncData (.name "rename" [T]) where
   inputTypes := [Addr]
   outputTypes := [Addr]
-  refsChange := fun a ρ rt => (rt.insert ρ (rt.find! a)).erase a
+  refsChange := fun a ρ rt => (rt.insert ρ (rt.find! a)).erase a  -- TODO think about whether this is really it
+
+instance : FuncData (.name "dup" []) where
+  inputTypes := [Addr]
+  outputTypes := [Addr, Addr]
+  refsChange := fun a ρ₁ ρ₂ rt => 
+    let fv := rt.find! a
+    ((rt.insert ρ₁ fv).insert ρ₂ fv).erase a
+
+instance : FuncData (.name "storeTemp" []) where
+  inputTypes := [Addr]
+  outputTypes := [Addr]
+  refsChange := fun a ρ rt => rt.insert ρ (rt.find! a)
