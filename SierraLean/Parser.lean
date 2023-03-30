@@ -10,7 +10,7 @@ mutual
 inductive Identifier where
   | name (s : String) (is : List Parameter)
   | ref (n : Nat)
-  deriving Repr, Hashable, BEq
+  deriving Repr, Hashable, BEq, Inhabited
 
 inductive Parameter where  -- find out what the stuff in the pointy brackets is called
   | identifier (i : Identifier)
@@ -180,13 +180,11 @@ type Tuple<u128, u128> = Struct<ut@Tuple, u128, u128>;
 
 def code' := "type [0] = felt252;
 
-libfunc [0] = felt252_const<0>;
-libfunc [1] = store_temp<[0]>;
+libfunc [0] = felt252_add;
 
-[0]() -> ([0]);
-[1]([0]) -> ([1]);
-return([1]);
+[0]([0], [1]) -> ([2]);
+return([2]);
 
-[0]@0() -> ([0]);
+[0]@0([0]: [0] , [1]: [0]) -> ([2]);
 "
 #eval parseGrammar code'
