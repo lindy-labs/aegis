@@ -2,9 +2,10 @@ import SierraLean.Parser
 import SierraLean.FuncData
 import Lean.Meta.SynthInstance
 import Lean.Meta.AppBuilder
+import Lean.Meta.Basic
 import Qq
 
-open Lean Qq Lean.Expr
+open Lean Qq Expr Meta
 
 namespace Sierra
 
@@ -18,6 +19,11 @@ def RefTable.getOrMkNew (refs : RefTable) (n : ℕ) : MetaM (RefTable × FVarId)
   | _ => do
     let fv ← mkFreshFVarId
     return (refs.insert n fv, fv)
+
+def Expr.mkAnds : List Expr → Expr
+| []        => mkConst `True
+| [e]       => e
+| (e :: es) => mkApp (mkApp (mkConst `And) e) (mkAnds es)
 
 structure State where
   (refs : HashMap Nat FVarId)
@@ -56,16 +62,27 @@ def statementStep (f : SierraFile) : M Unit := do
     return
   | _ => return
 
+partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier)) : M Expr := do
+  let ⟨refs, types, conditions, pc⟩ ← get
+  let ⟨i, inputs, outputs⟩ := f.statements.get! pc
+  match i with
+  | .name "return" [] =>
+    let e := Expr.mkAnds conditions
+    let e ← mkForallFVars (refs.toList.map (fun (_, fv) => .fvar fv)).toArray e
+    return e
+  | _ =>
+    statementStep f
+    statementLoop f finputs
+
 def sf : SierraFile :=
 { typedefs := [(Identifier.ref 0, Identifier.name "felt252" [])],
   libfuncs := [(Identifier.ref 0, Identifier.name "felt252_add" [])],
   statements := [(Identifier.ref 0, [0, 1], [2]), (Identifier.ref 0, [1, 2], [3]), (Identifier.name "return" [], [2], [])],
   declarations := [(Identifier.ref 0, 0, [(0, Identifier.ref 0), (1, Identifier.ref 0)], [Identifier.ref 2])] }
 
-def statementStepAndReturn (f : SierraFile) : MetaM (List Expr) := do
-  let (_, state) ← StateT.run (statementStep f) ⟨HashMap.empty, HashMap.empty, [], 0⟩
-  let (_, state) ← StateT.run (statementStep f) state
-  return state.conditions
+def statementStepAndReturn (f : SierraFile) : MetaM Expr := do
+  let e ← StateT.run (statementLoop f [(0, Identifier.ref 0), (1, Identifier.ref 0)]) ⟨HashMap.empty, HashMap.empty, [], 0⟩
+  return e.1
 
-#check @Sierra.FuncData.condition
-#eval statementStepAndReturn sf 
+#check Expr.forallE
+#eval statementStepAndReturn sf
