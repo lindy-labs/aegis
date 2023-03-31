@@ -5,7 +5,7 @@ import Lean.Meta.AppBuilder
 import Lean.Meta.Basic
 import Qq
 
-open Lean Qq Expr Meta
+open Lean Qq Expr Meta Sierra
 
 namespace Sierra
 
@@ -37,9 +37,14 @@ def withGetOrMkNewRefs (refs : RefTable) (ns : List ℕ) (types : List Expr) (fv
   | _,         _         => panic "types and ref list not the same length!"
 
 def Expr.mkAnds : List Expr → Expr
-| []        => mkConst `True
+| []        => mkConst ``True
 | [e]       => e
-| (e :: es) => mkApp (mkApp (mkConst `And) e) (mkAnds es)
+| (e :: es) => mkApp (mkApp (mkConst ``And) e) (mkAnds es)
+
+def mkExistsFVars (fvs : List Expr) (e : Expr) : M Expr :=
+  match fvs with
+  | []        => return e
+  | fv :: fvs => do mkAppM ``Exists #[← mkLambdaFVars #[fv] <| ← mkExistsFVars fvs e]
 
 def withStatementStep (f : SierraFile) (refs : RefTable) 
     (k : RefTable → List FVarId → M α) [Inhabited (M α)] : M α := do
@@ -74,7 +79,9 @@ partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier))
   match i with
   | .name "return" [] =>
     let e := Expr.mkAnds conditions
-    let e ← mkForallFVars (refs.toList.map (fun (_, fv) => .fvar fv)).toArray e
+    let (intermediateRefs, ioRefs) := refs.toList.partition fun (n, _) => n ∉ finputs.map Prod.fst
+    let e ← mkExistsFVars (intermediateRefs.map (fun (_, fv) => .fvar fv)) e
+    let e ← mkLambdaFVars (ioRefs.map (fun (_, fv) => .fvar fv)).toArray e
     return e
   | _ =>
     withStatementStep f refs fun refs _ =>
@@ -86,10 +93,10 @@ def sf : SierraFile :=
   statements := [(Identifier.ref 0, [0, 1], [2]), (Identifier.ref 0, [1, 2], [3]), (Identifier.name "return" [], [2], [])],
   declarations := [(Identifier.ref 0, 0, [(0, Identifier.ref 0), (1, Identifier.ref 0)], [Identifier.ref 2])] }
 
-def statementStepAndReturn (f : SierraFile) : MetaM Format := do
+def statementLoopAndReturn (f : SierraFile) : MetaM Format := do
   let e ← StateT.run (statementLoop f [(0, Identifier.ref 0), (1, Identifier.ref 0)]) ⟨[], 0⟩
   ppExpr e.1
 
-#check ppExpr
-#eval statementStepAndReturn sf
+#check (1 ∈ [1, 2])
+#eval statementLoopAndReturn sf
 
