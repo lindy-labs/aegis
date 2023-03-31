@@ -1,11 +1,8 @@
 import SierraLean.Parser
 import SierraLean.FuncData
-import Lean.Meta.SynthInstance
 import Lean.Meta.AppBuilder
-import Lean.Meta.Basic
-import Qq
 
-open Lean Qq Expr Meta Sierra
+open Lean Expr Meta Sierra
 
 namespace Sierra
 
@@ -79,24 +76,32 @@ partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier))
   match i with
   | .name "return" [] =>
     let e := Expr.mkAnds conditions
-    let (intermediateRefs, ioRefs) := refs.toList.partition fun (n, _) => n ∉ finputs.map Prod.fst
-    let e ← mkExistsFVars (intermediateRefs.map (fun (_, fv) => .fvar fv)) e
+    let (ioRefs, intermRefs) := refs.toList.partition fun (n, _) => n ∈ finputs.map Prod.fst
+    let e ← mkExistsFVars (intermRefs.map (fun (_, fv) => .fvar fv)) e
     let e ← mkLambdaFVars (ioRefs.map (fun (_, fv) => .fvar fv)).toArray e
     return e
   | _ =>
     withStatementStep f refs fun refs _ =>
       statementLoop f finputs refs
 
-def sf : SierraFile :=
-{ typedefs := [(Identifier.ref 0, Identifier.name "felt252" [])],
-  libfuncs := [(Identifier.ref 0, Identifier.name "felt252_add" [])],
-  statements := [(Identifier.ref 0, [0, 1], [2]), (Identifier.ref 0, [1, 2], [3]), (Identifier.name "return" [], [2], [])],
-  declarations := [(Identifier.ref 0, 0, [(0, Identifier.ref 0), (1, Identifier.ref 0)], [Identifier.ref 2])] }
+def analyzeFile (s : String) : MetaM Format := do
+  let sf := parseGrammar s
+  match sf with
+  | .ok sf =>
+    let ⟨_, pc, inputArgs, _⟩ := sf.declarations.get! 0  -- TODO Don't we need the output types?
+    let e := statementLoop sf inputArgs
+    let e ← StateT.run e ⟨[], pc⟩
+    ppExpr e.1
+  | _ => throwError "Could not parse Input file"
 
-def statementLoopAndReturn (f : SierraFile) : MetaM Format := do
-  let e ← StateT.run (statementLoop f [(0, Identifier.ref 0), (1, Identifier.ref 0)]) ⟨[], 0⟩
-  ppExpr e.1
+def code' :=
+"type [0] = felt252;
+libfunc [0] = felt252_add;
+[0]([0], [1]) -> ([2]);
+[0]([2], [3]) -> ([4]);
+return([4]);
+[0]@0([0]: [0] , [1]: [0]) -> ([2]);
+"
 
-#check (1 ∈ [1, 2])
-#eval statementLoopAndReturn sf
+#eval analyzeFile code'
 
