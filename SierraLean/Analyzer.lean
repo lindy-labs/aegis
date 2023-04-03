@@ -6,7 +6,7 @@ open Lean Expr Meta Sierra
 
 namespace Sierra
 
-def getTypeRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.typedefs
+--def getTypeRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.typedefs
 
 def getLibfuncRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.libfuncs
 
@@ -51,8 +51,12 @@ def withStatementStep (f : SierraFile) (refs : RefTable)
   let .some i' := libfuncs.find? i
     | throwError "Could not find function declared libfuncs"  -- TODO catch control flow commands before this
   match i' with 
-  | (.name istr []) =>
-    let fd := mkConst ("Sierra" ++ "FuncData" ++ istr)  -- TODO add parameters
+  | .name istr params =>
+    let mut fd := mkConst ("Sierra" ++ "FuncData" ++ istr)
+    for p in params do
+      match p with
+      | .const n => fd := mkApp fd <| .lit <| .natVal n
+      | _ => fd := fd  -- TODO
     let fd_condition ← Meta.mkProjection fd `condition  -- The plain condition
     let fd_inputTypes ← Meta.mkProjection fd `inputTypes
     let fd_outputTypes ← Meta.mkProjection fd `outputTypes
@@ -60,21 +64,21 @@ def withStatementStep (f : SierraFile) (refs : RefTable)
     let mut fd_typeList : List Expr := []
     for i in [:(inputs.length+outputs.length)] do
       fd_typeList := fd_typeList ++ [← mkAppM `List.get! #[fd_types, .lit <| .natVal i]]
-    withGetOrMkNewRefs refs (inputs ++ outputs) fd_typeList [] fun refs fvs => do
-      let fves := fvs.map Expr.fvar
-      let fd_condition ← whnf <| mkAppN fd_condition fves.toArray
+    withGetOrMkNewRefs refs (inputs ++ outputs).reverse fd_typeList [] fun refs fvs => do
+      let fd_condition ← whnf <| mkAppN fd_condition (fvs.map Expr.fvar).toArray
       let conditions' := conditions ++ [fd_condition]
       let fd : FuncData i' := FuncData_register i'
       let pc' := fd.pcChange pc
       set (⟨conditions', pc'⟩ : State)
       k refs fvs
-  | _ => k refs []
+  | _ => k refs []  -- TODO do something else if `i'` doesn't match `.name`
 
 
 partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier))
-    (refs : RefTable := HashMap.empty) : M Expr := do
+    (refs : RefTable := HashMap.empty) (gas : ℕ := 25) : M Expr := do
   let ⟨conditions, pc⟩ ← get
-  let ⟨i, sinputs, _⟩ := f.statements.get! pc
+  let ⟨i, sinputs, _⟩ := f.statements.get! pc  -- `sinputs` are the returned cells
+  if gas = 0 then return Expr.mkAnds conditions
   match i with
   | .name "return" [] =>
     let e := Expr.mkAnds conditions
@@ -86,7 +90,7 @@ partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier))
     return e
   | _ =>
     withStatementStep f refs fun refs _ =>
-      statementLoop f finputs refs
+      statementLoop f finputs refs (gas - 1)
 
 def analyzeFile (s : String) : MetaM Format := do
   match parseGrammar s with
@@ -98,12 +102,10 @@ def analyzeFile (s : String) : MetaM Format := do
 
 def code' :=
   "type [0] = felt252;
-  libfunc asdf = felt252_add;
-  libfunc [1] = felt252_mul;
-  asdf([0], [1]) -> ([2]);
-  [1]([2], [3]) -> ([4]);
-  return([4]);
-  [0]([1],[2]) -> ([3]);
+  libfunc [0] = felt252_const<4>;
+  libfunc [1] = felt252_add;
+  [0]() -> ([2]);
+  return([2]);
   [0]@0([0]: [0] , [1]: [0]) -> ([2]);"
 
 #eval analyzeFile code'
