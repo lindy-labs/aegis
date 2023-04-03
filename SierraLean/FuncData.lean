@@ -37,7 +37,7 @@ structure FuncData (i : Identifier) where
 
 instance : Inhabited (FuncData i) := ⟨{  }⟩
 
-def FuncData.felt252_const : FuncData (.name "felt252_const" [.const n]) where
+def FuncData.felt252_const (n : Nat) : FuncData (.name "felt252_const" [.const n]) where
   inputTypes := []
   outputTypes := [F]
   condition := fun a => a = (n : F)
@@ -51,6 +51,11 @@ def FuncData.felt252_sub : FuncData (.name "felt252_sub" []) where
   condition := fun a b ρ => ρ = a - b
   inputTypes := [F, F]
   outputTypes := [F]
+
+def FuncData.felt252_mul : FuncData (.name "felt252_mul" []) where
+  inputTypes := [F, F]
+  outputTypes := [F]
+  condition := fun a b ρ => ρ = a * b
 
 def FuncData.rename : FuncData (.name "rename" [T]) where
   inputTypes := [Addr]
@@ -70,6 +75,8 @@ def FuncData.storeTemp : FuncData (.name "storeTemp" []) where
   refsChange := fun a ρ rt => rt.insert ρ (rt.find! a)
 
 def FuncData_register : (i : Identifier) → FuncData i
+| .name "felt252_const" [.const n] => FuncData.felt252_const n
 | .name "felt252_add" [] => FuncData.felt252_add
 | .name "felt252_sub" [] => FuncData.felt252_sub
+| .name "felt252_mul" [] => FuncData.felt252_mul
 | _ => panic "FuncData not found in register"

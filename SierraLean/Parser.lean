@@ -180,9 +180,9 @@ type Tuple<u128, u128> = Struct<ut@Tuple, u128, u128>;
 
 def code' := "type [0] = felt252;
 
-libfunc [0] = felt252_add;
+libfunc [0] = felt252_const<5>;
 
-[0]([0], [1]) -> ([2]);
+[0]() -> ([2]);
 return([2]);
 
 [0]@0([0]: [0] , [1]: [0]) -> ([2]);
