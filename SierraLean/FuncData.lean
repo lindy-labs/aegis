@@ -75,7 +75,7 @@ def FuncData.dup : FuncData (.name "dup" []) where
                      ((rt.insert ρ₁ fv).insert ρ₂ fv).erase a
     | _ => panic "Wrong number of arguments supplied to dup()"
 
-def FuncData.store_temp : FuncData (.name "storeTemp" []) where
+def FuncData.store_temp (T) : FuncData (.name "store_temp" [T]) where
   inputTypes := [Addr]
   outputTypes := [Addr]
   refsChange rt args := match args with
@@ -90,6 +90,7 @@ def FuncData_register : (i : Identifier) → FuncData i
 | .name "felt252_mul" []           => FuncData.felt252_mul
 | .name "rename" [T]               => FuncData.rename T
 | .name "drop" [T]                 => FuncData.drop T
+| .name "store_temp" [T]           => FuncData.store_temp T
 | _ => panic "FuncData not found in register"
 
 /-- Compile-time type registry -/

@@ -118,10 +118,13 @@ def code' :=
   libfunc [1] = felt252_add;
   libfunc [2] = rename<[0]>;
   libfunc [3] = drop<[0]>;
+  libfunc [4] = store_temp<[0]>;
   [1]([0], [1]) -> ([2]);
   [3]([2]) -> ();
   [1]([0], [1]) -> ([3]);
-  return([3]);
+  [1]([0], [3]) -> ([5]);
+  [4]([5]) -> ([4]);
+  return([4]);
   [0]@0([0]: [0] , [1]: [0]) -> ([2]);"
 
 #eval analyzeFile code'
