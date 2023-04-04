@@ -6,7 +6,7 @@ open Lean Expr Meta Sierra
 
 namespace Sierra
 
---def getTypeRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.typedefs
+def getTypeRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.typedefs
 
 def getLibfuncRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.libfuncs
 
@@ -45,17 +45,22 @@ def mkExistsFVars (fvs : List Expr) (e : Expr) : M Expr :=
 
 def withStatementStep (f : SierraFile) (refs : RefTable) 
     (k : RefTable → List FVarId → M α) [Inhabited (M α)] : M α := do
+  let types := getTypeRefs f
   let libfuncs := getLibfuncRefs f
   let ⟨conditions, pc⟩ ← get
   let ⟨i, inputs, outputs⟩ := f.statements.get! pc
   let .some i' := libfuncs.find? i
-    | throwError "Could not find function declared libfuncs"  -- TODO catch control flow commands before this
+    | throwError "Could not find function in declared libfuncs"  -- TODO catch control flow commands before this
   match i' with 
   | .name istr params =>
     let mut fd := mkConst ("Sierra" ++ "FuncData" ++ istr)
     for p in params do
       match p with
       | .const n => fd := mkApp fd <| .lit <| .natVal n
+      | .identifier t => 
+          let .some t' := types.find? t
+            | throwError "Could not find referenced type"
+          fd := mkApp fd <| Type_register t'
       | _ => fd := fd  -- TODO
     let fd_condition ← Meta.mkProjection fd `condition  -- The plain condition
     let fd_inputTypes ← Meta.mkProjection fd `inputTypes
@@ -64,15 +69,18 @@ def withStatementStep (f : SierraFile) (refs : RefTable)
     let mut fd_typeList : List Expr := []
     for i in [:(inputs.length+outputs.length)] do
       fd_typeList := fd_typeList ++ [← mkAppM `List.get! #[fd_types, .lit <| .natVal i]]
-    withGetOrMkNewRefs refs (inputs ++ outputs).reverse fd_typeList [] fun refs fvs => do
+    withGetOrMkNewRefs refs (inputs ++ outputs).reverse fd_typeList.reverse [] fun refs fvs => do
       let fd_condition ← whnf <| mkAppN fd_condition (fvs.map Expr.fvar).toArray
-      let conditions' := conditions ++ [fd_condition]
+      -- Only add new condition if it is not trivial
+      let conditions' := if ← isDefEq fd_condition (mkConst ``True) then conditions
+                         else conditions ++ [fd_condition]
       let fd : FuncData i' := FuncData_register i'
       let pc' := fd.pcChange pc
+      let refs' := fd.refsChange refs (inputs ++ outputs)
+      -- TODO filter `conditions'` by obsolete fvars!
       set (⟨conditions', pc'⟩ : State)
-      k refs fvs
-  | _ => k refs []  -- TODO do something else if `i'` doesn't match `.name`
-
+      k refs' fvs
+  | _ => throwError "Resolved libfunc does not have name"
 
 partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier))
     (refs : RefTable := HashMap.empty) (gas : ℕ := 25) : M Expr := do
@@ -104,8 +112,13 @@ def code' :=
   "type [0] = felt252;
   libfunc [0] = felt252_const<4>;
   libfunc [1] = felt252_add;
+  libfunc [2] = rename<[0]>;
   [0]() -> ([2]);
-  return([2]);
+  [1]([2], [1]) -> ([2]);
+  [2]([2]) -> ([3]);
+  return([3]);
   [0]@0([0]: [0] , [1]: [0]) -> ([2]);"
 
 #eval analyzeFile code'
+
+#check Expr.containsFVar

@@ -23,16 +23,12 @@ def OfInputs.const {R : Type} (r : R) : {Ts : List Type} → OfInputs R Ts
 
 abbrev RefTable := HashMap Nat FVarId
 
-structure state
-  (refFVars : HashMap Nat FVarId)
-  (refTypes : HashMap Nat Q(Type 1))
-  (conditions : List Expr)
-
+/-- A structure containing all necessary data to process a libfunc -/
 structure FuncData (i : Identifier) where
   (inputTypes : List Type := [])
   (outputTypes : List Type := [])
   (condition : OfInputs Prop (inputTypes ++ outputTypes) := OfInputs.const True)
-  (refsChange : OfInputs (RefTable → RefTable) (inputTypes ++ outputTypes) := OfInputs.const id)
+  (refsChange : RefTable → List ℕ → RefTable := fun rt _ => rt)
   (pcChange : Nat → Nat := (· + 1))
 
 instance : Inhabited (FuncData i) := ⟨{  }⟩
@@ -57,26 +53,38 @@ def FuncData.felt252_mul : FuncData (.name "felt252_mul" []) where
   outputTypes := [F]
   condition := fun a b ρ => ρ = a * b
 
-def FuncData.rename : FuncData (.name "rename" [T]) where
+def FuncData.rename (T) : FuncData (.name "rename" [T]) where
   inputTypes := [Addr]
   outputTypes := [Addr]
-  refsChange := fun a ρ rt => (rt.insert ρ (rt.find! a)).erase a  -- TODO think about whether this is really it
+  refsChange rt args := match args with
+    | [a, ρ] => (rt.insert ρ (rt.find! a)).erase a
+    | _ => panic "Wrong number of arguments supplied to rename()"
 
 def FuncData.dup : FuncData (.name "dup" []) where
   inputTypes := [Addr]
   outputTypes := [Addr, Addr]
-  refsChange := fun a ρ₁ ρ₂ rt => 
-    let fv := rt.find! a
-    ((rt.insert ρ₁ fv).insert ρ₂ fv).erase a
+  refsChange rt args := match args with
+    | [a, ρ₁, ρ₂] => let fv := rt.find! a
+                     ((rt.insert ρ₁ fv).insert ρ₂ fv).erase a
+    | _ => panic "Wrong number of arguments supplied to dup()"
 
-def FuncData.storeTemp : FuncData (.name "storeTemp" []) where
+def FuncData.store_temp : FuncData (.name "storeTemp" []) where
   inputTypes := [Addr]
   outputTypes := [Addr]
-  refsChange := fun a ρ rt => rt.insert ρ (rt.find! a)
+  refsChange rt args := match args with
+    | [a, ρ] => rt.insert ρ (rt.find! a)
+    | _ => panic "Wrong number of arguments supplied to store_temp()"
 
+/-- Compile-time function data register -/
 def FuncData_register : (i : Identifier) → FuncData i
 | .name "felt252_const" [.const n] => FuncData.felt252_const n
-| .name "felt252_add" [] => FuncData.felt252_add
-| .name "felt252_sub" [] => FuncData.felt252_sub
-| .name "felt252_mul" [] => FuncData.felt252_mul
+| .name "felt252_add" []           => FuncData.felt252_add
+| .name "felt252_sub" []           => FuncData.felt252_sub
+| .name "felt252_mul" []           => FuncData.felt252_mul
+| .name "rename" [T]               => FuncData.rename T
 | _ => panic "FuncData not found in register"
+
+/-- Compile-time type registry -/
+def Type_register : (i : Identifier) → Expr
+| .name "felt252" [] => mkConst ``Sierra.F
+| _ => panic "Type not found in register"
