@@ -82,6 +82,9 @@ def FuncData.store_temp (T) : FuncData (.name "store_temp" [T]) where
     | [a, ρ] => rt.insert ρ (rt.find! a)
     | _ => panic "Wrong number of arguments supplied to store_temp()"
 
+-- Does nothing internally to Sierra
+def FuncData.branch_align : FuncData (.name "branch_align" []) where
+  
 /-- Compile-time function data register -/
 def FuncData_register : (i : Identifier) → FuncData i
 | .name "felt252_const" [.const n] => FuncData.felt252_const n
@@ -92,6 +95,7 @@ def FuncData_register : (i : Identifier) → FuncData i
 | .name "drop" [T]                 => FuncData.drop T
 | .name "store_temp" [T]           => FuncData.store_temp T
 | .name "dup" [T]                  => FuncData.dup T
+| .name "branch_align" []          => FuncData.branch_align
 | _ => panic "FuncData not found in register"
 
 /-- Compile-time type registry -/

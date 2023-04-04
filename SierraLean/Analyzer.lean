@@ -21,7 +21,8 @@ def withGetOrMkNewRef (refs : RefTable) (n : ℕ) (type : Expr)
   match refs.find? n with
   | .some x => k refs x
   | _ => do
-    withLocalDeclD ("ref" ++ n.repr : String) type fun e =>
+    let name ← mkFreshUserName ("ref" ++ n.repr : String)
+    withLocalDeclD name type fun e =>
       let fv := e.fvarId!
       k (refs.insert n fv) fv
 
@@ -77,7 +78,6 @@ def withStatementStep (f : SierraFile) (refs : RefTable)
       let fd : FuncData i' := FuncData_register i'
       let pc' := fd.pcChange pc
       let refs' := fd.refsChange refs (inputs ++ outputs)
-      -- TODO filter `conditions'` by obsolete fvars!
       set (⟨conditions', pc'⟩ : State)
       k refs' fvs
   | _ => throwError "Resolved libfunc does not have name"
@@ -114,17 +114,17 @@ def analyzeFile (s : String) : MetaM Format := do
 
 def code' :=
   "type [0] = felt252;
-  libfunc [0] = felt252_const<4>;
-  libfunc [1] = felt252_add;
-  libfunc [2] = rename<[0]>;
-  libfunc [3] = drop<[0]>;
-  libfunc [4] = store_temp<[0]>;
-  libfunc [5] = dup<[0]>;
-  [1]([0], [1]) -> ([2]);
-  [5]([2]) -> ([3], [4]);
-  [1]([3], [4]) -> ([5]);
-  return([5]);
-  [0]@0([0]: [0] , [1]: [0]) -> ([2]);"
+
+libfunc [0] = felt252_add;
+libfunc [1] = dup<[0]>;
+
+[0]() -> ([0]);
+[1]([0]) -> ();
+[2]() -> ([1]);
+[3]([1]) -> ([2]);
+return([2]);
+
+[0]@0() -> ([0]);"
 
 #eval analyzeFile code'
 
