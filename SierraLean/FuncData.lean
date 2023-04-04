@@ -60,6 +60,13 @@ def FuncData.rename (T) : FuncData (.name "rename" [T]) where
     | [a, ρ] => (rt.insert ρ (rt.find! a)).erase a
     | _ => panic "Wrong number of arguments supplied to rename()"
 
+def FuncData.drop (T) : FuncData (.name "drop" [T]) where
+  inputTypes := [Addr]
+  outputTypes := []
+  refsChange rt args := match args with
+    | [a] => rt.erase a
+    | _ => panic "Wrong number of arguments supplied to drop()"
+
 def FuncData.dup : FuncData (.name "dup" []) where
   inputTypes := [Addr]
   outputTypes := [Addr, Addr]
@@ -82,6 +89,7 @@ def FuncData_register : (i : Identifier) → FuncData i
 | .name "felt252_sub" []           => FuncData.felt252_sub
 | .name "felt252_mul" []           => FuncData.felt252_mul
 | .name "rename" [T]               => FuncData.rename T
+| .name "drop" [T]                 => FuncData.drop T
 | _ => panic "FuncData not found in register"
 
 /-- Compile-time type registry -/

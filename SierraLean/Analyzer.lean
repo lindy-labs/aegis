@@ -89,6 +89,10 @@ partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier))
   if gas = 0 then return Expr.mkAnds conditions
   match i with
   | .name "return" [] =>
+    -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
+    let conditions := conditions.filter (¬ ·.hasAnyFVar (¬ (refs.toList.map (·.2)).contains ·))
+    logInfo "{refs.toList}"
+    -- Take the conjunction of all remaining conditions
     let e := Expr.mkAnds conditions
     let (ioRefs, intRefs) := refs.toList.reverse.partition (·.1 ∈ finputs.map (·.1) ++ sinputs)
     -- Existentially close over intermediate references
@@ -97,8 +101,8 @@ partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier))
     let e ← mkLambdaFVars (ioRefs.map (.fvar ·.2)).toArray e
     return e
   | _ =>
-    withStatementStep f refs fun refs _ =>
-      statementLoop f finputs refs (gas - 1)
+    -- Process next statement
+    withStatementStep f refs fun refs _ => statementLoop f finputs refs (gas - 1)
 
 def analyzeFile (s : String) : MetaM Format := do
   match parseGrammar s with
@@ -113,9 +117,10 @@ def code' :=
   libfunc [0] = felt252_const<4>;
   libfunc [1] = felt252_add;
   libfunc [2] = rename<[0]>;
-  [0]() -> ([2]);
-  [1]([2], [1]) -> ([2]);
-  [2]([2]) -> ([3]);
+  libfunc [3] = drop<[0]>;
+  [1]([0], [1]) -> ([2]);
+  [3]([2]) -> ();
+  [1]([0], [1]) -> ([3]);
   return([3]);
   [0]@0([0]: [0] , [1]: [0]) -> ([2]);"
 
