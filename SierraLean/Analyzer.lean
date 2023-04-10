@@ -59,8 +59,9 @@ def AndOrTree.append (t : AndOrTree) (e : Expr) : AndOrTree :=
 structure State where
   (conditions : AndOrTree)
   (pc : Nat)
+  (refs : RefTable)
 
-abbrev M := StateT State MetaM
+abbrev M := MetaM
 
 def withGetOrMkNewRef (refs : RefTable) (n : ℕ) (type : Expr) 
     (k : RefTable → FVarId → M α) : M α :=
@@ -85,14 +86,13 @@ def mkExistsFVars (fvs : List Expr) (e : Expr) : M Expr :=
   | []        => return e
   | fv :: fvs => do mkAppM ``Exists #[← mkLambdaFVars #[fv] <| ← mkExistsFVars fvs e]
 
-def withStatementStep (f : SierraFile) (refs : RefTable) 
-    (k : RefTable → List FVarId → M α) [Inhabited (M α)] : M α := do
+def withStatementStep (f : SierraFile) (s : State)
+    (k : State → M α) [Inhabited (M α)] : M α := do
   let types := getTypeRefs f
   let libfuncs := getLibfuncRefs f
-  let ⟨conditions, pc⟩ ← get
-  let .some s := f.statements.get? pc
+  let .some st := f.statements.get? s.pc
     | throwError "Program counter out of bounds"
-  let .some i' := libfuncs.find? s.libfunc_id
+  let .some i' := libfuncs.find? st.libfunc_id
     | throwError "Could not find function in declared libfuncs"  -- TODO catch control flow commands before this
   match i' with 
   | .name istr params =>
@@ -110,35 +110,33 @@ def withStatementStep (f : SierraFile) (refs : RefTable)
     let fd_outputTypes ← Meta.mkProjection fd `outputTypes
     let fd_types ← mkAppM `List.append #[fd_inputTypes, fd_outputTypes]
     let mut fd_typeList : List Expr := []
-    let inputs := s.args
-    let outputs := (s.branches.map BranchInfo.results).join  -- TODO
+    let inputs := st.args
+    let outputs := (st.branches.map BranchInfo.results).join  -- TODO
     for i in [:(inputs.length+outputs.length)] do
       fd_typeList := fd_typeList ++ [← mkAppM `List.get! #[fd_types, .lit <| .natVal i]]
-    withGetOrMkNewRefs refs (inputs ++ outputs).reverse fd_typeList.reverse [] fun refs fvs => do
+    withGetOrMkNewRefs s.refs (inputs ++ outputs).reverse fd_typeList.reverse [] fun refs fvs => do
       let fd_condition ← whnf <| mkAppN fd_condition (fvs.map Expr.fvar).toArray
       -- Only add new condition if it is not trivial
-      let conditions' := if ← isDefEq fd_condition (mkConst ``True) then conditions
-                         else conditions.append fd_condition
+      let conditions' := if ← isDefEq fd_condition (mkConst ``True) then s.conditions
+                         else s.conditions.append fd_condition
       let fd : FuncData i' := FuncData_register i'
-      let pc' := fd.pcChange pc
+      let pc' := fd.pcChange s.pc
       let refs' := fd.refsChange refs (inputs ++ outputs)
-      set (⟨conditions', pc'⟩ : State)
-      k refs' fvs
+      k { conditions := conditions', pc := pc', refs := refs' }
   | _ => throwError "Resolved libfunc does not have name"
 
 partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier))
-    (refs : RefTable := HashMap.empty) (gas : ℕ := 25) : M Expr := do
-  let ⟨conditions, pc⟩ ← get
-  let ⟨i, sinputs, _⟩ := f.statements.get! pc  -- `sinputs` are the returned cells
-  if gas = 0 then return conditions.toExpr
-  match i with
+    (s : State) (gas : ℕ := 25) : M Expr := do
+  let st := f.statements.get! s.pc  -- `sinputs` are the returned cells
+  if gas = 0 then return s.conditions.toExpr
+  match st.libfunc_id with
   | .name "return" [] =>
     -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
-    let conditions := conditions.filter (¬ ·.hasAnyFVar (¬ (refs.toList.map (·.2)).contains ·))
+    let conditions := s.conditions.filter (¬ ·.hasAnyFVar (¬ (s.refs.toList.map (·.2)).contains ·))
     logInfo "{refs.toList}"
     -- Take the conjunction of all remaining conditions
     let e := conditions.toExpr
-    let (ioRefs, intRefs) := refs.toList.reverse.partition (·.1 ∈ finputs.map (·.1) ++ sinputs)
+    let (ioRefs, intRefs) := s.refs.toList.reverse.partition (·.1 ∈ finputs.map (·.1) ++ st.args)
     -- Existentially close over intermediate references
     let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e
     -- Lambda-close over input and output references
@@ -146,14 +144,15 @@ partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier))
     return e
   | _ =>
     -- Process next statement
-    withStatementStep f refs fun refs _ => statementLoop f finputs refs (gas - 1)
+    withStatementStep f s fun s' =>
+      statementLoop f finputs s' (gas - 1)
 
 def analyzeFile (s : String) : MetaM Format := do
   match parseGrammar s with
-  | .ok sf =>
-    let ⟨_, pc, inputArgs, _⟩ := sf.declarations.get! 0  -- TODO Don't we need the output types?
-    let e ← StateT.run (statementLoop sf inputArgs) ⟨.nil, pc⟩
-    ppExpr e.1
+  | .ok f =>
+    let ⟨_, pc, inputArgs, _⟩ := f.declarations.get! 0  -- TODO Don't we need the output types?
+    let e ← statementLoop f inputArgs { conditions := .nil, pc := pc, refs := ∅ }
+    ppExpr e
   | .error str => throwError "Could not parse input file:\n{str}"
 
 def code' :=
