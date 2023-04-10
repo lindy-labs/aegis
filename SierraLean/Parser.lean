@@ -124,17 +124,27 @@ def libfuncLineP : P (Identifier × Identifier) := do
 /-- Parses tuples of references, as in `([0], [1])` -/
 def refTupleP : P (List Nat) := between '(' ')' <| sepEndBy' refP commaP
 
+/-- Parses a simple `BranchInfo` as it appears in a `{` `}` branching -/
+def branchInfoP : P BranchInfo := do
+  blanksP
+  let t ← (do discard <| string "fallthrough"; pure Option.none)
+    <|> (.some <$> numP)
+  return { target := t, results := ← refTupleP }
+
 /-- Parses a statement line -/
 def statementLineP : P Statement := do
   let ident ← identifierP
   let args ← refTupleP
-  let rets? ← option (do 
-    blanksP
-    discard <| string "->"
-    blanksP
-    refTupleP)
+  blanksP
+  let branches : List BranchInfo ← (do  -- Parse non-branching statmeent
+      discard <| string "->"; blanksP
+      return [{ target := .none, results := ← refTupleP }])
+    -- Parse branching statement
+    <|> (do between '{' '}' <| sepEndBy' branchInfoP blanksP)
+    -- To parse the return (TODO make cleaner)
+    <|> pure []
   semicolonP
-  return { libfunc_id := ident, args := args, branches := [⟨.none, rets?.getD []⟩] }
+  return { libfunc_id := ident, args := args, branches := branches }
 
 /-- Parses a tuple of identifiers -/
 def identifierTupleP : P (List Identifier) := between '(' ')' <| sepEndBy' identifierP commaP
@@ -194,7 +204,7 @@ def code' := "type [0] = felt252;
 
 libfunc [0] = felt252_const<5>;
 
-[0]() -> ([2]);
+[0]() { 1([5]) };
 return([2]);
 
 [0]@0([0]: [0] , [1]: [0]) -> ([2]);
