@@ -12,7 +12,7 @@ inductive Identifier where
   | ref (n : Nat)
   deriving Repr, Hashable, BEq, Inhabited
 
-inductive Parameter where  -- find out what the stuff in the pointy brackets is called
+inductive Parameter where
   | identifier (i : Identifier)
   | const (n : Nat)
   | usertype (i : Identifier)
@@ -25,16 +25,28 @@ inductive Parameter where  -- find out what the stuff in the pointy brackets is 
 
 end
 
+structure BranchInfo where
+  (target : Option Nat)  -- Is set to `.none` if statement is fallthrough
+  (results : List Nat)
+  deriving Repr
+
+structure Statement where
+  (libfunc_id : Identifier)
+  (args : List Nat)
+  (branches : List BranchInfo)
+  deriving Repr, Inhabited
+
 structure SierraFile where
   (typedefs : List (Identifier × Identifier))
   (libfuncs : List (Identifier × Identifier))
-  (statements : List (Identifier × List Nat × List Nat))
+  (statements : List Statement)
   (declarations : List (Identifier × Nat × List (Nat × Identifier) × List Identifier))
   deriving Repr
 
 -- TODO add a better printer
 instance : ToString Identifier where toString x := toString $ repr x
 instance : ToString Parameter where toString x := toString $ repr x
+instance : ToString Statement where toString x := toString $ repr x
 instance : ToString SierraFile where toString x := toString $ repr x
 
 abbrev P := Parsec Char String Unit  -- TODO replace the `Unit` by a proper error type
@@ -113,7 +125,7 @@ def libfuncLineP : P (Identifier × Identifier) := do
 def refTupleP : P (List Nat) := between '(' ')' <| sepEndBy' refP commaP
 
 /-- Parses a statement line -/
-def statementLineP : P (Identifier × List Nat × List Nat) := do
+def statementLineP : P Statement := do
   let ident ← identifierP
   let args ← refTupleP
   let rets? ← option (do 
@@ -122,7 +134,7 @@ def statementLineP : P (Identifier × List Nat × List Nat) := do
     blanksP
     refTupleP)
   semicolonP
-  return (ident, args, rets?.getD [])
+  return { libfunc_id := ident, args := args, branches := [⟨.none, rets?.getD []⟩] }
 
 /-- Parses a tuple of identifiers -/
 def identifierTupleP : P (List Identifier) := between '(' ')' <| sepEndBy' identifierP commaP

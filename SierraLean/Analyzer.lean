@@ -49,8 +49,9 @@ def withStatementStep (f : SierraFile) (refs : RefTable)
   let types := getTypeRefs f
   let libfuncs := getLibfuncRefs f
   let ⟨conditions, pc⟩ ← get
-  let ⟨i, inputs, outputs⟩ := f.statements.get! pc
-  let .some i' := libfuncs.find? i
+  let .some s := f.statements.get? pc
+    | throwError "Program counter out of bounds"
+  let .some i' := libfuncs.find? s.libfunc_id
     | throwError "Could not find function in declared libfuncs"  -- TODO catch control flow commands before this
   match i' with 
   | .name istr params =>
@@ -68,6 +69,8 @@ def withStatementStep (f : SierraFile) (refs : RefTable)
     let fd_outputTypes ← Meta.mkProjection fd `outputTypes
     let fd_types ← mkAppM `List.append #[fd_inputTypes, fd_outputTypes]
     let mut fd_typeList : List Expr := []
+    let inputs := s.args
+    let outputs := (s.branches.map BranchInfo.results).join
     for i in [:(inputs.length+outputs.length)] do
       fd_typeList := fd_typeList ++ [← mkAppM `List.get! #[fd_types, .lit <| .natVal i]]
     withGetOrMkNewRefs refs (inputs ++ outputs).reverse fd_typeList.reverse [] fun refs fvs => do
@@ -113,18 +116,17 @@ def analyzeFile (s : String) : MetaM Format := do
   | .error str => throwError "Could not parse input file:\n{str}"
 
 def code' :=
-  "type [0] = felt252;
+"type [0] = felt252;
 
 libfunc [0] = felt252_add;
 libfunc [1] = dup<[0]>;
 
-[0]() -> ([0]);
-[1]([0]) -> ();
-[2]() -> ([1]);
-[3]([1]) -> ([2]);
-return([2]);
+[1]([0]) -> ([0], [1]);
+[0]([0], [1]) -> ([2]);
+[0]([0], [2]) -> ([3]);
+return([3]);
 
-[0]@0() -> ([0]);"
+[0]@0([0]: [0]) -> ([0]);"
 
 #eval analyzeFile code'
 
