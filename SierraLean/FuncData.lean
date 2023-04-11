@@ -85,6 +85,8 @@ def FuncData.store_temp (T) : FuncData (.name "store_temp" [T]) where
 
 -- Does nothing internally to Sierra
 def FuncData.branch_align : FuncData (.name "branch_align" []) where
+
+def FuncData.jump : FuncData (.name "jump" []) where
   
 /-- Compile-time function data register -/
 def FuncData_register : (i : Identifier) → FuncData i
@@ -97,6 +99,7 @@ def FuncData_register : (i : Identifier) → FuncData i
 | .name "store_temp" [T]           => FuncData.store_temp T
 | .name "dup" [T]                  => FuncData.dup T
 | .name "branch_align" []          => FuncData.branch_align
+| .name "jump" []                  => FuncData.jump
 | _ => panic "FuncData not found in register"
 
 /-- Compile-time type registry -/

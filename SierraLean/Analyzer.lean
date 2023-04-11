@@ -35,6 +35,7 @@ def Expr.mkOrs : List Expr → Expr
 partial def AndOrTree.toExpr : AndOrTree → Expr
 | nil       => mkConst ``True
 | cons e [] => e
+| cons (.const ``True _) ts => Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
 | cons e ts => mkApp (mkApp (mkConst ``And) e) <| Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
 
 /-- Filter an `AndOrTree` by a boolean predicate on expressions -/
@@ -199,7 +200,9 @@ def code' :=
 libfunc [0] = felt252_add;
 libfunc [1] = drop<[0]>;
 libfunc [2] = branch_align;
+libfunc [3] = jump;
 
+[3]() { 2() };
 [0]([0], [1]) -> ([3]);
 [0]([3], [2]) -> ([4]);
 return([4]);
