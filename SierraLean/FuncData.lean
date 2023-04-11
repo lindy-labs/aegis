@@ -23,13 +23,14 @@ def OfInputs.const {R : Type} (r : R) : {Ts : List Type} → OfInputs R Ts
 
 abbrev RefTable := HashMap Nat FVarId
 
+instance : ToString RefTable where toString x := toString $ repr x.toList
+
 /-- A structure containing all necessary data to process a libfunc -/
 structure FuncData (i : Identifier) where
   (inputTypes : List Type := [])
   (outputTypes : List Type := [])
   (condition : OfInputs Prop (inputTypes ++ outputTypes) := OfInputs.const True)
   (refsChange : RefTable → List ℕ → RefTable := fun rt _ => rt)
-  (pcChange : Nat → Nat := (· + 1))
 
 instance : Inhabited (FuncData i) := ⟨{  }⟩
 

@@ -15,6 +15,9 @@ If we want to avoid trees, this has to be replaced by some graph structure in th
 inductive AndOrTree 
 | nil  : AndOrTree
 | cons : Expr → List AndOrTree → AndOrTree
+deriving Inhabited, Repr
+
+instance : ToString AndOrTree where toString x := toString $ repr x
 
 -- TODO delete
 def Expr.mkAnds : List Expr → Expr
@@ -49,6 +52,10 @@ partial def AndOrTree.map (f : Expr → Expr) : AndOrTree → AndOrTree
 | nil       => nil
 | cons e ts => cons (f e) (ts.map <| AndOrTree.map f)
 
+partial def AndOrTree.isNil : AndOrTree → Bool
+| nil      => true
+| cons _ _ => false
+
 /-- Append at leftmost point, TODO delete -/
 def AndOrTree.append (t : AndOrTree) (e : Expr) : AndOrTree :=
   match t with
@@ -57,30 +64,32 @@ def AndOrTree.append (t : AndOrTree) (e : Expr) : AndOrTree :=
   | cons e' (t :: ts) => cons e' (t.append e :: ts)
 
 structure State where
-  (conditions : AndOrTree)
   (pc : Nat)
   (refs : RefTable)
+  (lctx : LocalContext)
   (types : HashMap Identifier Identifier)
   (libfuncs : HashMap Identifier Identifier)
+  deriving Inhabited
 
-abbrev M := MetaM
+abbrev M := StateT State MetaM
 
-def withGetOrMkNewRef (refs : RefTable) (n : ℕ) (type : Expr) 
-    (k : RefTable → FVarId → M α) : M α :=
-  match refs.find? n with
-  | .some x => k refs x
+def getOrMkNewRef (n : ℕ) (type : Expr) : M FVarId := do
+  let s ← get
+  match s.refs.find? n with
+  | .some x => pure x
   | _ => do
     let name ← mkFreshUserName ("ref" ++ n.repr : String)
-    withLocalDeclD name type fun e =>
-      let fv := e.fvarId!
-      k (refs.insert n fv) fv
+    let fv ← mkFreshFVarId
+    let lctx' := (← get).lctx.mkLocalDecl fv name type
+    set { s with lctx := lctx', refs := s.refs.insert n fv }
+    return fv
 
-def withGetOrMkNewRefs (refs : RefTable) (ns : List ℕ) (types : List Expr) (fvs : List FVarId := [])
-    (k : RefTable → List FVarId → M α) [Inhabited (M α) ]: M α :=
+def getOrMkNewRefs (ns : List ℕ) (types : List Expr) (fvs : List FVarId := []) : M (List FVarId) :=
   match ns, types with
-  | (n :: ns), (t :: ts) => withGetOrMkNewRef refs n t fun refs' fv =>
-                              withGetOrMkNewRefs refs' ns ts (fv :: fvs) k
-  | [],        []        => k refs fvs
+  | (n :: ns), (t :: ts) => do
+    let fv ← getOrMkNewRef n t
+    getOrMkNewRefs ns ts (fv :: fvs)
+  | [],        []        => return fvs
   | _,         _         => panic "types and ref list not the same length!"
 
 def mkExistsFVars (fvs : List Expr) (e : Expr) : M Expr :=
@@ -101,18 +110,20 @@ def createFuncDataExpr (istr : String) (params : List Parameter)
     | _ => fd := fd  -- TODO
   return fd
 
-def processReturn (finputs : List (Nat × Identifier))
-    (st : Statement) (s : State) : M Expr := do
+def processReturn (finputs : List (Nat × Identifier)) (st : Statement) (cs : AndOrTree) :
+    M Expr := do
+  let s ← get
   -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
-  let conditions := s.conditions.filter (¬ ·.hasAnyFVar (¬ (s.refs.toList.map (·.2)).contains ·))
+  let conditions := cs.filter (¬ ·.hasAnyFVar (¬ (s.refs.toList.map (·.2)).contains ·))
   -- Take the conjunction of all remaining conditions
   let e := conditions.toExpr
   let (ioRefs, intRefs) := s.refs.toList.reverse.partition (·.1 ∈ finputs.map (·.1) ++ st.args)
-  -- Existentially close over intermediate references
-  let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e
-  -- Lambda-close over input and output references
-  let e ← mkLambdaFVars (ioRefs.map (.fvar ·.2)).toArray e
-  return e
+  withLCtx s.lctx #[] do
+    -- Existentially close over intermediate references
+    let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e
+    -- Lambda-close over input and output references
+    let e ← mkLambdaFVars (ioRefs.map (.fvar ·.2)).toArray e
+    return e
 
 def extractConditionHead (istr : String) (params : List Parameter) 
     (types : HashMap Identifier Identifier) : M Expr := do
@@ -131,11 +142,12 @@ def extractTypeList (istr : String) (params : List Parameter)
   return fd_typeList
 
 partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
-    (s : State) (gas : ℕ := 25) : M Expr := do
+    (gas : ℕ := 25) : M (Statement × AndOrTree) := do
+  let s ← get
   let st := f.statements.get! s.pc  -- `sinputs` are the returned cells
-  if gas = 0 then return s.conditions.toExpr
+  if gas = 0 then return (st, .nil)
   match st.libfunc_id with
-  | .name "return" [] => processReturn finputs st s
+  | .name "return" [] => return (st, .nil)
   | _ => do
     let types := getTypeRefs f
     let libfuncs := getLibfuncRefs f
@@ -147,26 +159,38 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
       | throwError "Could not find named function in declared libfuncs"  -- TODO catch control flow commands before this
     let fd_condition ← extractConditionHead istr params types
     let fd_typeList ← extractTypeList istr params types (inputs.length+outputs.length)
-    withGetOrMkNewRefs s.refs (inputs ++ outputs).reverse fd_typeList.reverse [] fun refs fvs => do
-      let fd_condition ← whnf <| mkAppN fd_condition (fvs.map Expr.fvar).toArray
-      -- Only add new condition if it is not trivial
-      let conditions' := if ← isDefEq fd_condition (mkConst ``True) then s.conditions
-                         else s.conditions.append fd_condition
-      let fd : FuncData i' := FuncData_register i'
-      let pc' := fd.pcChange s.pc
-      let refs' := fd.refsChange refs (inputs ++ outputs)
-      processState f finputs 
-        { conditions := conditions', pc := pc', refs := refs',
-          types := types, libfuncs := libfuncs } (gas - 1)
+    let fvs ← getOrMkNewRefs (inputs ++ outputs).reverse fd_typeList.reverse
+    let fd_condition ← whnf <| mkAppN fd_condition (fvs.map Expr.fvar).toArray
+    let fd : FuncData i' := FuncData_register i'
+    let mut st' := st
+    let mut bes : List AndOrTree := []
+    for bi in st.branches do
+      let s ← get
+      let pc' := bi.target.getD (s.pc + 1)  -- Fallthrough is the default
+      let refs' := fd.refsChange s.refs (inputs ++ outputs)
+      set { s with pc := pc', refs := refs' }
+      let (st'', es) ← processState f finputs (gas - 1)
+      st' := st''
+      bes := bes ++ [es]
+    if (← isDefEq fd_condition (mkConst ``True)) ∧ bes.all AndOrTree.isNil 
+      then return (st', .nil)
+      else return (st', .cons fd_condition bes)
 
 def analyzeFile (s : String) : MetaM Format := do
   match parseGrammar s with
   | .ok f =>
     let ⟨_, pc, inputArgs, _⟩ := f.declarations.get! 0  -- TODO Don't we need the output types?
-    let e ← processState f inputArgs { conditions := .nil, pc := pc, refs := ∅, 
-                                       types := getTypeRefs f, 
-                                       libfuncs := getLibfuncRefs f }
+    let initialState : State := { pc := pc,
+                                  refs := ∅, 
+                                  types := getTypeRefs f, 
+                                  libfuncs := getLibfuncRefs f,
+                                  lctx := .empty }
+    let (e, s) ← StateT.run 
+      (do
+      let (st, cs) ← processState f inputArgs
+      processReturn inputArgs st cs) initialState
     ppExpr e
+    --return toString s.refs
   | .error str => throwError "Could not parse input file:\n{str}"
 
 def code' :=
@@ -177,13 +201,9 @@ libfunc [1] = drop<[0]>;
 libfunc [2] = branch_align;
 
 [0]([0], [1]) -> ([3]);
-[0]([0], [1]) -> ([5]);
-[1]([5]);
 [0]([3], [2]) -> ([4]);
 return([4]);
 
 [0]@0([0]: [0], [1]: [0], [2]: [0]) -> ([0]);"
 
 #eval analyzeFile code'
-
-#check Expr.containsFVar
