@@ -60,6 +60,8 @@ structure State where
   (conditions : AndOrTree)
   (pc : Nat)
   (refs : RefTable)
+  (types : HashMap Identifier Identifier)
+  (libfuncs : HashMap Identifier Identifier)
 
 abbrev M := MetaM
 
@@ -86,34 +88,65 @@ def mkExistsFVars (fvs : List Expr) (e : Expr) : M Expr :=
   | []        => return e
   | fv :: fvs => do mkAppM ``Exists #[← mkLambdaFVars #[fv] <| ← mkExistsFVars fvs e]
 
-def withStatementStep (f : SierraFile) (s : State)
-    (k : State → M α) [Inhabited (M α)] : M α := do
-  let types := getTypeRefs f
-  let libfuncs := getLibfuncRefs f
-  let .some st := f.statements.get? s.pc
-    | throwError "Program counter out of bounds"
-  let .some i' := libfuncs.find? st.libfunc_id
-    | throwError "Could not find function in declared libfuncs"  -- TODO catch control flow commands before this
-  match i' with 
-  | .name istr params =>
-    let mut fd := mkConst ("Sierra" ++ "FuncData" ++ istr)
-    for p in params do
-      match p with
-      | .const n => fd := mkApp fd <| .lit <| .natVal n
-      | .identifier t => 
-          let .some t' := types.find? t
-            | throwError "Could not find referenced type"
-          fd := mkApp fd <| Type_register t'
-      | _ => fd := fd  -- TODO
-    let fd_condition ← Meta.mkProjection fd `condition  -- The plain condition
-    let fd_inputTypes ← Meta.mkProjection fd `inputTypes
-    let fd_outputTypes ← Meta.mkProjection fd `outputTypes
-    let fd_types ← mkAppM `List.append #[fd_inputTypes, fd_outputTypes]
-    let mut fd_typeList : List Expr := []
+def createFuncDataExpr (istr : String) (params : List Parameter)
+    (types : HashMap Identifier Identifier) : M Expr := do
+  let mut fd := mkConst ("Sierra" ++ "FuncData" ++ istr)
+  for p in params do
+    match p with
+    | .const n => fd := mkApp fd <| .lit <| .natVal n
+    | .identifier t => 
+        let .some t' := types.find? t
+          | throwError "Could not find referenced type"
+        fd := mkApp fd <| Type_register t'
+    | _ => fd := fd  -- TODO
+  return fd
+
+def processReturn (finputs : List (Nat × Identifier))
+    (st : Statement) (s : State) : M Expr := do
+  -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
+  let conditions := s.conditions.filter (¬ ·.hasAnyFVar (¬ (s.refs.toList.map (·.2)).contains ·))
+  -- Take the conjunction of all remaining conditions
+  let e := conditions.toExpr
+  let (ioRefs, intRefs) := s.refs.toList.reverse.partition (·.1 ∈ finputs.map (·.1) ++ st.args)
+  -- Existentially close over intermediate references
+  let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e
+  -- Lambda-close over input and output references
+  let e ← mkLambdaFVars (ioRefs.map (.fvar ·.2)).toArray e
+  return e
+
+def extractConditionHead (istr : String) (params : List Parameter) 
+    (types : HashMap Identifier Identifier) : M Expr := do
+  let fd ← createFuncDataExpr istr params types
+  Meta.mkProjection fd `condition
+
+def extractTypeList (istr : String) (params : List Parameter) 
+    (types : HashMap Identifier Identifier) (iolength : ℕ) : M (List Expr) := do
+  let fd ← createFuncDataExpr istr params types
+  let fd_inputTypes ← Meta.mkProjection fd `inputTypes
+  let fd_outputTypes ← Meta.mkProjection fd `outputTypes
+  let fd_types ← mkAppM `List.append #[fd_inputTypes, fd_outputTypes]
+  let mut fd_typeList : List Expr := []
+  for i in [:iolength] do
+    fd_typeList := fd_typeList ++ [← mkAppM `List.get! #[fd_types, .lit <| .natVal i]]
+  return fd_typeList
+
+partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
+    (s : State) (gas : ℕ := 25) : M Expr := do
+  let st := f.statements.get! s.pc  -- `sinputs` are the returned cells
+  if gas = 0 then return s.conditions.toExpr
+  match st.libfunc_id with
+  | .name "return" [] => processReturn finputs st s
+  | _ => do
+    let types := getTypeRefs f
+    let libfuncs := getLibfuncRefs f
     let inputs := st.args
     let outputs := (st.branches.map BranchInfo.results).join  -- TODO
-    for i in [:(inputs.length+outputs.length)] do
-      fd_typeList := fd_typeList ++ [← mkAppM `List.get! #[fd_types, .lit <| .natVal i]]
+    let .some st := f.statements.get? s.pc
+      | throwError "Program counter out of bounds"
+    let .some i'@(.name istr params) := libfuncs.find? st.libfunc_id
+      | throwError "Could not find named function in declared libfuncs"  -- TODO catch control flow commands before this
+    let fd_condition ← extractConditionHead istr params types
+    let fd_typeList ← extractTypeList istr params types (inputs.length+outputs.length)
     withGetOrMkNewRefs s.refs (inputs ++ outputs).reverse fd_typeList.reverse [] fun refs fvs => do
       let fd_condition ← whnf <| mkAppN fd_condition (fvs.map Expr.fvar).toArray
       -- Only add new condition if it is not trivial
@@ -122,36 +155,17 @@ def withStatementStep (f : SierraFile) (s : State)
       let fd : FuncData i' := FuncData_register i'
       let pc' := fd.pcChange s.pc
       let refs' := fd.refsChange refs (inputs ++ outputs)
-      k { conditions := conditions', pc := pc', refs := refs' }
-  | _ => throwError "Resolved libfunc does not have name"
-
-partial def statementLoop (f : SierraFile) (finputs : List (Nat × Identifier))
-    (s : State) (gas : ℕ := 25) : M Expr := do
-  let st := f.statements.get! s.pc  -- `sinputs` are the returned cells
-  if gas = 0 then return s.conditions.toExpr
-  match st.libfunc_id with
-  | .name "return" [] =>
-    -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
-    let conditions := s.conditions.filter (¬ ·.hasAnyFVar (¬ (s.refs.toList.map (·.2)).contains ·))
-    logInfo "{refs.toList}"
-    -- Take the conjunction of all remaining conditions
-    let e := conditions.toExpr
-    let (ioRefs, intRefs) := s.refs.toList.reverse.partition (·.1 ∈ finputs.map (·.1) ++ st.args)
-    -- Existentially close over intermediate references
-    let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e
-    -- Lambda-close over input and output references
-    let e ← mkLambdaFVars (ioRefs.map (.fvar ·.2)).toArray e
-    return e
-  | _ =>
-    -- Process next statement
-    withStatementStep f s fun s' =>
-      statementLoop f finputs s' (gas - 1)
+      processState f finputs 
+        { conditions := conditions', pc := pc', refs := refs',
+          types := types, libfuncs := libfuncs } (gas - 1)
 
 def analyzeFile (s : String) : MetaM Format := do
   match parseGrammar s with
   | .ok f =>
     let ⟨_, pc, inputArgs, _⟩ := f.declarations.get! 0  -- TODO Don't we need the output types?
-    let e ← statementLoop f inputArgs { conditions := .nil, pc := pc, refs := ∅ }
+    let e ← processState f inputArgs { conditions := .nil, pc := pc, refs := ∅, 
+                                       types := getTypeRefs f, 
+                                       libfuncs := getLibfuncRefs f }
     ppExpr e
   | .error str => throwError "Could not parse input file:\n{str}"
 
@@ -159,9 +173,12 @@ def code' :=
 "type [0] = felt252;
 
 libfunc [0] = felt252_add;
-libfunc [1] = dup<[0]>;
+libfunc [1] = drop<[0]>;
+libfunc [2] = branch_align;
 
 [0]([0], [1]) -> ([3]);
+[0]([0], [1]) -> ([5]);
+[1]([5]);
 [0]([3], [2]) -> ([4]);
 return([4]);
 
