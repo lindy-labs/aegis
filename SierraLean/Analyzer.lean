@@ -31,12 +31,18 @@ def Expr.mkOrs : List Expr → Expr
 | [e]       => e
 | (e :: es) => mkApp (mkApp (mkConst ``Or) e) <| mkOrs es
 
+partial def AndOrTree.isNil : AndOrTree → Bool
+| nil      => true
+| cons _ _ => false
+
 /-- Compile an `AndOrTree` down to a single expression -/
 partial def AndOrTree.toExpr : AndOrTree → Expr
 | nil       => mkConst ``True
 | cons e [] => e
 | cons (.const ``True _) ts => Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
-| cons e ts => mkApp (mkApp (mkConst ``And) e) <| Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
+| cons e ts => 
+   if ts.all (·.isNil) then e
+   else mkApp (mkApp (mkConst ``And) e) <| Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
 
 /-- Filter an `AndOrTree` by a boolean predicate on expressions -/
 partial def AndOrTree.filter (p : Expr → Bool) : AndOrTree → AndOrTree
@@ -52,10 +58,6 @@ partial def AndOrTree.filter (p : Expr → Bool) : AndOrTree → AndOrTree
 partial def AndOrTree.map (f : Expr → Expr) : AndOrTree → AndOrTree
 | nil       => nil
 | cons e ts => cons (f e) (ts.map <| AndOrTree.map f)
-
-partial def AndOrTree.isNil : AndOrTree → Bool
-| nil      => true
-| cons _ _ => false
 
 /-- Append at leftmost point, TODO delete -/
 def AndOrTree.append (t : AndOrTree) (e : Expr) : AndOrTree :=
@@ -129,13 +131,16 @@ def processReturn (finputs : List (Nat × Identifier)) (st : Statement) (cs : An
 def extractConditionHead (istr : String) (params : List Parameter) 
     (types : HashMap Identifier Identifier) : M Expr := do
   let fd ← createFuncDataExpr istr params types
-  Meta.mkProjection fd `condition
+  let fd_condition ← Meta.mkProjection fd `condition
+  let fd_condition ← mkAppM' fd_condition #[mkConst ``Unit.unit]
+  return fd_condition
 
 def extractTypeList (istr : String) (params : List Parameter) 
     (types : HashMap Identifier Identifier) (iolength : ℕ) : M (List Expr) := do
   let fd ← createFuncDataExpr istr params types
   let fd_inputTypes ← Meta.mkProjection fd `inputTypes
   let fd_outputTypes ← Meta.mkProjection fd `outputTypes
+  let fd_outputTypes ← mkAppM' fd_outputTypes #[mkConst ``Unit.unit]  -- TODO
   let fd_types ← mkAppM `List.append #[fd_inputTypes, fd_outputTypes]
   let mut fd_typeList : List Expr := []
   for i in [:iolength] do
@@ -167,15 +172,13 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
     let mut bes : List AndOrTree := []
     for bi in st.branches do
       let s ← get
-      let pc' := bi.target.getD (s.pc + 1)  -- Fallthrough is the default
+      let pc' := bi.target.getD <| s.pc + 1  -- Fallthrough is the default
       let refs' := fd.refsChange s.refs (inputs ++ outputs)
       set { s with pc := pc', refs := refs' }
       let (st'', es) ← processState f finputs (gas - 1)
       st' := st''
       bes := bes ++ [es]
-    if (← isDefEq fd_condition (mkConst ``True)) ∧ bes.all AndOrTree.isNil 
-      then return (st', .nil)
-      else return (st', .cons fd_condition bes)
+    return (st', .cons fd_condition bes)
 
 def analyzeFile (s : String) : MetaM Format := do
   match parseGrammar s with
@@ -202,7 +205,7 @@ libfunc [1] = drop<[0]>;
 libfunc [2] = branch_align;
 libfunc [3] = jump;
 
-[3]() { 2() };
+[3]() { 1() };
 [0]([0], [1]) -> ([3]);
 [0]([3], [2]) -> ([4]);
 return([4]);
