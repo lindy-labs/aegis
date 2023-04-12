@@ -28,7 +28,7 @@ end
 structure BranchInfo where
   (target : Option Nat)  -- Is set to `.none` if statement is fallthrough
   (results : List Nat)
-  deriving Repr
+  deriving Repr, Inhabited
 
 structure Statement where
   (libfunc_id : Identifier)
@@ -189,24 +189,3 @@ def sierraFileP : P SierraFile := do
 
 def parseGrammar (code : String) : Except String SierraFile :=
   Except.mapError toString $ parse sierraFileP code
-
-def code := "
-type core::option::Option::<core::integer::u128> = Enum<ut@core::option::Option::<core::integer::u128>, u128, Unit>;
-type Tuple<u128> = Struct<ut@Tuple, u128>;
-type Tuple<wad_ray::wad_ray::Wad> = Struct<ut@Tuple, wad_ray::wad_ray::Wad>;
-type wad_ray::wad_ray::Ray = Struct<ut@wad_ray::wad_ray::Ray, u128>;
-type Tuple<wad_ray::wad_ray::Ray> = Struct<ut@Tuple, wad_ray::wad_ray::Ray>;
-type Tuple<u128, u128> = Struct<ut@Tuple, u128, u128>;
-"  -- TODO any bigger than this and we run out of stack space, not sure what to do about it
-#eval parseGrammar code
-
-def code' := "type [0] = felt252;
-
-libfunc [0] = felt252_const<5>;
-
-[0]() { 1([5]) };
-return([2]);
-
-[0]@0([0]: [0] , [1]: [0]) -> ([2]);
-"
-#eval parseGrammar code'

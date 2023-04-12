@@ -31,6 +31,8 @@ structure BranchData (inputTypes : List Type) where
   (outputTypes : List Type := [])
   /-- The condition associated with the branch -/
   (condition : OfInputs Prop (inputTypes ++ outputTypes) := OfInputs.const <| True)
+  /-- Ref table changes, only used for memory management commands -/
+  (refsChange : List ℕ → RefTable → RefTable := fun _ rt => rt)
 
 instance : Inhabited (BranchData inputTypes) := ⟨{  }⟩
 
@@ -38,8 +40,6 @@ instance : Inhabited (BranchData inputTypes) := ⟨{  }⟩
 structure FuncData (i : Identifier) where
   /-- The types of the arguments, empty by default -/
   (inputTypes : List Type := [])
-  /-- Ref table changes, only used for memory management commands -/
-  (refsChange : RefTable → List ℕ → RefTable := fun rt _ => rt)
   /-- The list of branches, one branch by default -/
   (branches : List (BranchData inputTypes) := [{ }])
 
@@ -61,33 +61,41 @@ def FuncData.felt252_mul : FuncData (.name "felt252_mul" []) where
   inputTypes := [F, F]
   branches := [{ outputTypes := [F], condition := fun a b ρ => ρ = a * b }]
 
+def FuncData.felt252_is_zero : FuncData (.name "felt252_zero" []) where
+  inputTypes := [F]
+  branches := [{ outputTypes := [],
+                 condition := fun a => a = 0 },
+               { outputTypes := [F], -- TODO Actually the condition is baked into the output type here
+                 condition := fun a _ => a ≠ 0 }]
+
 def FuncData.rename (T) : FuncData (.name "rename" [T]) where
   inputTypes := [Addr]
-  branches := [{ outputTypes := [Addr] }]
-  refsChange rt args := match args with
-    | [a, ρ] => (rt.insert ρ (rt.find! a)).erase a
-    | _ => panic "Wrong number of arguments supplied to rename()"
+  branches := [{ outputTypes := [Addr],
+                 refsChange := fun aρ rt => match aρ with
+                  | [a, ρ] => (rt.insert ρ (rt.find! a)).erase a
+                  | _ => panic! "Wrong number of arguments supplied to rename()" }]
 
 def FuncData.drop (T) : FuncData (.name "drop" [T]) where
   inputTypes := [Addr]
-  refsChange rt args := match args with
-    | [a] => rt.erase a
-    | _ => panic "Wrong number of arguments supplied to drop()"
+  branches := [{ outputTypes := [],
+                 refsChange := fun a rt => match a with
+                  | [a] => rt.erase a
+                  | _ => panic! "Wrong number of arguments supplied to drop()" }]
 
 def FuncData.dup (T) : FuncData (.name "dup" [T]) where
   inputTypes := [Addr]
-  branches := [{ outputTypes := [Addr, Addr] }] 
-  refsChange rt args := match args with
-    | [a, ρ₁, ρ₂] => let fv := rt.find! a
-                     ((rt.insert ρ₁ fv).insert ρ₂ fv).erase a
-    | _ => panic "Wrong number of arguments supplied to dup()"
+  branches := [{ outputTypes := [Addr, Addr],
+                 refsChange := fun aρ₁ρ₂ rt => match aρ₁ρ₂ with
+                  | [a, ρ₁, ρ₂] => let fv := rt.find! a
+                    ((rt.insert ρ₁ fv).insert ρ₂ fv).erase a
+                  | _ => panic! "Wrong number of arguments supplied to dup()" }]
 
 def FuncData.store_temp (T) : FuncData (.name "store_temp" [T]) where
   inputTypes := [Addr]
-  branches := [{ outputTypes := [Addr] }]
-  refsChange rt args := match args with
-    | [a, ρ] => rt.insert ρ (rt.find! a)
-    | _ => panic "Wrong number of arguments supplied to store_temp()"
+  branches := [{ outputTypes := [Addr],
+                 refsChange := fun aρ rt => match aρ with
+                  | [a, ρ] => rt.insert ρ (rt.find! a)
+                  | _ => panic! "Wrong number of arguments supplied to store_temp()" }]
 
 -- Does nothing internally to Sierra
 def FuncData.branch_align : FuncData (.name "branch_align" []) where
