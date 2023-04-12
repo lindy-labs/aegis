@@ -25,85 +25,74 @@ abbrev RefTable := HashMap Nat FVarId
 
 instance : ToString RefTable where toString x := toString $ repr x.toList
 
+/-- A structure contining the branch-specific data for a libfunc -/
+structure BranchData (inputTypes : List Type) where
+  /-- The return types -/
+  (outputTypes : List Type := [])
+  /-- The condition associated with the branch -/
+  (condition : OfInputs Prop (inputTypes ++ outputTypes) := OfInputs.const <| True)
+
+instance : Inhabited (BranchData inputTypes) := ⟨{  }⟩
+
 /-- A structure containing all necessary data to process a libfunc -/
 structure FuncData (i : Identifier) where
   /-- The types of the arguments, empty by default -/
   (inputTypes : List Type := [])
-  /-- The number of branches, `1` by default -/
-  (Branches : Type := Unit)
-  /-- The return types of each branch -/
-  (outputTypes : Branches → List Type := fun _ => [])
-  /-- The condition for each branch -/
-  (condition : (b : Branches) → OfInputs Prop (inputTypes ++ outputTypes b) :=
-    fun _ => OfInputs.const <| True)
+  /-- Ref table changes, only used for memory management commands -/
   (refsChange : RefTable → List ℕ → RefTable := fun rt _ => rt)
+  /-- The list of branches, one branch by default -/
+  (branches : List (BranchData inputTypes) := [{ }])
 
-instance : Inhabited (FuncData i) := ⟨{ outputTypes := fun _ => default,
-                                        condition := fun _ => OfInputs.const True }⟩
+instance : Inhabited (FuncData i) := ⟨{ }⟩
 
 def FuncData.felt252_const (n : Nat) : FuncData (.name "felt252_const" [.const n]) where
   inputTypes := []
-  outputTypes := fun _ => [F]
-  condition := fun _ a => a = (n : F)
+  branches := [{ outputTypes := [F], condition := fun a => a = (n : F) }]
 
 def FuncData.felt252_add : FuncData (.name "felt252_add" []) where
-  condition := fun _ a b ρ => ρ = a + b
   inputTypes := [F, F]
-  outputTypes := fun _ => [F]
+  branches := [{ outputTypes := [F], condition := fun a b ρ => ρ = a + b }]
 
 def FuncData.felt252_sub : FuncData (.name "felt252_sub" []) where
-  condition := fun _ a b ρ => ρ = a - b
   inputTypes := [F, F]
-  outputTypes := fun _ => [F]
+  branches := [{ outputTypes := [F], condition := fun a b ρ => ρ = a - b }]
 
 def FuncData.felt252_mul : FuncData (.name "felt252_mul" []) where
   inputTypes := [F, F]
-  outputTypes := fun _ => [F]
-  condition := fun _ a b ρ => ρ = a * b
+  branches := [{ outputTypes := [F], condition := fun a b ρ => ρ = a * b }]
 
 def FuncData.rename (T) : FuncData (.name "rename" [T]) where
   inputTypes := [Addr]
-  outputTypes := fun _ => [Addr]
+  branches := [{ outputTypes := [Addr] }]
   refsChange rt args := match args with
     | [a, ρ] => (rt.insert ρ (rt.find! a)).erase a
     | _ => panic "Wrong number of arguments supplied to rename()"
-  condition := fun _ _ _ => True
 
 def FuncData.drop (T) : FuncData (.name "drop" [T]) where
   inputTypes := [Addr]
-  outputTypes := fun _ => []
   refsChange rt args := match args with
     | [a] => rt.erase a
     | _ => panic "Wrong number of arguments supplied to drop()"
-  condition := fun _ _ => True
 
 def FuncData.dup (T) : FuncData (.name "dup" [T]) where
   inputTypes := [Addr]
-  outputTypes := fun _ => [Addr, Addr]
+  branches := [{ outputTypes := [Addr, Addr] }] 
   refsChange rt args := match args with
     | [a, ρ₁, ρ₂] => let fv := rt.find! a
                      ((rt.insert ρ₁ fv).insert ρ₂ fv).erase a
     | _ => panic "Wrong number of arguments supplied to dup()"
-  condition := fun _ _ _ _ => True
 
 def FuncData.store_temp (T) : FuncData (.name "store_temp" [T]) where
   inputTypes := [Addr]
-  outputTypes := fun _ => [Addr]
+  branches := [{ outputTypes := [Addr] }]
   refsChange rt args := match args with
     | [a, ρ] => rt.insert ρ (rt.find! a)
     | _ => panic "Wrong number of arguments supplied to store_temp()"
-  condition := fun _ _ _ => True
 
 -- Does nothing internally to Sierra
 def FuncData.branch_align : FuncData (.name "branch_align" []) where
-  inputTypes := []
-  outputTypes := fun _ => []
-  condition := fun _ => True
 
 def FuncData.jump : FuncData (.name "jump" []) where
-  inputTypes := []
-  outputTypes := fun _ => []
-  condition := fun _ => True
   
 /-- Compile-time function data register -/
 def FuncData_register : (i : Identifier) → FuncData i
