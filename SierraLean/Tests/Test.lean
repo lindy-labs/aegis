@@ -34,9 +34,36 @@ return([4]);
 
 def code04 :=
 "type [0] = felt252;
-libfunc [4] = store_temp<[0]>;
-[4]([0]) -> ([1]);
-return([1]);
+type [1] = NonZero<[0]>;
+
+libfunc [2] = felt252_const<5>;
+libfunc [3] = dup<[0]>;
+libfunc [1] = felt252_sub;
+libfunc [9] = store_temp<[0]>;
+libfunc [0] = felt252_is_zero;
+libfunc [4] = branch_align;
+libfunc [5] = drop<[0]>;
+libfunc [6] = felt252_const<0>;
+libfunc [7] = jump;
+libfunc [8] = drop<[1]>;
+libfunc [10] = rename<[0]>;
+
+[2]() -> ([1]);
+[3]([0]) -> ([0], [3]);
+[1]([3], [1]) -> ([2]);
+[9]([2]) -> ([2]);
+[0]([2]) { fallthrough() 10([4]) };
+[4]() -> ();
+[5]([0]) -> ();
+[6]() -> ([5]);
+[9]([5]) -> ([6]);
+[7]() { 13() };
+[4]() -> ();
+[8]([4]) -> ();
+[9]([0]) -> ([6]);
+[10]([6]) -> ([7]);
+return([7]);
+
 [0]@0([0]: [0]) -> ([0]);"
 #eval parseGrammar code04
 

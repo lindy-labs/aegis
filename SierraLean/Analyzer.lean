@@ -181,7 +181,7 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
       let inOutArgs := st.args ++ (st.branches.get! branchIdx).results
       let fd_typeList ← extractTypeList istr params types inOutArgs.length branchIdx
       let fvs ← getOrMkNewRefs inOutArgs.reverse fd_typeList.reverse
-      let fd_condition ← whnf <| mkAppN fd_condition (fvs.map Expr.fvar).toArray
+      let fd_condition ← whnf <| mkAppN fd_condition (fvs.map Expr.fvar).toArray  -- TODO instead of whnfing, just unfold
       let s ← get
       let pc' := bi.target.getD <| s.pc + 1  -- Fallthrough is the default
       let refs' := bd.refsChange inOutArgs s.refs
