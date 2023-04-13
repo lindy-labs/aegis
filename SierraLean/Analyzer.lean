@@ -101,15 +101,15 @@ def mkExistsFVars (fvs : List Expr) (e : Expr) : MetaM Expr :=
   | fv :: fvs => do mkAppM ``Exists #[← mkLambdaFVars #[fv] <| ← mkExistsFVars fvs e]
 
 def createFuncDataExpr (istr : String) (params : List Parameter)
-    (types : HashMap Identifier Identifier) : MetaM Expr := do
+    (_ : HashMap Identifier Identifier) : MetaM Expr := do
   let mut fd := mkConst ("Sierra" ++ "FuncData" ++ istr)
   for p in params do
     match p with
-    | .const n => fd := mkApp fd <| .lit <| .natVal n
-    | .identifier t => 
+    | .const n => fd := mkApp fd <| .lit <| .natVal n  -- TODO genereralize to `Int`
+    /-| .identifier t => 
         let .some t' := types.find? t
           | throwError "Could not find referenced type"
-        fd := mkApp fd <| Type_register t'
+        fd := mkApp fd <| Type_register t'  --TODO replace by `Expr` representing `p` or change `FuncData` -/
     | _ => fd := fd  -- TODO
   return fd
 
@@ -166,7 +166,7 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
       | throwError "Program counter out of bounds"
     let .some i'@(.name istr params) := libfuncs.find? st.libfunc_id
       | throwError "Could not find named function in declared libfuncs"
-    let fd : FuncData i' := FuncData_register i'
+    let fd : FuncData := FuncData_register i'
     unless fd.branches.length = st.branches.length do
       throwError "Incorrect number of branches to {istr}"
     unless fd.inputTypes.length = st.args.length do
@@ -203,7 +203,7 @@ def analyzeFile (s : String) : MetaM Format := do
                                   types := getTypeRefs f, 
                                   libfuncs := getLibfuncRefs f,
                                   lctx := .empty }
-    let (e, s) ← StateT.run 
+    let (e, _) ← StateT.run 
       (do
       let (st, cs) ← processState f inputArgs
       processReturn inputArgs st cs) initialState

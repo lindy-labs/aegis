@@ -37,52 +37,52 @@ structure BranchData (inputTypes : List Type) where
 instance : Inhabited (BranchData inputTypes) := ⟨{  }⟩
 
 /-- A structure containing all necessary data to process a libfunc -/
-structure FuncData (i : Identifier) where
+structure FuncData where
   /-- The types of the arguments, empty by default -/
   (inputTypes : List Type := [])
   /-- The list of branches, one branch by default -/
   (branches : List (BranchData inputTypes) := [{ }])
 
-instance : Inhabited (FuncData i) := ⟨{ }⟩
+instance : Inhabited FuncData := ⟨{ }⟩
 
-def FuncData.felt252_const (n : Nat) : FuncData (.name "felt252_const" [.const n]) where
+def FuncData.felt252_const (n : Nat) : FuncData where
   inputTypes := []
   branches := [{ outputTypes := [F], condition := fun a => a = (n : F) }]
 
-def FuncData.felt252_add : FuncData (.name "felt252_add" []) where
+def FuncData.felt252_add : FuncData where
   inputTypes := [F, F]
   branches := [{ outputTypes := [F], condition := fun a b ρ => ρ = a + b }]
 
-def FuncData.felt252_sub : FuncData (.name "felt252_sub" []) where
+def FuncData.felt252_sub : FuncData where
   inputTypes := [F, F]
   branches := [{ outputTypes := [F], condition := fun a b ρ => ρ = a - b }]
 
-def FuncData.felt252_mul : FuncData (.name "felt252_mul" []) where
+def FuncData.felt252_mul : FuncData where
   inputTypes := [F, F]
   branches := [{ outputTypes := [F], condition := fun a b ρ => ρ = a * b }]
 
-def FuncData.felt252_is_zero : FuncData (.name "felt252_zero" []) where
+def FuncData.felt252_is_zero : FuncData where
   inputTypes := [F]
   branches := [{ outputTypes := [],
                  condition := fun a => a = 0 },
                { outputTypes := [F], -- TODO Actually the condition is baked into the output type here
                  condition := fun a _ => a ≠ 0 }]
 
-def FuncData.rename (T) : FuncData (.name "rename" [T]) where
+def FuncData.rename : FuncData where
   inputTypes := [Addr]
   branches := [{ outputTypes := [Addr],
                  refsChange := fun aρ rt => match aρ with
                   | [a, ρ] => (rt.insert ρ (rt.find! a)).erase a
                   | _ => panic! "Wrong number of arguments supplied to rename()" }]
 
-def FuncData.drop (T) : FuncData (.name "drop" [T]) where
+def FuncData.drop : FuncData where
   inputTypes := [Addr]
   branches := [{ outputTypes := [],
                  refsChange := fun a rt => match a with
                   | [a] => rt.erase a
                   | _ => panic! "Wrong number of arguments supplied to drop()" }]
 
-def FuncData.dup (T) : FuncData (.name "dup" [T]) where
+def FuncData.dup : FuncData where
   inputTypes := [Addr]
   branches := [{ outputTypes := [Addr, Addr],
                  refsChange := fun aρ₁ρ₂ rt => match aρ₁ρ₂ with
@@ -90,7 +90,7 @@ def FuncData.dup (T) : FuncData (.name "dup" [T]) where
                     ((rt.insert ρ₁ fv).insert ρ₂ fv).erase a
                   | _ => panic! "Wrong number of arguments supplied to dup()" }]
 
-def FuncData.store_temp (T) : FuncData (.name "store_temp" [T]) where
+def FuncData.store_temp : FuncData where
   inputTypes := [Addr]
   branches := [{ outputTypes := [Addr],
                  refsChange := fun aρ rt => match aρ with
@@ -98,20 +98,20 @@ def FuncData.store_temp (T) : FuncData (.name "store_temp" [T]) where
                   | _ => panic! "Wrong number of arguments supplied to store_temp()" }]
 
 -- Does nothing internally to Sierra
-def FuncData.branch_align : FuncData (.name "branch_align" []) where
+def FuncData.branch_align : FuncData where
 
-def FuncData.jump : FuncData (.name "jump" []) where
+def FuncData.jump : FuncData where
   
 /-- Compile-time function data register -/
-def FuncData_register : (i : Identifier) → FuncData i
+def FuncData_register : Identifier → FuncData
 | .name "felt252_const" [.const n] => FuncData.felt252_const n
 | .name "felt252_add" []           => FuncData.felt252_add
 | .name "felt252_sub" []           => FuncData.felt252_sub
 | .name "felt252_mul" []           => FuncData.felt252_mul
-| .name "rename" [T]               => FuncData.rename T
-| .name "drop" [T]                 => FuncData.drop T
-| .name "store_temp" [T]           => FuncData.store_temp T
-| .name "dup" [T]                  => FuncData.dup T
+| .name "rename" [_]               => FuncData.rename
+| .name "drop" [_]                 => FuncData.drop
+| .name "store_temp" [_]           => FuncData.store_temp
+| .name "dup" [_]                  => FuncData.dup
 | .name "branch_align" []          => FuncData.branch_align
 | .name "jump" []                  => FuncData.jump
 | _ => panic "FuncData not found in register"

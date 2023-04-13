@@ -34,13 +34,10 @@ return([4]);
 
 def code04 :=
 "type [0] = felt252;
-type [1] = NonZero<[0]>;
-
-libfunc [3] = dup<[0]>;
-
-[3]([0]) -> ([0], [3]);
-return([3]);
-
+libfunc [4] = store_temp<[0]>;
+[4]([0]) -> ([1]);
+return([1]);
 [0]@0([0]: [0]) -> ([0]);"
 #eval parseGrammar code04
+
 #eval analyzeFile code04
