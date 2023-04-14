@@ -1,6 +1,6 @@
 import SierraLean.Parser
+import SierraLean.ExprUtil
 import Mathlib.Data.ZMod.Basic
-import Qq
 
 open Lean Qq
 
@@ -13,20 +13,7 @@ def PRIME := 3618502788666131213697322783095070105623107215331596699973092056135
 abbrev F := ZMod PRIME
 
 -- TODO this has to exist somewhere?
-def OfInputs (R : Type) : List Q(Type) → Type
-| []        => R
-| (T :: Ts) => Q($T) → OfInputs R Ts
 
-def OfInputs.const {R : Type} (r : R) : {Ts : List Q(Type)} → OfInputs R Ts
-| []       => r
-| (_ :: _) => fun _ => OfInputs.const r
-
-def OfInputs.apply {R : Type} [Inhabited R] {Ts : List Q(Type)} (f : OfInputs R Ts) 
-    (ts : List Expr) : R :=
-  match Ts, ts with
-  | [],       []        => f
-  | (_ :: _), (t :: ts) => OfInputs.apply (f t) ts
-  | _,        _         => panic "Wrong number of arguments supplied to OfInputs"
 
 abbrev RefTable := HashMap Nat FVarId
 
