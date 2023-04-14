@@ -21,6 +21,13 @@ def OfInputs.const {R : Type} (r : R) : {Ts : List Q(Type)} → OfInputs R Ts
 | []       => r
 | (_ :: _) => fun _ => OfInputs.const r
 
+def OfInputs.apply {R : Type} [Inhabited R] {Ts : List Q(Type)} (f : OfInputs R Ts) 
+    (ts : List Expr) : R :=
+  match Ts, ts with
+  | [],       []        => f
+  | (_ :: _), (t :: ts) => OfInputs.apply (f t) ts
+  | _,        _         => panic "Wrong number of arguments supplied to OfInputs"
+
 abbrev RefTable := HashMap Nat FVarId
 
 instance : ToString RefTable where toString x := toString $ repr x.toList
@@ -34,7 +41,7 @@ structure BranchData (inputTypes : List Q(Type)) where
   /-- Ref table changes, only used for memory management commands -/
   (refsChange : List ℕ → RefTable → RefTable := fun _ rt => rt)
 
-instance : Inhabited (BranchData inputTypes) := ⟨{  }⟩
+instance : Inhabited (BranchData inputTypes) := ⟨{ }⟩
 
 /-- A structure containing all necessary data to process a libfunc -/
 structure FuncData where

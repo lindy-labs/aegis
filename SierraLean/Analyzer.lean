@@ -22,6 +22,8 @@ def Expr.mkOrs : List Expr → Expr
 | [e]       => e
 | (e :: es) => mkApp (mkApp (mkConst ``Or) e) <| mkOrs es
 
+def Expr.mkTrue : Expr := mkConst ``True
+
 /-- A tree to contain expressions to be composed with `And` and `Or`.
 If we want to avoid trees, this has to be replaced by some graph structure in the future. -/
 inductive AndOrTree 
@@ -31,9 +33,14 @@ deriving Inhabited, Repr
 
 instance : ToString AndOrTree where toString x := toString $ repr x
 
-partial def AndOrTree.isNil : AndOrTree → Bool
+def AndOrTree.isNil : AndOrTree → Bool
 | nil      => true
 | cons _ _ => false
+
+partial def AndOrTree.isTrivial : AndOrTree → Bool
+| nil                       => true
+| cons (.const ``True _) ts => ts.all AndOrTree.isTrivial
+| _                         => false
 
 /-- Compile an `AndOrTree` down to a single expression -/
 partial def AndOrTree.toExpr : AndOrTree → Expr
@@ -41,7 +48,7 @@ partial def AndOrTree.toExpr : AndOrTree → Expr
 | cons e [] => e
 | cons (.const ``True _) ts => Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
 | cons e ts => 
-   if ts.all (·.isNil) then e
+   if ts.all (·.isTrivial) then e
    else mkApp (mkApp (mkConst ``And) e) <| Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
 
 /-- Filter an `AndOrTree` by a boolean predicate on expressions -/
@@ -100,44 +107,6 @@ def mkExistsFVars (fvs : List Expr) (e : Expr) : MetaM Expr :=
   | []        => return e
   | fv :: fvs => do mkAppM ``Exists #[← mkLambdaFVars #[fv] <| ← mkExistsFVars fvs e]
 
-def createFuncDataExpr (istr : String) (params : List Parameter)
-    (_ : HashMap Identifier Identifier) : MetaM Expr := do
-  let mut fd := mkConst ("Sierra" ++ "FuncData" ++ istr)
-  for p in params do
-    match p with
-    | .const n => fd := mkApp fd <| .lit <| .natVal n  -- TODO genereralize to `Int`
-    /-| .identifier t => 
-        let .some t' := types.find? t
-          | throwError "Could not find referenced type"
-        fd := mkApp fd <| Type_register t'  --TODO replace by `Expr` representing `p` or change `FuncData` -/
-    | _ => fd := fd  -- TODO
-  return fd
-
-def createBranchDataExpr (istr : String) (params : List Parameter)
-    (types : HashMap Identifier Identifier) (branchIdx : ℕ) : MetaM Expr := do
-  let fd ← createFuncDataExpr istr params types
-  let fd ← Meta.mkProjection fd `branches
-  let bi := Expr.lit <| .natVal branchIdx
-  mkAppM ``List.get! #[fd, bi]
-
-def extractConditionHead (istr : String) (params : List Parameter) 
-    (types : HashMap Identifier Identifier) (branchIdx : ℕ): M Expr := do
-  let fd ← createBranchDataExpr istr params types branchIdx
-  let fd_condition ← Meta.mkProjection fd `condition
-  return fd_condition
-
-def extractTypeList (istr : String) (params : List Parameter) 
-    (types : HashMap Identifier Identifier) (iolength branchIdx : ℕ) : M (List Expr) := do
-  let fd ← createFuncDataExpr istr params types
-  let fd_inputTypes ← Meta.mkProjection fd `inputTypes
-  let bd ← createBranchDataExpr istr params types branchIdx
-  let fd_outputTypes ← Meta.mkProjection bd `outputTypes
-  let fd_types ← mkAppM `List.append #[fd_inputTypes, fd_outputTypes]
-  let mut fd_typeList : List Expr := []
-  for i in [:iolength] do
-    fd_typeList := fd_typeList ++ [← mkAppM `List.get! #[fd_types, .lit <| .natVal i]]
-  return fd_typeList
-
 def processReturn (finputs : List (Nat × Identifier)) (st : Statement) (cs : AndOrTree) :
     M Expr := do
   let s ← get
@@ -160,11 +129,11 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
   match st.libfunc_id with
   | .name "return" [] => return (st, .nil)
   | _ => do
-    let types := getTypeRefs f
+    --let types := getTypeRefs f
     let libfuncs := getLibfuncRefs f
     let .some st := f.statements.get? (← get).pc
       | throwError "Program counter out of bounds"
-    let .some i'@(.name istr params) := libfuncs.find? st.libfunc_id
+    let .some i'@(.name istr _) := libfuncs.find? st.libfunc_id
       | throwError "Could not find named function in declared libfuncs"
     let fd : FuncData := FuncData_register i'
     unless fd.branches.length = st.branches.length do
@@ -177,18 +146,18 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
       let bd := fd.branches.get! branchIdx
       unless bd.outputTypes.length = (st.branches.get! branchIdx).results.length do
         throwError "Incorrect number of results to {istr} at branch {branchIdx}"
-      let fd_condition ← extractConditionHead istr params types branchIdx
+      let c := bd.condition
+      let types := fd.inputTypes ++ bd.outputTypes
       let inOutArgs := st.args ++ (st.branches.get! branchIdx).results
-      let fd_typeList ← extractTypeList istr params types inOutArgs.length branchIdx
-      let fvs ← getOrMkNewRefs inOutArgs.reverse fd_typeList.reverse
-      let fd_condition ← whnf <| mkAppN fd_condition (fvs.map Expr.fvar).toArray  -- TODO instead of whnfing, just unfold
+      let fvs := .fvar <$> (← getOrMkNewRefs inOutArgs.reverse types.reverse)
+      let c := c.apply fvs
       let s ← get
       let pc' := bi.target.getD <| s.pc + 1  -- Fallthrough is the default
       let refs' := bd.refsChange inOutArgs s.refs
       set { s with pc := pc', refs := refs' }
       let (st'', es) ← processState f finputs (gas - 1)
       st' := st''
-      bes := bes ++ [.cons fd_condition [es]]
+      bes := bes ++ [.cons c [es]]
     match bes with
     | []   => return (st, .nil)
     | [es] => return (st', es)

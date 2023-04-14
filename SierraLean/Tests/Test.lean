@@ -1,5 +1,6 @@
 import SierraLean.Analyzer
 
+open Lean Meta Qq
 namespace Sierra
 
 def code01 := "
