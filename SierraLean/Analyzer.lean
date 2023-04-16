@@ -71,7 +71,8 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
       | throwError "Program counter out of bounds"
     let .some i'@(.name istr _) := libfuncs.find? st.libfunc_id
       | throwError "Could not find named function in declared libfuncs"
-    let fd : FuncData := FuncData_register i'
+    let .some fd := FuncData.libfuncs i'
+      | throwError "Could not find libfunc used in code"
     unless fd.branches.length = st.branches.length do
       throwError "Incorrect number of branches to {istr}"
     unless fd.inputTypes.length = st.args.length do
@@ -94,7 +95,7 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
       st' := st''
       bes := bes ++ [.cons c [es]]
     match bes with
-    | []   => return (st, .nil)
+    | []   => return (st', .nil)
     | [es] => return (st', es)
     | _    => return (st', .cons (mkConst ``True) bes)
 
@@ -107,10 +108,10 @@ def analyzeFile (s : String) : MetaM Format := do
                                   types := getTypeRefs f, 
                                   libfuncs := getLibfuncRefs f,
                                   lctx := .empty }
-    let (e, _) ← StateT.run 
+    let es ← StateT.run 
       (do
       let (st, cs) ← processState f inputArgs
       processReturn inputArgs st cs) initialState
-    ppExpr e
+    ppExpr es.1
     --return toString s.refs
   | .error str => throwError "Could not parse input file:\n{str}"

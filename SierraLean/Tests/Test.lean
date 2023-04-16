@@ -67,5 +67,35 @@ return([7]);
 
 [0]@0([0]: [0]) -> ([0]);"
 #eval parseGrammar code04
-
 #eval analyzeFile code04
+
+/-- Tests the genration of fresh names. -/
+def code05 :=
+"type [0] = felt252;
+libfunc [0] = rename<[0]>;
+libfunc [1] = felt252_const<4>;
+[0]([0]) -> ([1]);
+[1]() -> ([0]);
+return([0]);
+foo@0([0]: [0]) -> ([0]);"
+#eval parseGrammar code05
+#eval analyzeFile code05
+
+def e2etest_felt_add :=
+"type felt252 = felt252;
+
+libfunc dup<felt252> = dup<felt252>;
+libfunc felt252_add = felt252_add;
+libfunc drop<felt252> = drop<felt252>;
+libfunc store_temp<felt252> = store_temp<felt252>;
+
+dup<felt252>([0]) -> ([0], [3]);
+dup<felt252>([1]) -> ([1], [4]);
+felt252_add([3], [4]) -> ([2]);
+drop<felt252>([2]) -> ();
+felt252_add([0], [1]) -> ([5]);
+store_temp<felt252>([5]) -> ([6]);
+return([6]);
+
+test::foo@0([0]: felt252, [1]: felt252) -> (felt252);"
+#eval analyzeFile e2etest_felt_add
