@@ -47,10 +47,13 @@ def processReturn (finputs : List (Nat × Identifier)) (st : Statement) (cs : An
     M Expr := do
   let s ← get
   -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
-  let conditions := cs.filter (¬ ·.hasAnyFVar (¬ (s.refs.toList.map (·.2)).contains ·))
+  let cs := cs.filter (¬ ·.hasAnyFVar (¬ (s.refs.toList.map (·.2)).contains ·))
   -- Take the conjunction of all remaining conditions
-  let e := conditions.toExpr
-  let (ioRefs, intRefs) := s.refs.toList.reverse.partition (·.1 ∈ finputs.map (·.1) ++ st.args)
+  let e := cs.toExpr
+  let refs := s.refs.toList.reverse
+  -- Filter out free variables which do not actually appear in the expression
+  let refs := refs.filter (e.containsFVar ·.2)
+  let (ioRefs, intRefs) := refs.partition (·.1 ∈ finputs.map (·.1) ++ st.args)
   withLCtx s.lctx #[] do
     -- Existentially close over intermediate references
     let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e
