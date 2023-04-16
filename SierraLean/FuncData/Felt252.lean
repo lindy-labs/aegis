@@ -11,7 +11,7 @@ abbrev F := ZMod PRIME
 
 namespace FuncData
 
-def felt252_const (n : Q(Nat)) : FuncData where
+def felt252_const (n : Q(Int)) : FuncData where
   inputTypes := []
   branches := [{ outputTypes := [q(F)], condition := fun a => q($a = ($n : F)) }]
 

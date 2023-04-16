@@ -73,7 +73,7 @@ return([7]);
 def code05 :=
 "type [0] = felt252;
 libfunc [0] = rename<[0]>;
-libfunc [1] = felt252_const<4>;
+libfunc [1] = felt252_const<-4>;
 [0]([0]) -> ([1]);
 [1]() -> ([0]);
 return([0]);

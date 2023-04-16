@@ -14,7 +14,7 @@ inductive Identifier where
 
 inductive Parameter where
   | identifier (i : Identifier)
-  | const (n : Nat)
+  | const (n : Int)
   | usertype (i : Identifier)
   | userfunc (i : Identifier)
   | libfunc (i : Identifier)
@@ -51,8 +51,14 @@ instance : ToString SierraFile where toString x := toString $ repr x
 
 abbrev P := Parsec Char String Unit  -- TODO replace the `Unit` by a proper error type
 
-/-- Parses a number -/
+/-- Parses a natural number -/
 def numP : P Nat := do return String.toNat! <| String.mk <| ← some' (satisfy Char.isDigit)
+
+/-- Parses an integer -/
+partial def intP : P Int := do
+  match ← option <| discard <| single '-' with
+  | .none    => numP
+  | .some () => intP >>= fun x => pure <| -x
 
 /-- Discard whitespace and line breaks -/
 def blanksP : P Unit := discard $ many' (satisfy <| ([' ', '\n', '\t'].contains ·))
@@ -92,7 +98,7 @@ partial def identifierP := nameP <|> refIdentifierP
 
 /-- Parses a parameter, i.e. a constant or an identifier -/
 partial def parameterP : P Parameter :=
-  (.const <$> numP)
+  (.const <$> intP)
   <|> attempt (do discard <| string "ut@"; return .usertype (← identifierP))
   <|> attempt (do discard <| string "user@"; return .userfunc (← identifierP))
   <|> attempt (do discard <| string "lib@"; return .libfunc (← identifierP))
