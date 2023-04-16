@@ -1,7 +1,7 @@
 import SierraLean.Parser
 import SierraLean.FuncData
 
-open Lean Expr Meta Sierra
+open Lean Expr Meta Qq
 
 namespace Sierra
 
@@ -38,7 +38,7 @@ def getOrMkNewRefs (ns : List ℕ) (types : List Expr) (fvs : List FVarId := [])
   | [],        []        => return fvs
   | _,         _         => panic "types and ref list not the same length!"
 
-def mkExistsFVars (fvs : List Expr) (e : Expr) : MetaM Expr :=
+def mkExistsFVars (fvs : List Expr) (e : Q(Prop)) : MetaM Q(Prop) :=
   match fvs with
   | []        => return e
   | fv :: fvs => do mkAppM ``Exists #[← mkLambdaFVars #[fv] <| ← mkExistsFVars fvs e]
