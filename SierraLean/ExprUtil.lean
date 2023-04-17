@@ -80,3 +80,7 @@ def OfInputs.apply {R : Type} [Inhabited R] {Ts : List Q(Type)} (f : OfInputs R 
   | [],       []        => f
   | (_ :: _), (t :: ts) => OfInputs.apply (f t) ts
   | _,        _         => panic "Wrong number of arguments supplied to OfInputs"
+
+def listToExpr : List Q(Type) → Q(List Type)
+  | [] => q([])
+  | a :: as => q($a :: $(listToExpr as))

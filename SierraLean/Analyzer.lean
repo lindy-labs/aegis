@@ -51,9 +51,10 @@ def processReturn (finputs : List (Nat × Identifier)) (st : Statement) (cs : An
   -- Take the conjunction of all remaining conditions
   let e := cs.toExpr
   let refs := s.refs.toList.reverse
-  -- Filter out free variables which do not actually appear in the expression
-  let refs := refs.filter (e.containsFVar ·.2)
+  -- Partition fvars into input or output variables and intermediate variables
   let (ioRefs, intRefs) := refs.partition (·.1 ∈ finputs.map (·.1) ++ st.args)
+  -- Filter out intermediate variables which do not actually appear in the expression
+  let intRefs := intRefs.filter (e.containsFVar ·.2)
   withLCtx s.lctx #[] do
     -- Existentially close over intermediate references
     let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e

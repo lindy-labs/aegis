@@ -1,5 +1,6 @@
 import SierraLean.Parser
 import SierraLean.ExprUtil
+import Mathlib.Data.ZMod.Basic
 
 open Lean Qq
 
@@ -28,3 +29,29 @@ structure FuncData where
   (branches : List (BranchData inputTypes) := [{ }])
 
 instance : Inhabited FuncData := ⟨{ }⟩
+
+def PRIME := 3618502788666131213697322783095070105623107215331596699973092056135872020481
+
+abbrev F := ZMod PRIME
+
+abbrev UInt128 := ZMod <| 2^128
+
+def enum (fields : List Q(Type)) : Q(Type) :=
+  let f := listToExpr fields
+  q(Σ (i : Fin ($f).length), ($f).get i)
+
+mutual
+
+/-- Compile-time type registry -/ -- TODO decentralize this
+partial def Type_register : Identifier → Q(Type)
+| .name "felt252" [] => q(F)
+| .name "u128" []    => q(UInt128)
+| .name "Enum" (_ :: fields) => Enum fields
+| _ => panic "Type not found in register"
+
+partial def Enum (fields : List Parameter) : Q(Type) :=
+  enum <| fields.map fun f => match f with
+    | .identifier ident => Type_register ident
+    | _ => panic "foo"
+
+end

@@ -15,9 +15,10 @@ type Tuple<u128, u128> = Struct<ut@Tuple, u128, u128>;"
 def code02 := "type [0] = felt252;
 libfunc [0] = felt252_const<5>;
 [0]() { 1([5]) };
-return([2]);
-[0]@0([0]: [0] , [1]: [0]) -> ([2]);"
-#eval parseGrammar code01
+return([5]);
+foo@0([0]: [0] , [1]: [0]) -> ([2]);"
+#eval parseGrammar code02
+#eval analyzeFile code02
 
 def code03 :=
 "type [0] = felt252;
@@ -76,7 +77,7 @@ libfunc [0] = rename<[0]>;
 libfunc [1] = felt252_const<-4>;
 [0]([0]) -> ([1]);
 [1]() -> ([0]);
-return([0]);
+return([1]);
 foo@0([0]: [0]) -> ([0]);"
 #eval parseGrammar code05
 #eval analyzeFile code05

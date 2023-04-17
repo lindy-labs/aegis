@@ -18,7 +18,7 @@ inductive Parameter where
   | usertype (i : Identifier)
   | userfunc (i : Identifier)
   | libfunc (i : Identifier)
-  deriving Repr
+  deriving Repr, Inhabited
 
 -- TODO differentiate functions and types, or even better, builtin types, user types,
 -- libfuncs, and user functions
@@ -106,6 +106,7 @@ partial def parameterP : P Parameter :=
 
 end
 
+/-- Parses an equality between two identifiers -/
 def identifierEqualityP : P (Identifier × Identifier) := do
   let lhs ← identifierP
   blanksP

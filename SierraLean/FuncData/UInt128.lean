@@ -5,8 +5,6 @@ open Qq
 
 namespace Sierra
 
-abbrev UInt128 := ZMod <| 2^128
-
 namespace FuncData
 
 def u128_overflowing_add : FuncData where

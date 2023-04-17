@@ -4,11 +4,6 @@ import Mathlib.Data.ZMod.Basic
 open Qq
 
 namespace Sierra
-
-def PRIME := 3618502788666131213697322783095070105623107215331596699973092056135872020481
-
-abbrev F := ZMod PRIME
-
 namespace FuncData
 
 def felt252_const (n : Q(Int)) : FuncData where
