@@ -54,7 +54,7 @@ def processReturn (finputs : List (Nat × Identifier)) (st : Statement) (cs : An
   -- Partition fvars into input or output variables and intermediate variables
   let (ioRefs, intRefs) := refs.partition (·.1 ∈ finputs.map (·.1) ++ st.args)
   -- Filter out intermediate variables which do not actually appear in the expression
-  let intRefs := intRefs.filter (e.containsFVar ·.2)
+  -- let intRefs := intRefs.filter (e.containsFVar ·.2)
   withLCtx s.lctx #[] do
     -- Existentially close over intermediate references
     let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e
@@ -69,13 +69,13 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
   match st.libfunc_id with
   | .name "return" [] => return (st, .nil)
   | _ => do
-    --let types := getTypeRefs f
+    let typeRefs := getTypeRefs f
     let libfuncs := getLibfuncRefs f
     let .some st := f.statements.get? (← get).pc
       | throwError "Program counter out of bounds"
     let .some i'@(.name istr _) := libfuncs.find? st.libfunc_id
       | throwError "Could not find named function in declared libfuncs"
-    let .some fd := FuncData.libfuncs i'
+    let .some fd := FuncData.libfuncs typeRefs i'
       | throwError "Could not find libfunc used in code"
     unless fd.branches.length = st.branches.length do
       throwError "Incorrect number of branches to {istr}"
@@ -116,6 +116,7 @@ def analyzeFile (s : String) : MetaM Format := do
       (do
       let (st, cs) ← processState f inputArgs
       processReturn inputArgs st cs) initialState
-    ppExpr es.1
-    --return toString s.refs
+    let foo ← inferType es.1
+    ppExpr foo
+    --return toString es.2.refs
   | .error str => throwError "Could not parse input file:\n{str}"

@@ -16,6 +16,9 @@ def Expr.mkOrs : List Expr → Expr
 | [e]       => e
 | (e :: es) => mkApp (mkApp (mkConst ``Or) e) <| mkOrs es
 
+def Expr.mkEq (type : Expr) (lhs rhs : Expr) : Expr :=
+mkAppN (mkConst `Eq [levelOne]) #[type, lhs, rhs]
+
 /-- A tree to contain expressions to be composed with `And` and `Or`.
 If we want to avoid trees, this has to be replaced by some graph structure in the future. -/
 inductive AndOrTree 

@@ -47,9 +47,9 @@ partial def Type_register : Identifier → Q(Type)
 | .name "felt252" [] => q(F)
 | .name "u128" []    => q(UInt128)
 | .name "Enum" (_ :: fields) => Enum fields
-| _ => panic "Type not found in register"
+| i@_ => panic <| "Type not found in register: " ++ toString i
 
-partial def Enum (fields : List Parameter) : Q(Type) :=
+partial def Enum (fields : List Parameter) : Q(Type) :=  -- TODO replace by `List Identifier` and to dereferencing before
   enum <| fields.map fun f => match f with
     | .identifier ident => Type_register ident
     | _ => panic "foo"

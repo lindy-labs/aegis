@@ -100,3 +100,16 @@ return([6]);
 
 test::foo@0([0]: felt252, [1]: felt252) -> (felt252);"
 #eval analyzeFile e2etest_felt_add
+
+def test_enum_init :=
+"type [0] = felt252;
+ type [1] = Enum<foo, [0], [0]>;
+ type [2] = Enum<bar, [1], [1]>;
+ libfunc [0] = enum_init<[1], 1>;
+ libfunc [1] = enum_init<[2], 1>;
+ [0]([0]) -> ([1]);
+ [1]([1]) -> ([2]);
+ return([2]);
+ foo@0([0]: [0]) -> ([2]);"
+#eval parseGrammar test_enum_init
+#eval analyzeFile test_enum_init
