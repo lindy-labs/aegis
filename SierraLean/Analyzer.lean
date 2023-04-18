@@ -5,15 +5,22 @@ open Lean Expr Meta Qq
 
 namespace Sierra
 
-def getTypeRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.typedefs
-
+def getTypeRefs (f : SierraFile) : HashMap Identifier ResolvedIdentifier := Id.run do
+  let mut ret : HashMap Identifier ResolvedIdentifier := ∅
+  for (lhs, rhs) in f.typedefs do
+    let rhs' : ResolvedIdentifier := match rhs with
+      | .name n ps => .name n <| resolveParameters ret ps
+      | .ref _ => ret.find! rhs
+    ret := ret.insert lhs rhs'
+  return ret
+ 
 def getLibfuncRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.libfuncs
 
 structure State where
   (pc : Nat)
   (refs : RefTable)
   (lctx : LocalContext)
-  (types : HashMap Identifier Identifier)
+  (types : HashMap Identifier ResolvedIdentifier)
   (libfuncs : HashMap Identifier Identifier)
   deriving Inhabited
 
@@ -116,7 +123,7 @@ def analyzeFile (s : String) : MetaM Format := do
       (do
       let (st, cs) ← processState f inputArgs
       processReturn inputArgs st cs) initialState
-    let foo ← inferType es.1
-    ppExpr foo
+    let esType ← inferType es.1
+    return (← ppExpr es.1) ++ "\n Type:" ++ (← ppExpr esType)
     --return toString es.2.refs
   | .error str => throwError "Could not parse input file:\n{str}"

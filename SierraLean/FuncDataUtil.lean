@@ -42,16 +42,49 @@ def enum (fields : List Q(Type)) : Q(Type) :=
 
 mutual
 
+inductive ResolvedParameter where
+| const (n : Int)
+| identifier (i : ResolvedIdentifier)
+deriving Inhabited, Repr
+
+inductive ResolvedIdentifier where
+| name (str : String) (ps : List ResolvedParameter)
+deriving Inhabited, Repr
+
+end
+
+instance : ToString ResolvedParameter where toString x := toString $ repr x
+instance : ToString ResolvedIdentifier where toString x := toString $ repr x
+
+partial def resolveParameter (typeRefs : HashMap Identifier ResolvedIdentifier) :
+    Parameter → ResolvedParameter
+| .identifier i
+| .userfunc i
+| .libfunc i
+| .usertype i => .identifier <| typeRefs.find! i
+| .const n => .const n
+
+def resolveParameters (typeRefs : HashMap Identifier ResolvedIdentifier) :
+    List Parameter → List ResolvedParameter := 
+  List.map (resolveParameter typeRefs)
+
+def toResolvedIdentifiers : List ResolvedParameter → List ResolvedIdentifier :=
+List.filterMap <| fun p => match p with
+  | .identifier i => i
+  | _ => .none
+
+mutual
+
 /-- Compile-time type registry -/ -- TODO decentralize this
-partial def Type_register : Identifier → Q(Type)
+partial def Type_register (typeRefs : HashMap Identifier ResolvedIdentifier) :
+    ResolvedIdentifier → Q(Type)
 | .name "felt252" [] => q(F)
 | .name "u128" []    => q(UInt128)
-| .name "Enum" (_ :: fields) => Enum fields
-| i@_ => panic <| "Type not found in register: " ++ toString i
+| .name "Enum" (_ :: fields) => Enum typeRefs (toResolvedIdentifiers fields)
+| i@_ => panic <| "Type not found in register: " ++ toString (repr i)
 
-partial def Enum (fields : List Parameter) : Q(Type) :=  -- TODO replace by `List Identifier` and to dereferencing before
-  enum <| fields.map fun f => match f with
-    | .identifier ident => Type_register ident
-    | _ => panic "foo"
+partial def Enum (typeRefs : HashMap Identifier ResolvedIdentifier)
+    (fields : List ResolvedIdentifier) : Q(Type) :=
+  enum <| fields.map fun ident => Type_register typeRefs ident
 
 end
