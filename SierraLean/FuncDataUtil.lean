@@ -61,12 +61,14 @@ partial def resolveParameter (typeRefs : HashMap Identifier ResolvedIdentifier) 
 | .identifier i
 | .userfunc i
 | .libfunc i
-| .usertype i => .identifier <| typeRefs.find! i
+| .usertype i =>
+  match typeRefs.find? i with
+  | .some i' => .identifier i'
+  | .none =>
+    match i with
+    | .name str ps => .identifier <| .name str <| resolveParameter typeRefs <$> ps
+    | _ => panic "cannot resolve parameters"
 | .const n => .const n
-
-def resolveParameters (typeRefs : HashMap Identifier ResolvedIdentifier) :
-    List Parameter → List ResolvedParameter := 
-  List.map (resolveParameter typeRefs)
 
 def toResolvedIdentifiers : List ResolvedParameter → List ResolvedIdentifier :=
 List.filterMap <| fun p => match p with

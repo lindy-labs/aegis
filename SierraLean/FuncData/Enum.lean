@@ -16,10 +16,8 @@ def enumLibfuncs (typeRefs : HashMap Identifier ResolvedIdentifier) : Identifier
 | .name "enum_init" [.identifier ident, .const (.ofNat n)] =>
   match typeRefs.find? ident with
   | .some (.name "Enum" (_::fields)) =>
-    dbg_trace "before dereferencing: {fields}"
     let fields := toResolvedIdentifiers fields
     let fields := fields.map (Type_register typeRefs)
-    dbg_trace "after resolving types: {fields}"
     if hn : n < fields.length then enum_init fields ⟨n, hn⟩
     else .none
   | _ => .none

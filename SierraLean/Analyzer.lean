@@ -9,9 +9,10 @@ def getTypeRefs (f : SierraFile) : HashMap Identifier ResolvedIdentifier := Id.r
   let mut ret : HashMap Identifier ResolvedIdentifier := ∅
   for (lhs, rhs) in f.typedefs do
     let rhs' : ResolvedIdentifier := match rhs with
-      | .name n ps => .name n <| resolveParameters ret ps
+      | .name n ps => .name n <| resolveParameter ret <$> ps
       | .ref _ => ret.find! rhs
     ret := ret.insert lhs rhs'
+    dbg_trace ret.toList
   return ret
  
 def getLibfuncRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.libfuncs
@@ -20,7 +21,7 @@ structure State where
   (pc : Nat)
   (refs : RefTable)
   (lctx : LocalContext)
-  (types : HashMap Identifier ResolvedIdentifier)
+  (typeRefs : HashMap Identifier ResolvedIdentifier)
   (libfuncs : HashMap Identifier Identifier)
   deriving Inhabited
 
@@ -76,13 +77,12 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
   match st.libfunc_id with
   | .name "return" [] => return (st, .nil)
   | _ => do
-    let typeRefs := getTypeRefs f
     let libfuncs := getLibfuncRefs f
     let .some st := f.statements.get? (← get).pc
       | throwError "Program counter out of bounds"
     let .some i'@(.name istr _) := libfuncs.find? st.libfunc_id
       | throwError "Could not find named function in declared libfuncs"
-    let .some fd := FuncData.libfuncs typeRefs i'
+    let .some fd := FuncData.libfuncs (← get).typeRefs i'
       | throwError "Could not find libfunc used in code"
     unless fd.branches.length = st.branches.length do
       throwError "Incorrect number of branches to {istr}"
@@ -116,7 +116,7 @@ def analyzeFile (s : String) : MetaM Format := do
     let ⟨_, pc, inputArgs, _⟩ := f.declarations.get! 0  -- TODO Don't we need the output types?
     let initialState : State := { pc := pc,
                                   refs := ∅, 
-                                  types := getTypeRefs f, 
+                                  typeRefs := getTypeRefs f, 
                                   libfuncs := getLibfuncRefs f,
                                   lctx := .empty }
     let es ← StateT.run 
