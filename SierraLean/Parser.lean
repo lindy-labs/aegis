@@ -18,7 +18,7 @@ inductive Parameter where
   | usertype (i : Identifier)
   | userfunc (i : Identifier)
   | libfunc (i : Identifier)
-  deriving Repr, Inhabited
+  deriving Repr, Inhabited, Hashable, BEq
 
 -- TODO differentiate functions and types, or even better, builtin types, user types,
 -- libfuncs, and user functions
