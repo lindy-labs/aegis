@@ -1,38 +1,36 @@
 import SierraLean.FuncDataUtil
 
-open Qq
+open Qq Sierra.SierraType
 
 namespace Sierra
-
-def Addr := Nat
 
 namespace FuncData
 
 def rename : FuncData where
-  inputTypes := [q(Addr)]
-  branches := [{ outputTypes := [q(Addr)],
+  inputTypes := [SierraType.Addr]
+  branches := [{ outputTypes := [SierraType.Addr],
                  refsChange := fun aρ rt => match aρ with
                   | [a, ρ] => (rt.insert ρ (rt.find! a)).erase a
                   | _ => panic! "Wrong number of arguments supplied to rename()" }]
 
 def drop : FuncData where
-  inputTypes := [q(Addr)]
+  inputTypes := [SierraType.Addr]
   branches := [{ outputTypes := [],
                  refsChange := fun a rt => match a with
                   | [a] => rt.erase a
                   | _ => panic! "Wrong number of arguments supplied to drop()" }]
 
 def dup : FuncData where
-  inputTypes := [q(Addr)]
-  branches := [{ outputTypes := [q(Addr), q(Addr)],
+  inputTypes := [SierraType.Addr]
+  branches := [{ outputTypes := [SierraType.Addr, SierraType.Addr],
                  refsChange := fun aρ₁ρ₂ rt => match aρ₁ρ₂ with
                   | [a, ρ₁, ρ₂] => let fv := rt.find! a
                     ((rt.insert ρ₁ fv).insert ρ₂ fv).erase a
                   | _ => panic! "Wrong number of arguments supplied to dup()" }]
 
 def store_temp : FuncData where
-  inputTypes := [q(Addr)]
-  branches := [{ outputTypes := [q(Addr)],
+  inputTypes := [SierraType.Addr]
+  branches := [{ outputTypes := [SierraType.Addr],
                  refsChange := fun aρ rt => match aρ with
                   | [a, ρ] => rt.insert ρ (rt.find! a)
                   | _ => panic! "Wrong number of arguments supplied to store_temp()" }]

@@ -1,33 +1,48 @@
 import SierraLean.FuncDataUtil
 import Mathlib.Data.ZMod.Basic
 
-open Qq
+open Qq Sierra.SierraType
 
 namespace Sierra
 namespace FuncData
 
 def felt252_const (n : Q(Int)) : FuncData where
   inputTypes := []
-  branches := [{ outputTypes := [q(F)], condition := fun a => q($a = ($n : F)) }]
+  branches := [{
+    outputTypes := [Felt252],
+    condition := fun (a : Q(F)) => q($a = ($n : F))
+  }]
 
 def felt252_add : FuncData where
-  inputTypes := [q(F), q(F)]
-  branches := [{ outputTypes := [q(F)], condition := fun a b ρ => q($ρ = $a + $b) }]
+  inputTypes := [Felt252, Felt252]
+  branches := [{
+    outputTypes := [Felt252],
+    condition := fun (a : Q(F)) (b : Q(F)) (ρ : Q(F)) => q($ρ = $a + $b)
+  }]
 
 def felt252_sub : FuncData where
-  inputTypes := [q(F), q(F)]
-  branches := [{ outputTypes := [q(F)], condition := fun a b ρ => q($ρ = $a - $b) }]
+  inputTypes := [Felt252, Felt252]
+  branches := [{
+    outputTypes := [Felt252],
+    condition := fun (a : Q(F)) (b : Q(F)) (ρ : Q(F)) => q($ρ = $a - $b)
+  }]
 
 def felt252_mul : FuncData where
-  inputTypes := [q(F), q(F)]
-  branches := [{ outputTypes := [q(F)], condition := fun a b ρ => q($ρ = $a * $b) }]
+  inputTypes := [Felt252, Felt252]
+  branches := [{
+    outputTypes := [Felt252],
+    condition := fun (a : Q(F)) (b : Q(F)) (ρ : Q(F)) => q($ρ = $a * $b)
+  }]
 
 def felt252_is_zero : FuncData where
-  inputTypes := [q(F)]
-  branches := [{ outputTypes := [],
-                 condition := fun a => q($a = 0) },
-               { outputTypes := [q(F)], -- TODO Actually the condition is baked into the output type here
-                 condition := fun a _ => q($a ≠ 0) }]
+  inputTypes := [Felt252]
+  branches := [
+    { outputTypes := [],
+      condition := fun (a : Q(F)) => q($a = 0)
+    },
+    { outputTypes := [Felt252], -- TODO Actually the condition is baked into the output type here
+      condition := fun (a : Q(F)) (_ : Q(F)) => q($a ≠ 0)
+    }]
 
 def felt252Libfuncs : Identifier → Option FuncData
 | .name "felt252_const" [.const n] => FuncData.felt252_const q($n)

@@ -114,7 +114,7 @@ partial def processState
         throwError "Incorrect number of results to {st.libfunc_id} at branch {branchIdx}"
       let types := fd.inputTypes ++ bd.outputTypes
       let inOutArgs := st.args ++ (st.branches.get! branchIdx).results
-      let fvs := .fvar <$> (← getOrMkNewRefs inOutArgs.reverse types.reverse)
+      let fvs := .fvar <$> (← getOrMkNewRefs inOutArgs.reverse (types.map SierraType.toQuote).reverse)
       let c := bd.condition.apply fvs
       let s ← get
       let pc' := bi.target.getD <| s.pc + 1  -- Fallthrough is the default
