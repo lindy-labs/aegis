@@ -13,7 +13,7 @@ inductive SierraType
 | U128
 | SierraBool
 | Addr
-| Enum (name : Identifier) (l : List SierraType)
+| Enum (l : List SierraType)
 | NonZero (ty : SierraType)
   deriving Inhabited, Repr
 
@@ -31,19 +31,13 @@ def enum (fields : List Q(Type)) : Q(Type) :=
   let f := listToExpr fields
   q(Σ (i : Fin ($f).length), ($f).get i)
 
-mutual
 partial def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
   | .U128 => q(UInt128)
   | .SierraBool => q(Bool)
   | .Addr => q(Sierra.Addr)
-  | .Enum _ fields => enum <| listToQuote fields
+  | .Enum fields => enum <| fields.map toQuote
   | .NonZero t => toQuote t
-
-partial def SierraType.listToQuote : List SierraType → List Q(Type)
-  | [] => []
-  | x :: t => toQuote x :: listToQuote t
-end
 
 /-- A structure contining the branch-specific data for a libfunc -/
 structure BranchData (inputTypes : List SierraType) where

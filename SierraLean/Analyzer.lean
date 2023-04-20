@@ -6,24 +6,25 @@ open Lean Expr Meta Qq
 
 namespace Sierra
 
-def buildTypeDefs (typedefs : List (Identifier × Identifier)) : Except String (HashMap Identifier SierraType) := do
+def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
+    Except String (HashMap Identifier SierraType) := do
   let mut acc := HashMap.empty
   for (name, ty) in typedefs do
     let v : SierraType ← go acc ty
-    acc := HashMap.insert acc name v
+    acc := acc.insert name v
   return acc
 where go (acc : _) (ty : Identifier) : Except String SierraType :=
   match ty with
-  | .name "felt252" [] => pure SierraType.Felt252
-  | .name "u128" [] => pure SierraType.U128
-  | .name "Enum" (Parameter.usertype ut :: l) => do
+  | .name "felt252" [] => pure .Felt252
+  | .name "u128" [] => pure .U128
+  | .name "Enum" (.usertype _ :: l) => do
     let l ← flip mapM l fun x => match x with
       | .identifier ident => pure ident
       | _ => throw "Expected Enum parameter to refer a to a type"
-    pure <| SierraType.Enum ut (l.map acc.find!)
+    pure <| .Enum (l.map acc.find!)
   | .name "NonZero" (Parameter.identifier ident :: []) => do
-    pure <| SierraType.NonZero <| acc.find! ident
-  | .name n l => throw <| "Unhandled " ++ n ++ " " ++ (String.intercalate " " <| l.map toString)
+    pure <| .NonZero <| acc.find! ident
+  | .name n l => throw <| "Unhandled " ++ n ++ " " ++ (" ".intercalate <| l.map toString)
   | .ref _ => throw "Unhandled ref"
 
 def buildFuncSignatures
