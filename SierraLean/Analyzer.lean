@@ -25,15 +25,21 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
     pure <| SierraType.NonZero <| acc.find! ident
   | .name n l => throw <| "Unhandled " ++ n ++ " " ++ (String.intercalate " " <| l.map toString)
   | .ref _ => throw "Unhandled ref"
- 
-def getLibfuncRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.libfuncs
 
+def buildFuncSignatures
+  (typedefs : HashMap Identifier SierraType)
+  (funcdefs : List (Identifier × Identifier)) : Except String (HashMap Identifier FuncData) := do
+  let mut acc := HashMap.empty
+  for (name, sig) in funcdefs do
+    match FuncData.libfuncs typedefs sig with
+    | some sig => acc := HashMap.insert acc name sig
+    | none => throw <| toString name ++ " : no such libfunc"
+  return acc
+ 
 structure State where
   (pc : Nat)
   (refs : RefTable)
   (lctx : LocalContext)
-  (typeDefs : HashMap Identifier SierraType)
-  (libfuncs : HashMap Identifier Identifier)
   deriving Inhabited
 
 abbrev M := StateT State MetaM
@@ -81,30 +87,31 @@ def processReturn (finputs : List (Nat × Identifier)) (st : Statement) (cs : An
     let e ← mkLambdaFVars (ioRefs.map (.fvar ·.2)).toArray e
     return e
 
-partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
-    (gas : ℕ := 25) : M (Statement × AndOrTree) := do
+partial def processState
+  (typeDefs : HashMap Identifier SierraType)
+  (funcSigs : HashMap Identifier FuncData)
+  (f : SierraFile)
+  (finputs : List (Nat × Identifier))
+  (gas : ℕ := 25) : M (Statement × AndOrTree) := do
   let st := f.statements.get! (← get).pc
   if gas = 0 then return (st, .nil)
   match st.libfunc_id with
   | .name "return" [] => return (st, .nil)
   | _ => do
-    let libfuncs := getLibfuncRefs f
     let .some st := f.statements.get? (← get).pc
       | throwError "Program counter out of bounds"
-    let .some i'@(.name istr _) := libfuncs.find? st.libfunc_id
-      | throwError "Could not find named function in declared libfuncs"
-    let .some fd := FuncData.libfuncs (← get).typeDefs i'
+    let .some fd := funcSigs.find? st.libfunc_id
       | throwError "Could not find libfunc used in code"
     unless fd.branches.length = st.branches.length do
-      throwError "Incorrect number of branches to {istr}"
+      throwError "Incorrect number of branches to {st.libfunc_id}"
     unless fd.inputTypes.length = st.args.length do
-      throwError "Incorrect number of arguments to {istr}"
+      throwError "Incorrect number of arguments to {st.libfunc_id}"
     let mut st' := st
     let mut bes : List AndOrTree := []
     for (branchIdx, bi) in st.branches.enum do
       let bd := fd.branches.get! branchIdx
       unless bd.outputTypes.length = (st.branches.get! branchIdx).results.length do
-        throwError "Incorrect number of results to {istr} at branch {branchIdx}"
+        throwError "Incorrect number of results to {st.libfunc_id} at branch {branchIdx}"
       let types := fd.inputTypes ++ bd.outputTypes
       let inOutArgs := st.args ++ (st.branches.get! branchIdx).results
       let fvs := .fvar <$> (← getOrMkNewRefs inOutArgs.reverse types.reverse)
@@ -113,7 +120,7 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
       let pc' := bi.target.getD <| s.pc + 1  -- Fallthrough is the default
       let refs' := bd.refsChange inOutArgs s.refs
       set { s with pc := pc', refs := refs' }
-      let (st'', es) ← processState f finputs (gas - 1)
+      let (st'', es) ← processState typeDefs funcSigs f finputs (gas - 1)
       st' := st''
       bes := bes ++ [.cons c [es]]
     match bes with
@@ -125,17 +132,18 @@ def analyzeFile (s : String) : MetaM Format := do
   match parseGrammar s with
   | .ok f =>
     let ⟨_, pc, inputArgs, _⟩ := f.declarations.get! 0  -- TODO Don't we need the output types?
-    let typedefs ← match buildTypeDefs f.typedefs with
+    let typeDefs ← match buildTypeDefs f.typedefs with
+      | .ok x => pure x
+      | .error err => throwError err
+    let funcSigs ← match buildFuncSignatures typeDefs f.libfuncs with
       | .ok x => pure x
       | .error err => throwError err
     let initialState : State := { pc := pc,
-                                  refs := ∅, 
-                                  typeDefs := typedefs, 
-                                  libfuncs := getLibfuncRefs f,
+                                  refs := ∅,
                                   lctx := .empty }
     let es ← StateT.run 
       (do
-      let (st, cs) ← processState f inputArgs
+      let (st, cs) ← processState typeDefs funcSigs f inputArgs
       processReturn inputArgs st cs) initialState
     let esType ← inferType es.1
     return (← ppExpr es.1) ++ "\n Type:" ++ (← ppExpr esType)
