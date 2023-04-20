@@ -41,7 +41,7 @@ structure SierraFile where
   (libfuncs : List (Identifier × Identifier))
   (statements : List Statement)
   (declarations : List (Identifier × Nat × List (Nat × Identifier) × List Identifier))
-  deriving Repr
+  deriving Repr, Inhabited
 
 -- TODO add a better printer
 instance : ToString Identifier where toString x := toString $ repr x
