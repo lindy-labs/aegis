@@ -6,6 +6,13 @@ open Lean Qq
 
 namespace Sierra
 
+inductive SierraType
+| Felt252
+| U128
+| Enum (name : Identifier) (l : List SierraType)
+| NonZero (ty : SierraType)
+  deriving Inhabited, Repr
+
 abbrev RefTable := HashMap Nat FVarId
 
 instance : ToString RefTable where toString x := toString $ repr x.toList
@@ -41,52 +48,13 @@ def enum (fields : List Q(Type)) : Q(Type) :=
   q(Σ (i : Fin ($f).length), ($f).get i)
 
 mutual
+partial def SierraType.toQuote : SierraType → Q(Type)
+  | .Felt252 => q(F)
+  | .U128 => q(UInt128)
+  | .Enum _ fields => enum <| listToQuote fields
+  | .NonZero t => toQuote t
 
-inductive ResolvedParameter where
-| const (n : Int)
-| identifier (i : ResolvedIdentifier)
-deriving Inhabited, Repr
-
-inductive ResolvedIdentifier where
-| name (str : String) (ps : List ResolvedParameter)
-deriving Inhabited, Repr
-
-end
-
-instance : ToString ResolvedParameter where toString x := toString $ repr x
-instance : ToString ResolvedIdentifier where toString x := toString $ repr x
-
-partial def resolveParameter (typeRefs : HashMap Identifier ResolvedIdentifier) :
-    Parameter → ResolvedParameter
-| .identifier i
-| .userfunc i
-| .libfunc i
-| .usertype i =>
-  match typeRefs.find? i with
-  | .some i' => .identifier i'
-  | .none =>
-    match i with
-    | .name str ps => .identifier <| .name str <| resolveParameter typeRefs <$> ps
-    | _ => panic "cannot resolve parameters"
-| .const n => .const n
-
-def toResolvedIdentifiers : List ResolvedParameter → List ResolvedIdentifier :=
-List.filterMap <| fun p => match p with
-  | .identifier i => i
-  | _ => .none
-
-mutual
-
-/-- Compile-time type registry -/ -- TODO decentralize this
-partial def Type_register (typeRefs : HashMap Identifier ResolvedIdentifier) :
-    ResolvedIdentifier → Q(Type)
-| .name "felt252" [] => q(F)
-| .name "u128" []    => q(UInt128)
-| .name "Enum" (_ :: fields) => Enum typeRefs (toResolvedIdentifiers fields)
-| i@_ => panic <| "Type not found in register: " ++ toString (repr i)
-
-partial def Enum (typeRefs : HashMap Identifier ResolvedIdentifier)
-    (fields : List ResolvedIdentifier) : Q(Type) :=
-  enum <| fields.map fun ident => Type_register typeRefs ident
-
+partial def SierraType.listToQuote : List SierraType → List Q(Type)
+  | [] => []
+  | x :: t => toQuote x :: listToQuote t
 end

@@ -1,19 +1,30 @@
 import SierraLean.Parser
 import SierraLean.FuncData
+import SierraLean.FuncDataUtil
 
 open Lean Expr Meta Qq
 
 namespace Sierra
 
-def getTypeRefs (f : SierraFile) : HashMap Identifier ResolvedIdentifier := Id.run do
-  let mut ret : HashMap Identifier ResolvedIdentifier := ∅
-  for (lhs, rhs) in f.typedefs do
-    let rhs' : ResolvedIdentifier := match rhs with
-      | .name n ps => .name n <| resolveParameter ret <$> ps
-      | .ref _ => ret.find! rhs
-    ret := ret.insert lhs rhs'
-    dbg_trace ret.toList
-  return ret
+def buildTypeDefs (typedefs : List (Identifier × Identifier)) : Except String (HashMap Identifier SierraType) := do
+  let mut acc := HashMap.empty
+  for (name, ty) in typedefs do
+    let v : SierraType ← go acc ty
+    acc := HashMap.insert acc name v
+  return acc
+where go (acc : _) (ty : Identifier) : Except String SierraType :=
+  match ty with
+  | .name "felt252" [] => pure SierraType.Felt252
+  | .name "u128" [] => pure SierraType.U128
+  | .name "Enum" (Parameter.usertype ut :: l) => do
+    let l ← flip mapM l fun x => match x with
+      | .identifier ident => pure ident
+      | _ => throw "Expected Enum parameter to refer a to a type"
+    pure <| SierraType.Enum ut (l.map acc.find!)
+  | .name "NonZero" (Parameter.identifier ident :: []) => do
+    pure <| SierraType.NonZero <| acc.find! ident
+  | .name n l => throw <| "Unhandled " ++ n ++ " " ++ (String.intercalate " " <| l.map toString)
+  | .ref _ => throw "Unhandled ref"
  
 def getLibfuncRefs (f : SierraFile) : HashMap Identifier Identifier := HashMap.ofList f.libfuncs
 
@@ -21,7 +32,7 @@ structure State where
   (pc : Nat)
   (refs : RefTable)
   (lctx : LocalContext)
-  (typeRefs : HashMap Identifier ResolvedIdentifier)
+  (typeDefs : HashMap Identifier SierraType)
   (libfuncs : HashMap Identifier Identifier)
   deriving Inhabited
 
@@ -82,7 +93,7 @@ partial def processState (f : SierraFile) (finputs : List (Nat × Identifier))
       | throwError "Program counter out of bounds"
     let .some i'@(.name istr _) := libfuncs.find? st.libfunc_id
       | throwError "Could not find named function in declared libfuncs"
-    let .some fd := FuncData.libfuncs (← get).typeRefs i'
+    let .some fd := FuncData.libfuncs (← get).typeDefs i'
       | throwError "Could not find libfunc used in code"
     unless fd.branches.length = st.branches.length do
       throwError "Incorrect number of branches to {istr}"
@@ -114,9 +125,12 @@ def analyzeFile (s : String) : MetaM Format := do
   match parseGrammar s with
   | .ok f =>
     let ⟨_, pc, inputArgs, _⟩ := f.declarations.get! 0  -- TODO Don't we need the output types?
+    let typedefs ← match buildTypeDefs f.typedefs with
+      | .ok x => pure x
+      | .error err => throwError err
     let initialState : State := { pc := pc,
                                   refs := ∅, 
-                                  typeRefs := getTypeRefs f, 
+                                  typeDefs := typedefs, 
                                   libfuncs := getLibfuncRefs f,
                                   lctx := .empty }
     let es ← StateT.run 

@@ -9,7 +9,7 @@ open Lean Qq
 namespace Sierra.FuncData
 
 /-- Compile-time function data registry -/
-def libfuncs (typeRefs : HashMap Identifier ResolvedIdentifier) (i : Identifier) :
+def libfuncs (typeRefs : HashMap Identifier SierraType) (i : Identifier) :
     Option FuncData :=
   controlFlowLibfuncs i
   <|> felt252Libfuncs i
