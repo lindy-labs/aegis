@@ -4,21 +4,18 @@ open Lean Meta Elab Command
 
 namespace Sierra
 
-/- Extend the syntax by sierra commands -/
-
-syntax "sierra_load_string " str : command
-
-syntax "sierra_load_file " str : command
-
-syntax "sierra_spec " ident declVal : command
-
-syntax "sierra_sound " ident : command
-
 /- Initialize environment extensions holding a sierra file and specs -/
 
 initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun _ sf => sf
+    addImportedFn := fun _ => default  -- TODO ?
+  }
+
+initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name)
+    (HashMap Identifier Name) ←
+  registerSimplePersistentEnvExtension {
+    addEntryFn := fun specs (i, n) => specs.insert i n
     addImportedFn := fun _ => default  -- TODO ?
   }
 
@@ -38,9 +35,17 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
   let env ← getEnv
   let sf := loadedSierraFile.getState env
   match Megaparsec.Parsec.parse identifierP name.getString with
-  | .ok i =>  let type ← liftTermElabM <| getSpecTypeOfName sf i
-              let val' ← liftTermElabM <| Term.elabTermEnsuringType (Syntax.getArgs val)[1]! type
-              return ()
+  | .ok i =>  liftTermElabM do 
+                let type ← getSpecTypeOfName sf i
+                let val ← Term.elabTermEnsuringType (Syntax.getArgs val)[1]! type
+                let name : String := "spec_" ++ name.getString
+                addAndCompile <| .defnDecl {  name := name,
+                                              type := type,
+                                              levelParams := [],
+                                              value := val,
+                                              hints := default,
+                                              safety := default }
+                modifyEnv fun env => sierraSpecs.addEntry env (i, name)
   | .error str => throwError toString str
 
-#check Syntax
+elab "sierra_sound" name:str val:declVal : command => pure ()
