@@ -89,7 +89,6 @@ def processReturn (finputs : List (Nat × Identifier)) (st : Statement) (cs : An
     return e
 
 partial def processState
-  (typeDefs : HashMap Identifier SierraType)
   (funcSigs : HashMap Identifier FuncData)
   (f : SierraFile)
   (finputs : List (Nat × Identifier))
@@ -121,13 +120,30 @@ partial def processState
       let pc' := bi.target.getD <| s.pc + 1  -- Fallthrough is the default
       let refs' := bd.refsChange inOutArgs s.refs
       set { s with pc := pc', refs := refs' }
-      let (st'', es) ← processState typeDefs funcSigs f finputs (gas - 1)
+      let (st'', es) ← processState funcSigs f finputs (gas - 1)
       st' := st''
       bes := bes ++ [.cons c [es]]
     match bes with
     | []   => return (st', .nil)
     | [es] => return (st', es)
     | _    => return (st', .cons (mkConst ``True) bes)
+
+/-- Derive specification type independently of the acutal spec, in order to be able to 
+type check the spec. -/
+def getSpecsType (sf : SierraFile) (inputArgs : List (ℕ × Identifier))
+    (outputTypes : List Identifier) : MetaM Q(Type) := do
+  let typeDefs ← match buildTypeDefs sf.typedefs with
+    | .ok x => pure x
+    | .error err => throwError err
+  let inputs := inputArgs.map (SierraType.toQuote ∘ (typeDefs.find! ·.2))
+  let outputs := outputTypes.map (SierraType.toQuote ∘ typeDefs.find!)
+  return OfInputsQ q(Prop) (inputs ++ outputs)
+
+def getSpecTypeOfName (sf : SierraFile) (ident : Identifier) : MetaM Q(Type) := do
+  match sf.declarations.filter (·.1 == ident) with
+  | [] => throwError "No function with matching identifier found in Sierra file"
+  | [⟨_, _, inputArgs, outputTypes⟩] => getSpecsType sf inputArgs outputTypes
+  | _ => throwError "Ambiguous identifier, please edit Sierra file to make them unique"
 
 def analyzeFile (s : String) : MetaM Format := do
   match parseGrammar s with
@@ -144,7 +160,7 @@ def analyzeFile (s : String) : MetaM Format := do
                                   lctx := .empty }
     let es ← StateT.run 
       (do
-      let (st, cs) ← processState typeDefs funcSigs f inputArgs
+      let (st, cs) ← processState funcSigs f inputArgs
       processReturn inputArgs st cs) initialState
     let esType ← inferType es.1
     return (← ppExpr es.1) ++ "\n Type:" ++ (← ppExpr esType)

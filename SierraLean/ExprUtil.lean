@@ -87,3 +87,7 @@ def OfInputs.apply {R : Type} [Inhabited R] {Ts : List Q(Type)} (f : OfInputs R 
 def listToExpr : List Q(Type) → Q(List Type)
   | [] => q([])
   | a :: as => q($a :: $(listToExpr as))
+
+def OfInputsQ (r : Q(Type)) : List Q(Type) → Q(Type)
+| []        => r
+| (t :: ts) => q($t → $(OfInputsQ r ts))
