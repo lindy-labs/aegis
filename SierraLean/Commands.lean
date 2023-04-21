@@ -38,6 +38,7 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
   | .ok i =>  liftTermElabM do 
                 let type ← getSpecTypeOfName sf i
                 let val ← Term.elabTermEnsuringType (Syntax.getArgs val)[1]! type
+                let val ← instantiateMVars val
                 let name : String := "spec_" ++ name.getString
                 addAndCompile <| .defnDecl {  name := name,
                                               type := type,
@@ -45,6 +46,7 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
                                               value := val,
                                               hints := default,
                                               safety := default }
+                -- Add 
                 modifyEnv fun env => sierraSpecs.addEntry env (i, name)
   | .error str => throwError toString str
 
