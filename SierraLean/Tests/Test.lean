@@ -113,3 +113,16 @@ def test_enum_init :=
  foo@0([0]: [0]) -> ([2]);"
 #eval parseGrammar test_enum_init
 #eval analyzeFile test_enum_init
+
+def test_enum_match :=
+"type F = felt252;
+ type E = Enum<ut@foo, F, F>;
+ libfunc init = enum_init<E, 1>;
+ libfunc match = enum_match<E>;
+ init([0]) -> ([1]);
+ match([1]) { fallthrough([2]) 3([3]) };
+ return([2]);
+ return([3]);
+ foo@0([0]: F) -> (F);"
+#eval parseGrammar test_enum_match
+#eval analyzeFile test_enum_match
