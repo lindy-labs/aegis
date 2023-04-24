@@ -17,4 +17,4 @@ def libfuncs (typeRefs : HashMap Identifier SierraType) (i : Identifier) :
   <|> uint128Libfuncs i
   <|> boolLibfuncs i
   <|> enumLibfuncs typeRefs i
-  <|> structLibFuncs typeRefs i
+  <|> structLibfuncs typeRefs i

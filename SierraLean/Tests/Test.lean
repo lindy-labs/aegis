@@ -136,3 +136,15 @@ def test_struct_construct :=
  foo@0([0]: F, [1]: F) -> (F);"
 #eval parseGrammar test_struct_construct
 #eval analyzeFile test_struct_construct
+
+def test_struct_deconstruct :=
+"type F = felt252;
+ type S = Struct<ut@foo, F, F>;
+ libfunc construct = struct_construct<S>;
+ libfunc deconstruct = struct_deconstruct<S>;
+ construct([0], [1]) -> ([2]);
+ deconstruct([2]) -> ([3], [4]);
+ return([3]);
+ foo@0([0]: F, [1]: F) -> (F);"
+#eval parseGrammar test_struct_deconstruct
+#eval analyzeFile test_struct_deconstruct
