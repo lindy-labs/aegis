@@ -38,16 +38,38 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
   | .ok i =>  liftTermElabM do 
                 let type ← getSpecTypeOfName sf i
                 let val ← Term.elabTermEnsuringType (Syntax.getArgs val)[1]! type
+                Term.synthesizeSyntheticMVarsNoPostponing
                 let val ← instantiateMVars val
-                let name : String := "spec_" ++ name.getString
-                addAndCompile <| .defnDecl {  name := name,
-                                              type := type,
-                                              levelParams := [],
-                                              value := val,
-                                              hints := default,
+                let name : String := "spec_" ++ name.getString  -- TODO handle name clashes
+                addAndCompile <| .defnDecl {  name := name
+                                              type := type
+                                              levelParams := []
+                                              value := val
+                                              hints := default
                                               safety := default }
-                -- Add 
+                -- Add the spec to the cache
                 modifyEnv fun env => sierraSpecs.addEntry env (i, name)
   | .error str => throwError toString str
 
-elab "sierra_sound" name:str val:declVal : command => pure ()
+elab "sierra_sound" name:str val:declVal : command => do
+  let env ← getEnv
+  let sf := loadedSierraFile.getState env
+  match Megaparsec.Parsec.parse identifierP name.getString with
+  | .ok i =>  
+    liftTermElabM do
+      let type ← withLocalDeclsD (← getLocalDeclInfosOfName sf i) fun fvs => do
+        let ioArgs := fvs[:fvs.size - 1]
+        let .some specName := (sierraSpecs.getState env).find? i
+          | throwError "Could not find manual specification for {i}"
+        mkForallFVars fvs <| ← mkAppM specName ioArgs
+      let val ← Term.elabTermEnsuringType (Syntax.getArgs val)[1]! type
+      Term.synthesizeSyntheticMVarsNoPostponing
+      let val ← instantiateMVars val
+      let name : String := "sound_" ++ name.getString
+      addDecl <| .defnDecl {  name := name
+                              type := type
+                              levelParams := []
+                              value := val
+                              hints := default
+                              safety := default }
+  | .error str => throwError toString str

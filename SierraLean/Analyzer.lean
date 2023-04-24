@@ -128,10 +128,35 @@ partial def processState
     | [es] => return (st', es)
     | _    => return (st', .cons (mkConst ``True) bes)
 
+variable (sf : SierraFile) {n: Type → Type _} [MonadControlT MetaM n] [Monad n] [MonadError n]
+
+def withFindByIdentifier (ident : Identifier)
+  (k : ℕ → List (ℕ × Identifier) → List Identifier → n α) : n α := do
+  match sf.declarations.filter (·.1 == ident) with
+  | [] => throwError "No function with matching identifier found in Sierra file"
+  | [⟨_, pc, inputArgs, outputTypes⟩] => k pc inputArgs outputTypes
+  | _ => throwError "Ambiguous identifier, please edit Sierra file to make them unique"
+
+def getFuncCondition (pc : ℕ) (inputArgs : List (ℕ × Identifier)) : MetaM Expr := do
+  let typeDefs ← match buildTypeDefs sf.typedefs with
+    | .ok x => pure x
+    | .error err => throwError err
+  let funcSigs ← match buildFuncSignatures typeDefs sf.libfuncs with
+    | .ok x => pure x
+    | .error err => throwError err
+  let initialState : State := { pc := pc,
+                                refs := ∅,
+                                lctx := .empty }
+  let es ← StateT.run 
+    (do
+    let (st, cs) ← processState funcSigs sf inputArgs
+    processReturn inputArgs st cs) initialState
+  return es.1
+
 /-- Derive specification type independently of the acutal spec, in order to be able to 
 type check the spec. -/
-def getSpecsType (sf : SierraFile) (inputArgs : List (ℕ × Identifier))
-    (outputTypes : List Identifier) : MetaM Q(Type) := do
+def getSpecsType (inputArgs : List (ℕ × Identifier))
+   (outputTypes : List Identifier) : MetaM Q(Type) := do
   let typeDefs ← match buildTypeDefs sf.typedefs with
     | .ok x => pure x
     | .error err => throwError err
@@ -139,12 +164,31 @@ def getSpecsType (sf : SierraFile) (inputArgs : List (ℕ × Identifier))
   let outputs := outputTypes.map (SierraType.toQuote ∘ typeDefs.find!)
   return OfInputsQ q(Prop) (inputs ++ outputs)
 
-def getSpecTypeOfName (sf : SierraFile) (ident : Identifier) : MetaM Q(Type) := do
-  match sf.declarations.filter (·.1 == ident) with
-  | [] => throwError "No function with matching identifier found in Sierra file"
-  | [⟨_, _, inputArgs, outputTypes⟩] => getSpecsType sf inputArgs outputTypes
-  | _ => throwError "Ambiguous identifier, please edit Sierra file to make them unique"
+def getSpecTypeOfName (ident : Identifier) : MetaM Q(Type) :=
+  withFindByIdentifier sf ident fun _ => getSpecsType sf
 
+def getLocalDeclInfos (pc : ℕ) (inputArgs : List (ℕ × Identifier))
+    (outputTypes : List Identifier) : MetaM (Array (Name × (Array Expr → n Expr))) := do
+  let typeDefs ← match buildTypeDefs sf.typedefs with
+    | .ok x => pure x
+    | .error err => throwError err
+  let mut ret : Array (Name × (Array Expr → n Expr)) := #[]
+  for (_, t) in inputArgs do
+    let n ← mkFreshUserName `a  -- TODO make anonymous?
+    ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote <| typeDefs.find! t
+  for t in outputTypes do
+    let n ← mkFreshUserName `ρ  -- TODO make anonymous?
+    ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote <| typeDefs.find! t
+  let n ← mkFreshUserName `h_auto
+  let e ← getFuncCondition sf pc inputArgs
+  ret := ret.push <| .mk n fun h_args => pure <| mkAppN e h_args
+  return ret
+
+def getLocalDeclInfosOfName (sf : SierraFile) (ident : Identifier) :
+    MetaM (Array (Name × (Array Expr → n Expr))) :=
+  withFindByIdentifier sf ident <| getLocalDeclInfos sf
+
+-- TODO delete
 def analyzeFile (s : String) : MetaM Format := do
   match parseGrammar s with
   | .ok f =>
