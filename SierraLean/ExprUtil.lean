@@ -100,3 +100,9 @@ def listToExpr : List Q(Type) → Q(List Type)
 def OfInputsQ (r : Q(Type)) : List Q(Type) → Q(Type)
 | []        => r
 | (t :: ts) => q($t → $(OfInputsQ r ts))
+
+def quoteFin {n : Nat} (x : Fin n) : Q(Fin $n) :=
+match n, x with
+| .succ _, ⟨m, _⟩ => q(Fin.ofNat $m)
+
+instance {n : Nat} : ToExpr (Fin n) := { toExpr := quoteFin, toTypeExpr := q(Type) }

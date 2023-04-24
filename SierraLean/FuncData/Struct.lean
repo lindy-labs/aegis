@@ -11,7 +11,7 @@ match fields with
 | [] => fun (ρ : Expr) => acc ρ
 | ((idx, field) :: fields) => fun a =>
   let acc' : Expr → Expr := fun ρ =>
-    Expr.mkAnds [acc ρ, Expr.mkEq (SierraType.toQuote field) (mkApp ρ q(0)) a]
+    Expr.mkAnds [acc ρ, Expr.mkEq (SierraType.toQuote field) (mkApp ρ q($idx)) a]
   struct_construct_condition fields fields' acc'
 
 def struct_construct (fields : List SierraType) : FuncData where
