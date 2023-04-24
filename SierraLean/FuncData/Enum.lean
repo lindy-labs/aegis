@@ -1,7 +1,6 @@
 import SierraLean.FuncDataUtil
-import SierraLean.FuncData.Felt252
 
-open Qq Lean Meta Sierra
+open Qq Lean Sierra
 
 namespace Sierra.FuncData
 

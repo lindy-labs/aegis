@@ -3,6 +3,7 @@ import SierraLean.FuncData.Felt252
 import SierraLean.FuncData.UInt128
 import SierraLean.FuncData.Bool
 import SierraLean.FuncData.Enum
+import SierraLean.FuncData.Struct
 
 open Lean Qq
 
@@ -16,3 +17,4 @@ def libfuncs (typeRefs : HashMap Identifier SierraType) (i : Identifier) :
   <|> uint128Libfuncs i
   <|> boolLibfuncs i
   <|> enumLibfuncs typeRefs i
+  <|> structLibFuncs typeRefs i

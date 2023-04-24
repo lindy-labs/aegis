@@ -126,3 +126,13 @@ def test_enum_match :=
  foo@0([0]: F) -> (F);"
 #eval parseGrammar test_enum_match
 #eval analyzeFile test_enum_match
+
+def test_struct_construct :=
+"type F = felt252;
+ type S = Struct<ut@foo, F, F>;
+ libfunc construct = struct_construct<S>;
+ construct([0], [1]) -> ([2]);
+ return([2]);
+ foo@0([0]: F, [1]: F) -> (F);"
+#eval parseGrammar test_struct_construct
+#eval analyzeFile test_struct_construct

@@ -22,6 +22,11 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
       | .identifier ident => pure ident
       | _ => throw "Expected Enum parameter to refer a to a type"
     pure <| .Enum (l.map acc.find!)
+  | .name "Struct" (.usertype _ :: l) => do
+    let l ← flip mapM l fun x => match x with
+      | .identifier ident => pure ident
+      | _ => throw "Expected Enum parameter to refer a to a type"
+    pure <| .Struct (l.map acc.find!)
   | .name "NonZero" (Parameter.identifier ident :: []) => do
     pure <| .NonZero <| acc.find! ident
   | .name n l => throw <| "Unhandled " ++ n ++ " " ++ (" ".intercalate <| l.map toString)

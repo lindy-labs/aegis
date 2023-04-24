@@ -3,6 +3,13 @@ import Qq
 
 open Lean Qq
 
+def List.enumFin (xs : List α) : List (Fin xs.length × α) :=
+match xs with
+| []      => []
+| x :: xs => ((0 : Fin (length xs + 1)), x) :: xs.enumFin.map fun x => (Fin.succ x.1, x.2)
+
+theorem List.map_of_enumFin (xs : List α) : List.map (·.2) xs.enumFin = xs := sorry
+
 namespace Sierra
 
 def Expr.mkAnds : List Expr → Expr
@@ -76,6 +83,8 @@ def OfInputs (R : Type) : List Q(Type) → Type
 def OfInputs.const {R : Type} (r : R) : {Ts : List Q(Type)} → OfInputs R Ts
 | []       => r
 | (_ :: _) => fun _ => OfInputs.const r
+
+instance [Inhabited R] : Inhabited (OfInputs R Ts) := ⟨OfInputs.const default⟩
 
 def OfInputs.apply {R : Type} [Inhabited R] {Ts : List Q(Type)} (f : OfInputs R Ts) 
     (ts : List Expr) : R :=
