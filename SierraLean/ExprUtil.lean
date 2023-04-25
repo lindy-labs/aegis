@@ -1,7 +1,7 @@
 import Lean.Meta.AppBuilder
 import Qq
 
-open Lean Qq
+open Lean Qq Meta
 
 def List.enumFin (xs : List α) : List (Fin xs.length × α) :=
 match xs with
@@ -26,6 +26,8 @@ def Expr.mkOrs : List Expr → Expr
 def Expr.mkEq (type : Expr) (lhs rhs : Expr) : Expr :=
 mkAppN (mkConst `Eq [levelOne]) #[type, lhs, rhs]
 
+def mkEqM (lhs rhs : Expr) : MetaM Expr := mkAppM ``Eq #[lhs, rhs]
+
 /-- A tree to contain expressions to be composed with `And` and `Or`.
 If we want to avoid trees, this has to be replaced by some graph structure in the future. -/
 inductive AndOrTree 
@@ -34,6 +36,15 @@ inductive AndOrTree
 deriving Inhabited, Repr
 
 instance : ToString AndOrTree where toString x := toString $ repr x
+
+partial def AndOrTree.format (es : AndOrTree) : MetaM Format :=
+match es with
+| .nil => pure "[]"
+| .cons e es => do
+  let e ← ppExpr e
+  let es : List Format ← es.mapM fun e => e.format
+  let es := es.format
+  return e ++ " ∧ " ++ es
 
 def AndOrTree.isNil : AndOrTree → Bool
 | nil      => true
