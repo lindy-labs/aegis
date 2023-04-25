@@ -148,3 +148,14 @@ def test_struct_deconstruct :=
  foo@0([0]: F, [1]: F) -> (F);"
 #eval parseGrammar test_struct_deconstruct
 #eval analyzeFile test_struct_deconstruct
+
+def test_parse_tuples :=
+"type felt252 = felt252;
+type RangeCheck = RangeCheck;
+type u128 = u128;
+type Unit = Struct<ut@Tuple>;
+type core::option::Option::<core::integer::u128> = Enum<ut@core::option::Option::<core::integer::u128>, u128, Unit>;
+type Tuple<u128> = Struct<ut@Tuple, u128>;
+type Array<felt252> = Array<felt252>;
+type core::PanicResult::<(core::integer::u128,)> = Enum<ut@core::PanicResult::<(core::integer::u128,)>, Tuple<u128>, Array<felt252>>;"
+#eval parseGrammar test_parse_tuples

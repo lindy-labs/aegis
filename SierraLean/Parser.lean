@@ -18,6 +18,7 @@ inductive Parameter where
   | usertype (i : Identifier)
   | userfunc (i : Identifier)
   | libfunc (i : Identifier)
+  | tuple (ps : List Parameter)
   deriving Repr, Inhabited, Hashable, BEq
 
 -- TODO differentiate functions and types, or even better, builtin types, user types,
@@ -102,6 +103,9 @@ partial def parameterP : P Parameter :=
   <|> attempt (do discard <| string "ut@"; return .usertype (← identifierP))
   <|> attempt (do discard <| string "user@"; return .userfunc (← identifierP))
   <|> attempt (do discard <| string "lib@"; return .libfunc (← identifierP))
+  <|> attempt (do
+    let foo ← between '(' ')' <| sepEndBy' parameterP commaP
+    return .tuple foo )
   <|> (.identifier <$> identifierP)
 
 end
