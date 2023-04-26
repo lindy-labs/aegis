@@ -10,9 +10,13 @@ def Addr := Nat
 
 inductive SierraType
 | Felt252
+| U32
+| U64
 | U128
+| U256
 | SierraBool
 | Addr
+| RangeCheck
 | Enum (fields : List SierraType)
 | Struct (fields : List SierraType)
 | NonZero (ty : SierraType)
@@ -29,7 +33,10 @@ def PRIME := 3618502788666131213697322783095070105623107215331596699973092056135
 
 abbrev F := ZMod PRIME
 
+abbrev UInt32 := ZMod <| 2^32
+abbrev UInt64 := ZMod <| 2^64
 abbrev UInt128 := ZMod <| 2^128
+abbrev UInt256 := ZMod <| 2^256
 
 def enum (fields : List Q(Type)) : Q(Type) :=
   let f := listToExpr fields
@@ -41,9 +48,13 @@ def struct (fields : List Q(Type)) : Q(Type) :=
 
 partial def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
+  | .U32 => q(UInt32)
+  | .U64 => q(UInt64)
   | .U128 => q(UInt128)
+  | .U256 => q(UInt256)
   | .SierraBool => q(Bool)
   | .Addr => q(Sierra.Addr)
+  | .RangeCheck => q(Nat)  -- TODO
   | .Enum fields => enum <| fields.map toQuote
   | .Struct fields => struct <| fields.map toQuote
   | .NonZero t => toQuote t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
