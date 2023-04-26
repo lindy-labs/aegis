@@ -15,7 +15,7 @@ namespace Sierra.FuncData
 /-- Compile-time function data registry -/
 def libfuncs (typeRefs : HashMap Identifier SierraType) (i : Identifier) :
     Option FuncData :=
-  controlFlowLibfuncs i
+  controlFlowLibfuncs typeRefs i
   <|> felt252Libfuncs i
   <|> uint128Libfuncs i
   <|> boolLibfuncs i
