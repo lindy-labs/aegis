@@ -16,6 +16,9 @@ inductive SierraType
 | Enum (fields : List SierraType)
 | Struct (fields : List SierraType)
 | NonZero (ty : SierraType)
+| Box (ty : SierraType)
+| Snapshot (ty : SierraType)
+| Array (ty : SierraType)
   deriving Inhabited, Repr
 
 abbrev RefTable := HashMap Nat FVarId
@@ -43,7 +46,10 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .Addr => q(Sierra.Addr)
   | .Enum fields => enum <| fields.map toQuote
   | .Struct fields => struct <| fields.map toQuote
-  | .NonZero t => toQuote t
+  | .NonZero t => toQuote t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
+  | .Box t => toQuote t
+  | .Snapshot t => toQuote t
+  | .Array t => q(List $(toQuote t))
 
 /-- A structure contining the branch-specific data for a libfunc -/
 structure BranchData (inputTypes : List SierraType) where
