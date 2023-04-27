@@ -38,15 +38,7 @@ abbrev UInt64 := ZMod <| 2^64
 abbrev UInt128 := ZMod <| 2^128
 abbrev UInt256 := ZMod <| 2^256
 
-def enum (fields : List Q(Type)) : Q(Type) :=
-  let f := listToExpr fields
-  q(Σ (i : Fin ($f).length), ($f).get i)
-
-def struct (fields : List Q(Type)) : Q(Type) :=
-  let f := listToExpr fields
-  q(∀ (i : Fin ($f).length), ($f).get i)
-
-partial def SierraType.toQuote : SierraType → Q(Type)
+def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
   | .U32 => q(UInt32)
   | .U64 => q(UInt64)
@@ -55,12 +47,18 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .SierraBool => q(Bool)
   | .Addr => q(Sierra.Addr)
   | .RangeCheck => q(Nat)  -- TODO
-  | .Enum fields => enum <| fields.map toQuote
-  | .Struct fields => struct <| fields.map toQuote
+  | .Enum []      => q(Unit)
+  | .Enum [t]     => q($(t.toQuote))
+  | .Enum (t::ts) => q($(t.toQuote) ⊕ $(toQuote (.Enum ts)))
+  | .Struct []      => q(Unit)
+  | .Struct [t]     => q($(t.toQuote))
+  | .Struct (t::ts) => q($(t.toQuote) × $(toQuote (.Enum ts)))
   | .NonZero t => toQuote t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
   | .Box t => toQuote t
   | .Snapshot t => toQuote t
   | .Array t => q(List $(toQuote t))
+
+notation "⟦" t "⟧" => SierraType.toQuote t
 
 /-- A structure contining the branch-specific data for a libfunc -/
 structure BranchData (inputTypes : List SierraType) where

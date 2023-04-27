@@ -104,6 +104,17 @@ def OfInputs.apply {R : Type} [Inhabited R] {Ts : List Q(Type)} (f : OfInputs R 
   | (_ :: _), (t :: ts) => OfInputs.apply (f t) ts
   | _,        _         => panic "Wrong number of arguments supplied to OfInputs"
 
+def OfInputs.abstract {R : Type} {Ts : List Q(Type)} (k : List Expr → R) (acc : List Expr := []) :
+    OfInputs R Ts :=
+  match Ts with
+  | [] => k acc
+  | _::_ => fun x => OfInputs.abstract k (acc.append [x])
+
+def OfInputs.map {R R' : Type} {Ts : List Q(Type)} (f : R → R') : OfInputs R Ts → OfInputs R' Ts :=
+match Ts with
+| [] => f
+| _::_ => fun r t => OfInputs.map f (r t)
+
 def listToExpr : List Q(Type) → Q(List Type)
   | [] => q([])
   | a :: as => q($a :: $(listToExpr as))

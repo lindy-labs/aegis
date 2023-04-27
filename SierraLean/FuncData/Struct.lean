@@ -4,35 +4,35 @@ open Qq Lean Sierra
 
 namespace Sierra.FuncData
 
-private def struct_construct_condition (fields : List (Fin l × SierraType))
-  (fields' : List SierraType) (acc : Expr → Expr := fun _ => q(True)) :
-    OfInputs Q(Prop) (SierraType.toQuote <$> (fields.map (·.2) ++ [.Struct fields'])) :=
+private def struct_construct_condition (fields fields' : List SierraType) :
+  OfInputs (Expr × Expr) (SierraType.toQuote <$> (fields ++ [.Struct fields'])) :=
 match fields with
-| [] => fun (ρ : Expr) => acc ρ
-| ((idx, field) :: fields) => fun a =>
-  struct_construct_condition fields fields' fun ρ =>
-    Expr.mkAnds [acc ρ, Expr.mkEq field.toQuote (mkApp ρ q($idx)) a]
+| [] => fun (ρ : Expr) => (ρ, q(()))
+| [_] => fun (a ρ : Expr) => (ρ, a)
+| t::ts => fun (a : Expr) => OfInputs.abstract fun as =>
+  let tl := OfInputs.apply (struct_construct_condition ts fields') as
+  (tl.1, mkAppN q(@Prod.mk.{0, 0}) #[q($(⟦t⟧)), q($(⟦.Struct ts⟧)), a, tl.2])
 
 def struct_construct (fields : List SierraType) : FuncData where
   inputTypes := fields
   branches := [{ outputTypes := [.Struct fields]
-                 condition := List.map_of_enumFin fields ▸
-                  struct_construct_condition fields.enumFin (Prod.snd <$> fields.enumFin) }]
+                 condition := OfInputs.map (fun (ρ, a) => Expr.mkEq q($(⟦.Struct fields⟧)) ρ a)
+                   (struct_construct_condition fields fields) }]
 
-private def struct_deconstruct_condition (fields : List (Fin l × SierraType))
-  (fields' : List SierraType) (a : Expr) (acc : Expr := q(True)):
-    OfInputs Q(Prop) (SierraType.toQuote <$> (fields.map (·.2))) :=
+private def struct_deconstruct_condition (fields : List SierraType) :
+  OfInputs Expr (SierraType.toQuote <$> fields) :=
 match fields with
-| [] => acc
-| ((idx, field) :: fields) => fun ρ =>
-    let acc' := Expr.mkAnds [acc, Expr.mkEq field.toQuote ρ (mkApp a q($idx))]
-    struct_deconstruct_condition fields fields' ρ acc'
+| [] => q(())
+| [_] => fun (a : Expr) => a
+| t::ts => fun (a : Expr) => OfInputs.abstract fun as =>
+  let tl := OfInputs.apply (struct_deconstruct_condition ts) as
+  mkAppN q(@Prod.mk.{0, 0}) #[q($(⟦t⟧)), q($(⟦.Struct ts⟧)), a, tl]
 
 def struct_deconstruct (fields : List SierraType) : FuncData where
   inputTypes := [.Struct fields]
   branches := [{ outputTypes := fields
-                 condition := List.map_of_enumFin fields ▸
-                  struct_deconstruct_condition fields.enumFin (Prod.snd <$> fields.enumFin) }]
+                 condition := fun a => OfInputs.map (fun ρ => Expr.mkEq q($(⟦.Struct fields⟧)) ρ a)
+                   (struct_deconstruct_condition fields) }]
 
 def structLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "struct_construct" [.identifier ident] =>

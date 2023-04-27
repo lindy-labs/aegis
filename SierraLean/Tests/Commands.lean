@@ -23,9 +23,6 @@ sierra_spec "foo" := fun a ρ => ρ = a
 
 sierra_sound "foo" := fun a ρ => by
   unfold spec_foo
-  rintro ⟨⟨i, d₁⟩, d₂, d₃, ⟨h₁, rfl⟩, (⟨⟨h₂, rfl⟩, rfl⟩ | ⟨⟨h₂, rfl⟩, rfl⟩)⟩
-  · rfl
-  · rfl
-
-example (i : Fin 2) : (fun i => List.get [Sierra.F, Sierra.F] i) (1 : Fin 2) = Sierra.F := by
-  simp
+  rintro ⟨_, _, _, rfl, (⟨h, rfl⟩ | ⟨h, rfl⟩)⟩
+  · injection h
+  · injection h
