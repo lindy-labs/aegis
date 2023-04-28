@@ -206,9 +206,10 @@ partial def getFuncCondition (idx pc : ℕ) (inputArgs : List (ℕ × Identifier
                      outputTypes := outputTypes }
   let es ← StateT.run (do
     let mut refs : RefTable := ∅
+    -- Add input arguments to initial local context and refs table
     for (i, t) in inputArgs do
       refs := refs.insert i <| ← getOrMkNewRef i <| SierraType.toQuote <| typeDefs.find! t
-    set { s with refs := refs }
+    set { (← get) with refs := refs }
     let (_, cs) ← processState typeDefs funcSigs sf inputArgs
     processAndOrTree inputArgs cs) s
   return es.1
