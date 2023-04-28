@@ -7,13 +7,15 @@ import SierraLean.FuncData.Struct
 import SierraLean.FuncData.Box
 import SierraLean.FuncData.Snapshot
 import SierraLean.FuncData.Array
+import SierraLean.FuncData.FunctionCall
 
 open Lean Qq
 
 namespace Sierra.FuncData
 
 /-- Compile-time function data registry -/
-def libfuncs (typeRefs : HashMap Identifier SierraType) (i : Identifier) :
+def libfuncs (typeRefs : HashMap Identifier SierraType)
+   (userfuncs : HashMap Identifier FuncData) (specs : HashMap Identifier Name) (i : Identifier) :
     Option FuncData :=
   controlFlowLibfuncs typeRefs i
   <|> felt252Libfuncs i
@@ -24,3 +26,4 @@ def libfuncs (typeRefs : HashMap Identifier SierraType) (i : Identifier) :
   <|> boxLibfuncs typeRefs i
   <|> snapshotLibfuncs typeRefs i
   <|> arrayLibfuncs typeRefs i
+  <|> functionCallLibfuncs userfuncs specs i

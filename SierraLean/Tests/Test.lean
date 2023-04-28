@@ -158,3 +158,19 @@ type Tuple<u128> = Struct<ut@Tuple, u128>;
 type Array<felt252> = Array<felt252>;
 type core::PanicResult::<(core::integer::u128,)> = Enum<ut@core::PanicResult::<(core::integer::u128,)>, Tuple<u128>, Array<felt252>>;"
 #eval parseGrammar test_parse_tuples
+
+
+def test_function_call_01 :=
+"type F = felt252;
+libfunc c5 = felt252_const<5>;
+libfunc [1] = function_call<foo>;
+
+c5() -> ([1]);
+return([1]);
+[1]([2]) -> ([3]);
+return([3]);
+
+foo@0([0]: F) -> (F);
+bar@2([2]: F) -> (F);"
+#eval parseGrammar test_function_call_01
+#eval analyzeFile test_function_call_01 1

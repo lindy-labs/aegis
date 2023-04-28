@@ -38,7 +38,7 @@ abbrev UInt64 := ZMod <| 2^64
 abbrev UInt128 := ZMod <| 2^128
 abbrev UInt256 := ZMod <| 2^256
 
-def SierraType.toQuote : SierraType → Q(Type)
+partial def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
   | .U32 => q(UInt32)
   | .U64 => q(UInt64)

@@ -13,7 +13,7 @@ def array_append (t : SierraType) : FuncData where
   inputTypes := [.Array t, t]
   branches := [{ outputTypes := [.Array t]
                  condition := fun (a b ρ : Expr) => q(False) }] -- TODO
-/-
+
 def array_pop_front (t : SierraType) : FuncData where
   inputTypes := [.Array t]
   branches := [{ outputTypes := [.Array t, .Box t]
@@ -37,11 +37,11 @@ def array_get (t : SierraType) : FuncData where
                { outputTypes := [.RangeCheck]
                  condition := fun rc (a : Q(List $t.toQuote)) (i : Q(UInt32)) rc' =>
                    q(($i).val ≥ ($a).length) }]
--/
+
 def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
---| .name "array_new" [.identifier ident] => return array_new (← typeRefs.find? ident)
+| .name "array_new" [.identifier ident] => return array_new (← typeRefs.find? ident)
 | .name "array_append" [.identifier ident] => return array_append (← typeRefs.find? ident)
---| .name "array_pop_front" [.identifier ident] => return array_pop_front (← typeRefs.find? ident)
---| .name "array_len" [.identifier ident] => return array_len (← typeRefs.find? ident)
---| .name "array_get" [.identifier ident] => return array_get (← typeRefs.find? ident)
+| .name "array_pop_front" [.identifier ident] => return array_pop_front (← typeRefs.find? ident)
+| .name "array_len" [.identifier ident] => return array_len (← typeRefs.find? ident)
+| .name "array_get" [.identifier ident] => return array_get (← typeRefs.find? ident)
 | _ => .none

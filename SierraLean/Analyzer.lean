@@ -16,7 +16,11 @@ def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
 where go (acc : _) (ty : Identifier) : Except String SierraType :=
   match ty with
   | .name "felt252" [] => pure .Felt252
+  | .name "u32" [] => pure .U32
+  | .name "u64" [] => pure .U64
   | .name "u128" [] => pure .U128
+  | .name "u256" [] => pure .U256
+  | .name "RangeCheck" [] => pure .RangeCheck
   | .name "Enum" (.usertype _ :: l) => do
     let l ← flip mapM l fun x => match x with
       | .identifier ident => pure ident
@@ -29,16 +33,29 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
     pure <| .Struct (l.map acc.find!)
   | .name "NonZero" (Parameter.identifier ident :: []) => do
     pure <| .NonZero <| acc.find! ident
+  | .name "Box" [l] =>
+    match l with
+    | .identifier ident => pure <| .Box <| acc.find! ident
+    | _ => throw "Expected Box parameter to refer to a type"
+  | .name "Snapshot" [l] =>
+    match l with
+    | .identifier ident => pure <| .Snapshot <| acc.find! ident
+    | _ => throw "Expected Snapshot parameter to refer to a type"
+  | .name "Array" [t] =>
+    match t with
+    | .identifier ident => pure <| .Array <| acc.find! ident
+    | _ => throw "Expected ARray parameter to refer to a type"
   | .name n l => throw <| "Unhandled " ++ n ++ " " ++ (" ".intercalate <| l.map toString)
   | .ref _ => throw "Unhandled ref"
 
 def buildFuncSignatures
   (typedefs : HashMap Identifier SierraType)
-  (funcdefs : List (Identifier × Identifier)) : Except String (HashMap Identifier FuncData) := do
-  let mut acc := HashMap.empty
+  (funcdefs : List (Identifier × Identifier))
+  (specs : HashMap Identifier Name) : Except String (HashMap Identifier FuncData) := do
+  let mut acc := ∅
   for (name, sig) in funcdefs do
-    match FuncData.libfuncs typedefs sig with
-    | some sig => acc := HashMap.insert acc name sig
+    match FuncData.libfuncs typedefs acc specs sig with
+    | some sig => acc := acc.insert name sig
     | none => throw <| toString name ++ " : no such libfunc"
   return acc
  
@@ -154,12 +171,12 @@ def withFindByIdentifier (ident : Identifier)
   | [⟨_, pc, inputArgs, outputTypes⟩] => k pc inputArgs outputTypes
   | _ => throwError "Ambiguous identifier, please edit Sierra file to make them unique"
 
-def getFuncCondition (pc : ℕ) (inputArgs : List (ℕ × Identifier)) (outputTypes : List Identifier) :
-    MetaM Expr := do
+def getFuncCondition (pc : ℕ) (inputArgs : List (ℕ × Identifier)) (outputTypes : List Identifier) 
+    (specs : HashMap Identifier Name) : MetaM Expr := do
   let typeDefs ← match buildTypeDefs sf.typedefs with
     | .ok x => pure x
     | .error err => throwError err
-  let funcSigs ← match buildFuncSignatures typeDefs sf.libfuncs with
+  let funcSigs ← match buildFuncSignatures typeDefs sf.libfuncs specs with
     | .ok x => pure x
     | .error err => throwError err
   let mut lctx : LocalContext := .empty
@@ -191,8 +208,11 @@ def getSpecsType (inputArgs : List (ℕ × Identifier)) (outputTypes : List Iden
 def getSpecTypeOfName (ident : Identifier) : MetaM Q(Type) :=
   withFindByIdentifier sf ident fun _ => getSpecsType sf
 
+variable (specs : HashMap Identifier Name)
+
 def getLocalDeclInfos (pc : ℕ) (inputArgs : List (ℕ × Identifier))
-    (outputTypes : List Identifier) : MetaM (Array (Name × (Array Expr → n Expr))) := do
+    (outputTypes : List Identifier)
+     : MetaM (Array (Name × (Array Expr → n Expr))) := do
   let typeDefs ← match buildTypeDefs sf.typedefs with
     | .ok x => pure x
     | .error err => throwError err
@@ -204,20 +224,20 @@ def getLocalDeclInfos (pc : ℕ) (inputArgs : List (ℕ × Identifier))
     let n ← mkFreshUserName `ρ  -- TODO make anonymous?
     ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote <| typeDefs.find! t
   let n ← mkFreshUserName `h_auto
-  let e ← getFuncCondition sf pc inputArgs outputTypes
+  let e ← getFuncCondition sf pc inputArgs outputTypes specs
   ret := ret.push <| .mk n fun h_args => pure <| mkAppN e h_args
   return ret
 
 def getLocalDeclInfosOfName (sf : SierraFile) (ident : Identifier) :
     MetaM (Array (Name × (Array Expr → n Expr))) :=
-  withFindByIdentifier sf ident <| getLocalDeclInfos sf
+  withFindByIdentifier sf ident <| getLocalDeclInfos sf specs
 
 -- TODO delete?
-def analyzeFile (s : String) : MetaM Format := do
+def analyzeFile (s : String) (idx : ℕ := 0) : MetaM Format := do
   match parseGrammar s with
   | .ok sf =>
-    let ⟨_, pc, inputArgs, outputTypes⟩ := sf.declarations.get! 0
-    let e ← getFuncCondition sf pc inputArgs outputTypes
+    let ⟨_, pc, inputArgs, outputTypes⟩ := sf.declarations.get! idx
+    let e ← getFuncCondition sf pc inputArgs outputTypes ∅
     let esType ← inferType e
     return (← ppExpr e) ++ "\n Inferred Type:" ++ (← ppExpr esType)
     --return toString es.2.refs
