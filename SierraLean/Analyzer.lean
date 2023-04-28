@@ -51,17 +51,17 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
 def buildFuncSignatures
   (typedefs : HashMap Identifier SierraType)
   (funcdefs : List (Identifier × Identifier))
-  (specs : HashMap Identifier Name) : Except String (HashMap Identifier FuncData) := do
+  (specs : HashMap Identifier Name) : HashMap Identifier FuncData := Id.run do
   let mut acc := ∅
   for (name, sig) in funcdefs do
-    match FuncData.libfuncs typedefs acc specs sig with
+    match FuncData.libfuncs typedefs ∅ specs sig with  -- TODO replace `∅` by previous userfuncs
     | some sig => acc := acc.insert name sig
-    | none => throw <| toString name ++ " : no such libfunc"
+    | none => () --throw <| toString name ++ " : no such libfunc"
   return acc
  
 structure State where
   (pc : Nat)
-  (refs : RefTable := ∅)
+  (refs : RefTable)
   (lctx : LocalContext := .empty)
   (outputRefs : List FVarId)
   (outputTypes : List Identifier)
@@ -176,9 +176,7 @@ def getFuncCondition (pc : ℕ) (inputArgs : List (ℕ × Identifier)) (outputTy
   let typeDefs ← match buildTypeDefs sf.typedefs with
     | .ok x => pure x
     | .error err => throwError err
-  let funcSigs ← match buildFuncSignatures typeDefs sf.libfuncs specs with
-    | .ok x => pure x
-    | .error err => throwError err
+  let funcSigs := buildFuncSignatures typeDefs sf.libfuncs specs
   let mut lctx : LocalContext := .empty
   let mut outputRefs : Array FVarId := #[]
   for t in outputTypes do
@@ -187,9 +185,16 @@ def getFuncCondition (pc : ℕ) (inputArgs : List (ℕ × Identifier)) (outputTy
     let type := SierraType.toQuote <| typeDefs.find! t
     lctx := lctx.mkLocalDecl fv name type
     outputRefs := outputRefs.push fv
-  let s : State := { pc := pc, lctx := lctx, outputRefs := outputRefs.toList, outputTypes := outputTypes }
-  let es ← StateT.run 
-    (do
+  let s : State := { pc := pc
+                     refs := ∅
+                     lctx := lctx
+                     outputRefs := outputRefs.toList
+                     outputTypes := outputTypes }
+  let es ← StateT.run (do
+    let mut refs : RefTable := ∅
+    for (i, t) in inputArgs do
+      refs := refs.insert i <| ← getOrMkNewRef i <| SierraType.toQuote <| typeDefs.find! t
+    set { s with refs := refs }
     let (_, cs) ← processState typeDefs funcSigs sf inputArgs
     processAndOrTree inputArgs cs) s
   return es.1

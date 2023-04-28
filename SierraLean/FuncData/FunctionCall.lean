@@ -15,7 +15,6 @@ def function_call (i : Identifier) (userfuncs : HashMap Identifier FuncData)
 
 def functionCallLibfuncs (userfuncs : HashMap Identifier FuncData)
   (specs : HashMap Identifier Name) : Identifier → Option FuncData
-| .name "function_call" [.identifier i] =>
-  dbg_trace userfuncs.toList.map (·.1)
+| .name "function_call" [.userfunc i] =>
   if userfuncs.contains i then function_call i userfuncs specs else .none
 | _ => .none

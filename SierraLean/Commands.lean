@@ -57,7 +57,8 @@ elab "sierra_sound" name:str val:declVal : command => do
   match Megaparsec.Parsec.parse identifierP name.getString with
   | .ok i =>  
     liftTermElabM do
-      let type ← withLocalDeclsD (← getLocalDeclInfosOfName sf i) fun fvs => do
+      let specs := sierraSpecs.getState env
+      let type ← withLocalDeclsD (← getLocalDeclInfosOfName specs sf i) fun fvs => do
         let ioArgs := fvs[:fvs.size - 1]
         let .some specName := (sierraSpecs.getState env).find? i
           | throwError "Could not find manual specification for {i}"
@@ -66,6 +67,7 @@ elab "sierra_sound" name:str val:declVal : command => do
       Term.synthesizeSyntheticMVarsNoPostponing
       let val ← instantiateMVars val
       let name : String := "sound_" ++ name.getString
+      let name ← mkFreshUserName name
       addDecl <| .defnDecl {  name := name
                               type := type
                               levelParams := []
