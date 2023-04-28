@@ -49,4 +49,6 @@ sierra_sound "bar" := fun a ρ => by
 
 sierra_spec "baz" := fun _ ρ => ρ = 5
 
-sierra_sound "baz" := _
+sierra_sound "baz" := fun a ρ => by
+  rintro ⟨r, rfl, rfl⟩
+  rfl
