@@ -163,7 +163,7 @@ type core::PanicResult::<(core::integer::u128,)> = Enum<ut@core::PanicResult::<(
 def test_function_call_01 :=
 "type F = felt252;
 libfunc c5 = felt252_const<5>;
-libfunc [1] = function_call<foo>;
+libfunc [1] = function_call<c5>;
 
 c5() -> ([1]);
 return([1]);
@@ -173,4 +173,4 @@ return([3]);
 foo@0([0]: F) -> (F);
 bar@2([2]: F) -> (F);"
 #eval parseGrammar test_function_call_01
-#eval analyzeFile test_function_call_01 1
+#eval analyzeFile test_function_call_01 0
