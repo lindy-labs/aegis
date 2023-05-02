@@ -21,7 +21,7 @@ def array_pop_front (t : SierraType) : FuncData where
                    q($ρ₂ :: $ρ₁ = $a) },
                { outputTypes := [.Array t]
                  condition := fun (a : Q(List $t.toQuote)) (ρ : Q(List $t.toQuote)) =>
-                   q($a = []) }] -- TODO not actually clear what `ρ` is
+                   q($a = [] ∧ $ρ = []) }] -- TODO not actually clear what `ρ` is
 
 def array_len (t : SierraType) : FuncData where
   inputTypes := [.Snapshot (.Array t)]
