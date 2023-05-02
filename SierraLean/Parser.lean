@@ -100,6 +100,7 @@ partial def identifierP := nameP <|> refIdentifierP
 /-- Parses a parameter, i.e. a constant or an identifier -/
 partial def parameterP : P Parameter :=
   (.const <$> intP)
+  <|> attempt (do discard <| single '@'; return .identifier (← identifierP))
   <|> attempt (do discard <| string "ut@"; return .usertype (← identifierP))
   <|> attempt (do discard <| string "user@"; return .userfunc (← identifierP))
   <|> attempt (do discard <| string "lib@"; return .libfunc (← identifierP))
