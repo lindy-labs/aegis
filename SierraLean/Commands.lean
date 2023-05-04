@@ -9,14 +9,14 @@ namespace Sierra
 initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun _ sf => sf
-    addImportedFn := fun _ => default  -- TODO ?
+    addImportedFn := fun _ => default -- Load the empty Sierra file by default
   }
 
 initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name)
     (HashMap Identifier Name) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun specs (i, n) => specs.insert i n
-    addImportedFn := fun _ => default  -- TODO ?
+    addImportedFn := fun pss => HashMap.ofList pss.join.toList
   }
 
 /- Provide elaboration functions for the commands -/

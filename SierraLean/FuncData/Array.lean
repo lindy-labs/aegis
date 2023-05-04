@@ -7,12 +7,12 @@ namespace Sierra.FuncData
 def array_new (t : SierraType) : FuncData where
   inputTypes := []
   branches := [{ outputTypes := [.Array t]
-                 condition := fun (ρ : Expr) => Expr.mkEq q(List $(⟦t⟧)) ρ q(@List.nil $(⟦t⟧)) }]
+                 condition := fun (ρ : Q(List $t.toQuote)) => q($ρ = []) }]
 
 def array_append (t : SierraType) : FuncData where
   inputTypes := [.Array t, t]
   branches := [{ outputTypes := [.Array t]
-                 condition := fun (a b ρ : Expr) => q(False) }] -- TODO
+                 condition := fun (a b ρ : Q(List $t.toQuote)) => q($ρ = $a ++ $b) }]
 
 def array_pop_front (t : SierraType) : FuncData where
   inputTypes := [.Array t]
