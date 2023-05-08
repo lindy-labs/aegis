@@ -13,11 +13,11 @@ def unbox (t : SierraType) : FuncData where
   branches := [{ outputTypes := [t], condition := fun (a ρ : Expr) => q($ρ = $a) }]
 
 def boxLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
-| .name "box_into" [.identifier ident] =>
+| .name "box_into" [.identifier ident] _ =>
   match typeRefs.find? ident with
   | .some t => box_into t
   | _ => .none
-| .name "unbox" [.identifier ident] =>
+| .name "unbox" [.identifier ident] _ =>
   match typeRefs.find? ident with
   | .some t => unbox t
   | _ => .none

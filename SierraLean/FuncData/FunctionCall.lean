@@ -15,6 +15,6 @@ def function_call (i : Identifier) (userfuncs : HashMap Identifier FuncData)
 
 def functionCallLibfuncs (userfuncs : HashMap Identifier FuncData)
   (specs : HashMap Identifier Name) : Identifier → Option FuncData
-| .name "function_call" [.userfunc i] =>
+| .name "function_call" [.userfunc i] _ =>
   if userfuncs.contains i then function_call i userfuncs specs else .none
 | _ => .none

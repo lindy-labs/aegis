@@ -42,9 +42,9 @@ def bool_to_felt252 : FuncData where
   }]
 
 def boolLibfuncs : Identifier → Option FuncData
-| .name "bool_xor_impl" []   => bool_xor_impl
-| .name "bool_or_impl" []    => bool_or_impl 
-| .name "bool_and_impl" []   => bool_and_impl
-| .name "bool_not_impl" []   => bool_not_impl
-| .name "bool_to_felt252" [] => bool_to_felt252
+| .name "bool_xor_impl" []   _ => bool_xor_impl
+| .name "bool_or_impl" []    _ => bool_or_impl 
+| .name "bool_and_impl" []   _ => bool_and_impl
+| .name "bool_not_impl" []   _ => bool_not_impl
+| .name "bool_to_felt252" [] _ => bool_to_felt252
 | _                          => .none

@@ -44,10 +44,10 @@ def branch_align : FuncData where
 def jump : FuncData where
 
 def controlFlowLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
-| .name "rename" [.identifier ident] => return rename (← typeRefs.find? ident)
-| .name "drop" [.identifier ident] => return drop (← typeRefs.find? ident)
-| .name "store_temp" [.identifier ident] => return store_temp (← typeRefs.find? ident)
-| .name "dup" [.identifier ident] => return dup (← typeRefs.find? ident)
-| .name "branch_align" [] => FuncData.branch_align
-| .name "jump" [] => FuncData.jump
+| .name "rename" [.identifier ident] _ => return rename (← typeRefs.find? ident)
+| .name "drop" [.identifier ident] _ => return drop (← typeRefs.find? ident)
+| .name "store_temp" [.identifier ident] _ => return store_temp (← typeRefs.find? ident)
+| .name "dup" [.identifier ident] _ => return dup (← typeRefs.find? ident)
+| .name "branch_align" [] _ => FuncData.branch_align
+| .name "jump" [] _ => FuncData.jump
 | _  => .none

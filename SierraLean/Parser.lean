@@ -8,15 +8,15 @@ open MonadParsec Megaparsec Megaparsec.Char Megaparsec.Parsec Megaparsec.Common
 mutual
 
 inductive Identifier where
-  | name (s : String) (is : List Parameter)
+  | name (s : String) (is : List Parameter) (tl : Option Identifier)
   | ref (n : Nat)
   deriving Repr, Hashable, BEq, Inhabited
 
 inductive Parameter where
   | identifier (i : Identifier)
   | const (n : Int)
-  | usertype (i : Identifier)
-  | userfunc (i : Identifier)
+  | usertype (s : Identifier)
+  | userfunc (s : Identifier)
   | libfunc (i : Identifier)
   | tuple (ps : List Parameter)
   deriving Repr, Inhabited, Hashable, BEq
@@ -75,8 +75,8 @@ def semicolonP : P Unit := discard (single ';') *> blanksP
 
 /-- The name is maybe a bit misleading, this parses a whole identifier, including namespace ids -/
 def atomP : P String := do
-  let c : Char ← satisfy Char.isAlpha
-  let cs : List Char ← many' (satisfy fun c => c.isAlphanum || c == '_' || c == ':')
+  let c : Char ← satisfy fun c => c.isAlpha || c == '_'
+  let cs : List Char ← many' (satisfy fun c => c.isAlphanum || c == '_')
   return String.mk (c :: cs)
 
 /-- Parses a reference to a type or memory cell -/
@@ -89,20 +89,24 @@ mutual
 
 /-- Parses a name-based identifier -/
 partial def nameP : P Identifier := do
-  blanksP
   let s ← atomP
-  let is ← (between '<' '>' <| sepEndBy' parameterP commaP) <|> (pure [])
-  return .name s is
+  let is ← attempt (do
+    discard <| optional <| string "::"
+    between '<' '>' <| sepEndBy' parameterP commaP) <|> (pure [])
+  let tl ← optional (do discard <| string "::"; nameP)
+  return .name s is tl
 
 /-- Parses a reference-based identifier -/
-partial def identifierP := nameP <|> refIdentifierP
+partial def identifierP := 
+  nameP
+  <|> (do discard <| single '@'; nameP)
+  <|> refIdentifierP
 
 /-- Parses a parameter, i.e. a constant or an identifier -/
 partial def parameterP : P Parameter :=
   (.const <$> intP)
-  <|> attempt (do discard <| single '@'; return .identifier (← identifierP))
   <|> attempt (do discard <| string "ut@"; return .usertype (← identifierP))
-  <|> attempt (do discard <| string "user@"; return .userfunc (← identifierP))
+  <|> attempt (do discard <| string "user@"; return .userfunc (← nameP))
   <|> attempt (do discard <| string "lib@"; return .libfunc (← identifierP))
   <|> attempt (do
     let foo ← between '(' ')' <| sepEndBy' parameterP commaP

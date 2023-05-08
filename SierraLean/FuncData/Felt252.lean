@@ -45,9 +45,9 @@ def felt252_is_zero : FuncData where
     }]
 
 def felt252Libfuncs : Identifier → Option FuncData
-| .name "felt252_const" [.const n] => FuncData.felt252_const q($n)
-| .name "felt252_add" []           => FuncData.felt252_add
-| .name "felt252_sub" []           => FuncData.felt252_sub
-| .name "felt252_mul" []           => FuncData.felt252_mul
-| .name "felt252_is_zero" []       => FuncData.felt252_is_zero
-| _                                => .none
+| .name "felt252_const" [.const n] _ => FuncData.felt252_const q($n)
+| .name "felt252_add" []           _ => FuncData.felt252_add
+| .name "felt252_sub" []           _ => FuncData.felt252_sub
+| .name "felt252_mul" []           _ => FuncData.felt252_mul
+| .name "felt252_is_zero" []       _ => FuncData.felt252_is_zero
+| _                                  => .none

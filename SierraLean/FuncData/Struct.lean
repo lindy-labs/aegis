@@ -35,11 +35,11 @@ def struct_deconstruct (fields : List SierraType) : FuncData where
                    (struct_deconstruct_condition fields) }]
 
 def structLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
-| .name "struct_construct" [.identifier ident] =>
+| .name "struct_construct" [.identifier ident] _ =>
   match typeRefs.find? ident with
   | .some (.Struct fields) => struct_construct fields
   | _ => .none
-| .name "struct_deconstruct" [.identifier ident] =>
+| .name "struct_deconstruct" [.identifier ident] _ =>
   match typeRefs.find? ident with
   | .some (.Struct fields) => struct_deconstruct fields
   | _ => .none

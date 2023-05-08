@@ -39,9 +39,9 @@ def array_get (t : SierraType) : FuncData where
                    q(($i).val ≥ ($a).length) }]
 
 def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
-| .name "array_new" [.identifier ident] => return array_new (← typeRefs.find? ident)
-| .name "array_append" [.identifier ident] => return array_append (← typeRefs.find? ident)
-| .name "array_pop_front" [.identifier ident] => return array_pop_front (← typeRefs.find? ident)
-| .name "array_len" [.identifier ident] => return array_len (← typeRefs.find? ident)
-| .name "array_get" [.identifier ident] => return array_get (← typeRefs.find? ident)
+| .name "array_new" [.identifier ident] _ => return array_new (← typeRefs.find? ident)
+| .name "array_append" [.identifier ident] _ => return array_append (← typeRefs.find? ident)
+| .name "array_pop_front" [.identifier ident] _ => return array_pop_front (← typeRefs.find? ident)
+| .name "array_len" [.identifier ident] _ => return array_len (← typeRefs.find? ident)
+| .name "array_get" [.identifier ident] _ => return array_get (← typeRefs.find? ident)
 | _ => .none

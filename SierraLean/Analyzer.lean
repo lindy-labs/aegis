@@ -15,37 +15,37 @@ def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
   return acc
 where go (acc : _) (ty : Identifier) : Except String SierraType :=
   match ty with
-  | .name "felt252" [] => pure .Felt252
-  | .name "u32" [] => pure .U32
-  | .name "u64" [] => pure .U64
-  | .name "u128" [] => pure .U128
-  | .name "u256" [] => pure .U256
-  | .name "RangeCheck" [] => pure .RangeCheck
-  | .name "Enum" (.usertype _ :: l) => do
+  | .name "felt252" [] .none => pure .Felt252
+  | .name "u32" [] .none => pure .U32
+  | .name "u64" [] .none => pure .U64
+  | .name "u128" [] .none => pure .U128
+  | .name "u256" [] .none => pure .U256
+  | .name "RangeCheck" [] .none => pure .RangeCheck
+  | .name "Enum" (.usertype _ :: l) .none => do
     let l ← flip mapM l fun x => match x with
       | .identifier ident => pure ident
       | _ => throw "Expected Enum parameter to refer a to a type"
     pure <| .Enum (l.map acc.find!)
-  | .name "Struct" (.usertype _ :: l) => do
+  | .name "Struct" (.usertype _ :: l) .none => do
     let l ← flip mapM l fun x => match x with
       | .identifier ident => pure ident
       | _ => throw "Expected Enum parameter to refer a to a type"
     pure <| .Struct (l.map acc.find!)
-  | .name "NonZero" (Parameter.identifier ident :: []) => do
+  | .name "NonZero" (Parameter.identifier ident :: []) .none => do
     pure <| .NonZero <| acc.find! ident
-  | .name "Box" [l] =>
+  | .name "Box" [l] .none =>
     match l with
     | .identifier ident => pure <| .Box <| acc.find! ident
     | _ => throw "Expected Box parameter to refer to a type"
-  | .name "Snapshot" [l] =>
+  | .name "Snapshot" [l] .none =>
     match l with
     | .identifier ident => pure <| .Snapshot <| acc.find! ident
     | _ => throw "Expected Snapshot parameter to refer to a type"
-  | .name "Array" [t] =>
+  | .name "Array" [t] .none =>
     match t with
     | .identifier ident => pure <| .Array <| acc.find! ident
     | _ => throw "Expected ARray parameter to refer to a type"
-  | .name n l => throw <| "Unhandled " ++ n ++ " " ++ (" ".intercalate <| l.map toString)
+  | .name n l _ => throw <| "Unhandled " ++ n ++ " " ++ (" ".intercalate <| l.map toString)
   | .ref _ => throw "Unhandled ref"
 
 def buildFuncSignatures
@@ -125,7 +125,7 @@ partial def processState
   let st := f.statements.get! (← get).pc
   if gas = 0 then return (st, .nil)
   match st.libfunc_id with
-  | .name "return" [] =>
+  | .name "return" [] .none =>
     let s ← get
     let es := (s.outputRefs.zip (st.args.map fun n => s.refs.find! n)).zip s.outputTypes
     let es := es.map fun ((ofv, rfv), type) =>

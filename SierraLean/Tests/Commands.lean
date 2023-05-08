@@ -12,9 +12,9 @@ sierra_sound "ternary_add" := fun a b c ρ => by
   rfl
 
 sierra_load_string "type F = felt252;
- type E = Enum<ut@foo, F, F>;
- libfunc init = enum_init<E, 1>;
- libfunc match = enum_match<E>;
+ type E::E::<test>::E = Enum<ut@foo, F, F>;
+ libfunc init = enum_init<E::E::<test>::E, 1>;
+ libfunc match = enum_match<E::E::<test>::E>;
  init([0]) -> ([1]);
  match([1]) { fallthrough([2]) 3([3]) };
  return([2]);

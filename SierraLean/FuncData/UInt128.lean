@@ -22,6 +22,6 @@ def u128_overflowing_sub : FuncData where
   }]
 
 def uint128Libfuncs : Identifier → Option FuncData
-| .name "u128_overflowing_add" [] => u128_overflowing_add
-| .name "u128_overflowing_sub" [] => u128_overflowing_sub
-| _                               => .none
+| .name "u128_overflowing_add" [] _ => u128_overflowing_add
+| .name "u128_overflowing_sub" [] _ => u128_overflowing_sub
+| _                                 => .none
