@@ -49,21 +49,22 @@ def sierraLoadString (s : String) : CommandElabM Unit :=
 
 elab "sierra_load_string " s:str : command => sierraLoadString s.getString
 
-elab "sierra_set_path" s:str : command => do
+elab "sierra_set_path " s:str : command => do
   let fp : System.FilePath := ⟨s.getString⟩
   unless ← fp.pathExists do throwError "Could not find cairo directory"
   modifyEnv (cairoPath.addEntry · fp)
 
-elab "sierra_load_file" s:str : command => do
+elab "sierra_load_file " s:str : command => do
   let filePath : System.FilePath := ⟨s.getString⟩
   match filePath.extension with
   | .some "sierra" => sierraLoadString <| ← IO.FS.readFile filePath
   | .some "cairo" =>
     let filePath ← IO.FS.realPath filePath
+    let cairoPath := (cairoPath.getState (← getEnv)).getD "cairo"
     let args : IO.Process.SpawnArgs := 
       { cmd := "cargo"
         args := #["run", "--bin", "cairo-compile", "--", "--replace-ids", filePath.toString]
-        cwd := cairoPath.getState (← getEnv) }
+        cwd := cairoPath }
     let child ← IO.Process.output args
     dbg_trace "Compilation stderr: {child.stderr}"
     sierraLoadString child.stdout
@@ -75,25 +76,27 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
   let typeDefs ← match buildTypeDefs sf.typedefs with
   | .ok x => pure x
   | .error err => throwError err
-  let val ← liftMacroM <| declValToTerm val
+  let val ← liftMacroM <| declValToTerm val 
   match Megaparsec.Parsec.parse identifierP name.getString with
-  | .ok i =>  liftTermElabM do 
-                let type ← getSpecTypeOfName sf i
-                let val ← Term.elabTermEnsuringType val type
-                Term.synthesizeSyntheticMVarsNoPostponing
-                let val ← instantiateMVars val
-                let name : String := "spec_" ++ name.getString  -- TODO handle name clashes
-                addAndCompile <| .defnDecl {  name := name
-                                              type := type
-                                              levelParams := []
-                                              value := val
-                                              hints := default
-                                              safety := default }
-                withFindByIdentifier sf i fun _ _ inputArgs outputTypes =>
-                  -- Generate the `FuncData`
-                  let fd := funcDataFromCondition typeDefs inputArgs outputTypes val
-                  -- Add the spec to the cache
-                  modifyEnv fun env => sierraSpecs.addEntry env (i, name, fd)
+  | .ok i =>  
+    withRef val do
+      liftTermElabM do 
+        let type ← getSpecTypeOfName sf i
+        let val ← Term.elabTermEnsuringType val type
+        Term.synthesizeSyntheticMVarsNoPostponing
+        let val ← instantiateMVars val
+        let name : String := "spec_" ++ name.getString  -- TODO handle name clashes
+        addAndCompile <| .defnDecl {  name := name
+                                      type := type
+                                      levelParams := []
+                                      value := val
+                                      hints := default
+                                      safety := default }
+        withFindByIdentifier sf i fun _ _ inputArgs outputTypes =>
+          -- Generate the `FuncData`
+          let fd := funcDataFromCondition typeDefs inputArgs outputTypes val
+          -- Add the spec to the cache
+          modifyEnv fun env => sierraSpecs.addEntry env (i, name, fd)
   | .error str => throwError toString str
 
 elab "sierra_sound" name:str val:declVal : command => do
@@ -102,22 +105,23 @@ elab "sierra_sound" name:str val:declVal : command => do
   let val ← liftMacroM <| declValToTerm val
   match Megaparsec.Parsec.parse identifierP name.getString with
   | .ok i =>  
-    liftTermElabM do
-      let specs := sierraSpecs.getState env
-      let type ← withLocalDeclsD (← getLocalDeclInfosOfName specs sf i) fun fvs => do
-        let ioArgs := fvs[:fvs.size - 1]
-        let .some (specName, _) := (sierraSpecs.getState env).find? i
-          | throwError "Could not find manual specification for {i}"
-        mkForallFVars fvs <| ← mkAppM specName ioArgs
-      let val ← Term.elabTermEnsuringType val type
-      Term.synthesizeSyntheticMVarsNoPostponing
-      let val ← instantiateMVars val
-      let name : String := "sound_" ++ name.getString
-      let name ← mkFreshUserName name
-      addDecl <| .defnDecl {  name := name
-                              type := type
-                              levelParams := []
-                              value := val
-                              hints := default
-                              safety := default }
+    withRef val do
+      liftTermElabM do
+        let specs := sierraSpecs.getState env
+        let type ← withLocalDeclsD (← getLocalDeclInfosOfName specs sf i) fun fvs => do
+          let ioArgs := fvs[:fvs.size - 1]
+          let .some (specName, _) := (sierraSpecs.getState env).find? i
+            | throwError "Could not find manual specification for {i}"
+          mkForallFVars fvs <| ← mkAppM specName ioArgs
+        let val ← Term.elabTermEnsuringType val type
+        Term.synthesizeSyntheticMVarsNoPostponing
+        let val ← instantiateMVars val
+        let name : String := "sound_" ++ name.getString
+        let name ← mkFreshUserName name
+        addDecl <| .defnDecl {  name := name
+                                type := type
+                                levelParams := []
+                                value := val
+                                hints := default
+                                safety := default }
   | .error str => throwError toString str
