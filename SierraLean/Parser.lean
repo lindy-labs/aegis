@@ -3,12 +3,12 @@ import Megaparsec.MonadParsec
 import Megaparsec.Common
 import Megaparsec.Char
 
-open MonadParsec Megaparsec Megaparsec.Char Megaparsec.Parsec Megaparsec.Common
+open MonadParsec Megaparsec Megaparsec.Char Megaparsec.Parsec Megaparsec.Common Lean
 
 mutual
 
 inductive Identifier where
-  | name (s : String) (is : List Parameter) (tl : Option Identifier)
+  | name (s : String) (ps : List Parameter) (tl : Option Identifier)
   | ref (n : Nat)
   deriving Repr, Hashable, BEq, Inhabited
 
@@ -44,11 +44,34 @@ structure SierraFile where
   (declarations : List (Identifier × Nat × List (Nat × Identifier) × List Identifier))
   deriving Repr, Inhabited
 
--- TODO add a better printer
-instance : ToString Identifier where toString x := toString $ repr x
-instance : ToString Parameter where toString x := toString $ repr x
+mutual
+
+partial def identifierToString : Identifier → String
+| .name s ps tl =>
+  let ps := match ps with
+  | [] => "" 
+  | ps@_ => "<" ++ String.intercalate ", " (parameterToString <$> ps) ++ ">"
+  let hd := s ++ ps
+  match tl with
+  | .some i => hd ++ "::" ++ identifierToString i
+  | .none => hd
+| .ref n => s!"[{n}]"
+
+partial def parameterToString : Parameter → String
+| .identifier i => identifierToString i
+| .const n => toString n
+| .tuple ps => "(" ++ String.intercalate ", " (parameterToString <$> ps) ++ ")"
+| .usertype i => "ut@" ++ identifierToString i
+| .userfunc i => "user@" ++ identifierToString i
+| .libfunc i => "lib@" ++ identifierToString i
+
+end
+
+instance : ToString Identifier where toString := identifierToString
+instance : ToString Parameter where toString := parameterToString
 instance : ToString Statement where toString x := toString $ repr x
 instance : ToString SierraFile where toString x := toString $ repr x
+
 
 abbrev P := Parsec Char String Unit  -- TODO replace the `Unit` by a proper error type
 
