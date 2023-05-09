@@ -12,8 +12,8 @@ initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile
     addImportedFn := fun _ => default -- Load the empty Sierra file by default
   }
 
-initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name)
-    (HashMap Identifier Name) ←
+initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × FuncData)
+    (HashMap Identifier (Name × FuncData)) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun specs (i, n) => specs.insert i n
     addImportedFn := fun pss => HashMap.ofList pss.join.toList
@@ -34,6 +34,9 @@ elab "sierra_load_file " s:str : command => do
 elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `str` to `ident`
   let env ← getEnv
   let sf := loadedSierraFile.getState env
+  let typeDefs ← match buildTypeDefs sf.typedefs with
+  | .ok x => pure x
+  | .error err => throwError err
   match Megaparsec.Parsec.parse identifierP name.getString with
   | .ok i =>  liftTermElabM do 
                 let type ← getSpecTypeOfName sf i
@@ -47,8 +50,11 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
                                               value := val
                                               hints := default
                                               safety := default }
-                -- Add the spec to the cache
-                modifyEnv fun env => sierraSpecs.addEntry env (i, name)
+                withFindByIdentifier sf i fun _ _ inputArgs outputTypes =>
+                  -- Generate the `FuncData`
+                  let fd := funcDataFromCondition typeDefs inputArgs outputTypes val
+                  -- Add the spec to the cache
+                  modifyEnv fun env => sierraSpecs.addEntry env (i, name, fd)
   | .error str => throwError toString str
 
 elab "sierra_sound" name:str val:declVal : command => do
@@ -60,7 +66,7 @@ elab "sierra_sound" name:str val:declVal : command => do
       let specs := sierraSpecs.getState env
       let type ← withLocalDeclsD (← getLocalDeclInfosOfName specs sf i) fun fvs => do
         let ioArgs := fvs[:fvs.size - 1]
-        let .some specName := (sierraSpecs.getState env).find? i
+        let .some (specName, _) := (sierraSpecs.getState env).find? i
           | throwError "Could not find manual specification for {i}"
         mkForallFVars fvs <| ← mkAppM specName ioArgs
       let val ← Term.elabTermEnsuringType (Syntax.getArgs val)[1]! type
