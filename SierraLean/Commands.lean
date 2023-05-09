@@ -19,7 +19,13 @@ private def declValToTerm (declVal : Syntax) : MacroM Syntax := withRef declVal 
   else
     Macro.throwErrorAt declVal "unexpected declaration body"
 
-/- Initialize environment extensions holding a sierra file and specs -/
+/- Initialize environment extensions holding cairo path, sierra file and specs -/
+
+initialize cairoPath : SimplePersistentEnvExtension System.FilePath (Option System.FilePath) ←
+  registerSimplePersistentEnvExtension {
+    addEntryFn := fun _ p => p
+    addImportedFn := fun pss => pss.join.back?
+  }
 
 initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile ←
   registerSimplePersistentEnvExtension {
@@ -31,7 +37,7 @@ initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × Fun
     (HashMap Identifier (Name × FuncData)) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun specs (i, n) => specs.insert i n
-    addImportedFn := fun pss => HashMap.ofList pss.join.toList
+    addImportedFn := (HashMap.ofList ·.join.toList)
   }
 
 /- Provide elaboration functions for the commands -/
@@ -39,12 +45,29 @@ initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × Fun
 def sierraLoadString (s : String) : CommandElabM Unit :=
   match parseGrammar s with
   | .error str => throwError ("Unable to load string:\n" ++ str)
-  | .ok sf => modifyEnv fun env => loadedSierraFile.addEntry env sf
+  | .ok sf => modifyEnv (loadedSierraFile.addEntry · sf)
 
 elab "sierra_load_string " s:str : command => sierraLoadString s.getString
 
-elab "sierra_load_file " s:str : command => do
-  sierraLoadString <| ← IO.FS.readFile <| .mk s.getString
+elab "sierra_set_path" s:str : command => do
+  let fp : System.FilePath := ⟨s.getString⟩
+  unless ← fp.pathExists do throwError "Could not find cairo directory"
+  modifyEnv (cairoPath.addEntry · fp)
+
+elab "sierra_load_file" s:str : command => do
+  let filePath : System.FilePath := ⟨s.getString⟩
+  match filePath.extension with
+  | .some "sierra" => sierraLoadString <| ← IO.FS.readFile filePath
+  | .some "cairo" =>
+    let filePath ← IO.FS.realPath filePath
+    let args : IO.Process.SpawnArgs := 
+      { cmd := "cargo"
+        args := #["run", "--bin", "cairo-compile", "--", "--replace-ids", filePath.toString]
+        cwd := cairoPath.getState (← getEnv) }
+    let child ← IO.Process.output args
+    dbg_trace "Compilation stderr: {child.stderr}"
+    sierraLoadString child.stdout
+  | _ => throwError "Wrong file extension, must be .cairo or .sierra!"
 
 elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `str` to `ident`
   let env ← getEnv
