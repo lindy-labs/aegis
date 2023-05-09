@@ -4,6 +4,21 @@ open Lean Meta Elab Command
 
 namespace Sierra
 
+/- Utilities -/
+
+/-- Copied from Lean.Elab.MutualDef -/
+private def declValToTerm (declVal : Syntax) : MacroM Syntax := withRef declVal do
+  if declVal.isOfKind ``Parser.Command.declValSimple then
+    Term.expandWhereDeclsOpt declVal[2] declVal[1]
+  else if declVal.isOfKind ``Parser.Command.declValEqns then
+    Term.expandMatchAltsWhereDecls declVal[0]
+  -- else if declVal.isOfKind ``Parser.Command.whereStructInst then
+  --   expandWhereStructInst declVal
+  else if declVal.isMissing then
+    Macro.throwErrorAt declVal "declaration body is missing"
+  else
+    Macro.throwErrorAt declVal "unexpected declaration body"
+
 /- Initialize environment extensions holding a sierra file and specs -/
 
 initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile ←
@@ -37,10 +52,11 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
   let typeDefs ← match buildTypeDefs sf.typedefs with
   | .ok x => pure x
   | .error err => throwError err
+  let val ← liftMacroM <| declValToTerm val
   match Megaparsec.Parsec.parse identifierP name.getString with
   | .ok i =>  liftTermElabM do 
                 let type ← getSpecTypeOfName sf i
-                let val ← Term.elabTermEnsuringType (Syntax.getArgs val)[1]! type
+                let val ← Term.elabTermEnsuringType val type
                 Term.synthesizeSyntheticMVarsNoPostponing
                 let val ← instantiateMVars val
                 let name : String := "spec_" ++ name.getString  -- TODO handle name clashes
@@ -60,6 +76,7 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
 elab "sierra_sound" name:str val:declVal : command => do
   let env ← getEnv
   let sf := loadedSierraFile.getState env
+  let val ← liftMacroM <| declValToTerm val
   match Megaparsec.Parsec.parse identifierP name.getString with
   | .ok i =>  
     liftTermElabM do
@@ -69,7 +86,7 @@ elab "sierra_sound" name:str val:declVal : command => do
         let .some (specName, _) := (sierraSpecs.getState env).find? i
           | throwError "Could not find manual specification for {i}"
         mkForallFVars fvs <| ← mkAppM specName ioArgs
-      let val ← Term.elabTermEnsuringType (Syntax.getArgs val)[1]! type
+      let val ← Term.elabTermEnsuringType val type
       Term.synthesizeSyntheticMVarsNoPostponing
       let val ← instantiateMVars val
       let name : String := "sound_" ++ name.getString
