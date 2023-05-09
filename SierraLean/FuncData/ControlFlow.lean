@@ -12,12 +12,13 @@ def rename (t : SierraType) : FuncData where
                   | [a, ρ] => (rt.insert ρ (rt.find! a)).erase a
                   | _ => panic! "Wrong number of arguments supplied to rename()" -/ } ]
 
+-- Implement as trivial for now (correct if Sierra is in SSA form)
 def drop (t : SierraType) : FuncData where
   inputTypes := [t]
-  branches := [{ outputTypes := []
+  /-branches := [{ outputTypes := []
                  refsChange := fun a rt => match a with
                   | [a] => rt.erase a
-                  | _ => panic! "Wrong number of arguments supplied to drop()" }]
+                  | _ => panic! "Wrong number of arguments supplied to drop()" }] -/
 
 def dup (t : SierraType) : FuncData where
   inputTypes := [t]
