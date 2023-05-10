@@ -52,3 +52,21 @@ sierra_spec "baz" := fun _ ρ => ρ = 5
 sierra_sound "baz" := fun a ρ => by
   rintro ⟨r, rfl, rfl⟩
   rfl
+
+sierra_load_string "type F = felt252;
+  libfunc is_zero = felt252_is_zero;
+  libfunc call = function_call<user@rec>;
+  libfunc drop = drop<felt252>;
+  is_zero([0]) { fallthrough() 2([1]) };
+  return([0]);
+  call([0]) -> ([2]);
+  return([2]);
+  rec@0([0]: F) -> (F);"
+
+sierra_spec "rec" := fun _ ρ => ρ = 0
+
+sierra_sound "rec" := fun a ρ => by
+  rintro ⟨_, r2, (⟨rfl, rfl⟩|⟨_, rfl, rfl⟩)⟩
+    <;> unfold spec_rec
+  · rfl
+  · rfl
