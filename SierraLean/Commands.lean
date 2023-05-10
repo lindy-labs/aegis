@@ -60,11 +60,9 @@ elab "sierra_load_file " s:str : command => do
   | .some "sierra" => sierraLoadString <| ← IO.FS.readFile filePath
   | .some "cairo" =>
     let filePath ← IO.FS.realPath filePath
-    let cairoPath := (cairoPath.getState (← getEnv)).getD "cairo"
     let args : IO.Process.SpawnArgs := 
-      { cmd := "cargo"
-        args := #["run", "--bin", "cairo-compile", "--", "--replace-ids", filePath.toString]
-        cwd := cairoPath }
+      { cmd := "cairo-compile"
+        args := #["--replace-ids", filePath.toString] }
     let child ← IO.Process.output args
     dbg_trace "Compilation stderr: {child.stderr}"
     sierraLoadString child.stdout
