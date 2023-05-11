@@ -42,7 +42,8 @@ def u128_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U128, NonZero U128]
   branches := [{ outputTypes := [RangeCheck, U128, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ_div ρ_mod : Q(UInt128)) =>
-                   q($(a).val = $(b).val * $(ρ_div).val + $(ρ_mod).val) }]
+                   q($(a).val = $(b).val * $(ρ_div).val + $(ρ_mod).val
+                     ∧ $(ρ_mod).val < $(b).val) }]
 
 def u128_to_felt252 : FuncData where
   inputTypes := [U128]
@@ -57,6 +58,17 @@ def u128_is_zero : FuncData where
                { outputTypes := [NonZero U128]
                  condition := fun (a ρ : Q(UInt128)) => q($ρ = $a) }]
 
+def u128_const (n : Q(Int)) : FuncData where
+  inputTypes := []
+  branches := [{ outputTypes := [U128]
+                 condition := fun (ρ : Q(UInt128)) => q($ρ = ($n : F)) }]
+
+def u128_eq : FuncData where
+  inputTypes := [U128, U128]
+  -- TODO double check the order of branches
+  branches := [{ condition := fun (a b : Q(UInt128)) => q($a ≠ $b) },
+               { condition := fun (a b : Q(UInt128)) => q($a = $b) }]
+
 def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_overflowing_add" [] .none      => u128_overflowing_add
 | .name "u128_overflowing_sub" [] .none      => u128_overflowing_sub
@@ -66,4 +78,6 @@ def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_safe_divmod" [] .none          => u128_safe_divmod
 | .name "u128_to_felt252" [] .none           => u128_to_felt252
 | .name "u128_is_zero" [] .none              => u128_is_zero
+| .name "u128_const" [.const n] .none        => u128_const q($n)
+| .name "u128_eq" [] .none                   => u128_eq
 | _                                          => .none
