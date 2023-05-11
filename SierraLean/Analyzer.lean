@@ -45,8 +45,8 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
     match t with
     | .identifier ident => pure <| .Array <| acc.find! ident
     | _ => throw "Expected ARray parameter to refer to a type"
-  | .name n l _ => throw <| "Unhandled " ++ n ++ " " ++ (" ".intercalate <| l.map toString)
-  | .ref _ => throw "Unhandled ref"
+  | .name "U128MulGuarantee" [] .none => pure .U128MulGuarantee
+  | _ => throw s!"Unhandled type {ty}"
 
 def buildFuncSignatures
   (typedefs : HashMap Identifier SierraType)

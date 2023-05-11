@@ -65,6 +65,7 @@ elab "sierra_load_file " s:str : command => do
         args := #["--replace-ids", filePath.toString] }
     let child ← IO.Process.output args
     dbg_trace "Compilation stderr: {child.stderr}"
+    dbg_trace "Compilation stdout: {child.stdout}"
     sierraLoadString child.stdout
   | _ => throwError "Wrong file extension, must be .cairo or .sierra!"
 
