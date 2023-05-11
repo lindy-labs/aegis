@@ -129,7 +129,7 @@ partial def identifierP :=
 partial def parameterP : P Parameter :=
   (.const <$> intP)
   <|> attempt (do discard <| string "ut@"; return .usertype (← identifierP))
-  <|> attempt (do discard <| string "user@"; return .userfunc (← nameP))
+  <|> attempt (do discard <| string "user@"; return .userfunc (← identifierP))
   <|> attempt (do discard <| string "lib@"; return .libfunc (← identifierP))
   <|> attempt (do
     let foo ← between '(' ')' <| sepEndBy' parameterP commaP
