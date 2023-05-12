@@ -24,6 +24,7 @@ inductive SierraType
 | Snapshot (ty : SierraType)
 | Array (ty : SierraType)
 | U128MulGuarantee
+| Pedersen
   deriving Inhabited, Repr
 
 abbrev RefTable := HashMap Nat FVarId
@@ -59,6 +60,7 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .Snapshot t => toQuote t
   | .Array t => q(List $(toQuote t))
   | .U128MulGuarantee => q(Unit) -- We don't store the guarantee in the type
+  | .Pedersen => q(Nat)
 
 notation "⟦" t "⟧" => SierraType.toQuote t
 
