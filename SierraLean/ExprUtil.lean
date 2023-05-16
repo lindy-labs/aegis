@@ -1,4 +1,5 @@
 import Lean.Meta.AppBuilder
+import Mathlib.Lean.Expr.Basic
 import Qq
 
 open Lean Qq Meta
@@ -9,6 +10,8 @@ match xs with
 | x :: xs => ((0 : Fin (length xs + 1)), x) :: xs.enumFin.map fun x => (Fin.succ x.1, x.2)
 
 theorem List.map_of_enumFin (xs : List α) : List.map (·.2) xs.enumFin = xs := sorry
+
+def Lean.Expr.getFVars (e : Expr) : Array FVarId := (Lean.CollectFVars.main e { }).fvarIds
 
 namespace Sierra
 
@@ -86,6 +89,32 @@ def AndOrTree.append (t : AndOrTree) (e : Expr) : AndOrTree :=
   | nil               => cons e []
   | cons e' []        => cons e' [cons e []]
   | cons e' (t :: ts) => cons e' (t.append e :: ts)
+
+/-- Apply a substitution to an `AndOrTree` -/
+def AndOrTree.applySubst (t : AndOrTree) (s : FVarSubst) := t.map s.apply
+
+/-- Contract equalities in an `AndOrTree` which fulfill a given criterion -/
+partial def AndOrTree.contractEqs (t : AndOrTree) (crit : FVarId → Bool)
+    (s : FVarSubst := .empty) (fvs : HashSet FVarId := ∅) : AndOrTree :=
+  match t with
+  | nil => nil
+  | cons e ts =>
+    let e := s.apply e
+    let (e, s) : Expr × FVarSubst := match e.eq? with
+    | .some (_, lhs, rhs) =>
+      if lhs == rhs then (q(True), s) else
+      match lhs.fvarId?, rhs.fvarId? with
+      | .some l, _ =>
+        if crit l && ¬(fvs.contains l) then (q(True), s.insert l <| rhs)
+        else (e, s)
+      | _, some r =>
+        if crit r && ¬(fvs.contains r) then (q(True), s.insert r <| lhs)
+        else (e, s)
+      | _, _ =>
+        (e, s)
+    | .none => (e, s)
+    let fvs := fvs.insertMany e.getFVars
+    cons e <| ts.map <| fun t => t.contractEqs crit s fvs
 
 def OfInputs (R : Type) : List Q(Type) → Type
 | []        => R

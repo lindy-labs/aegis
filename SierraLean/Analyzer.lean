@@ -99,16 +99,18 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     M Expr := do
   let s ← get
   withLCtx s.lctx #[] do
-    let allRefs := s.refs.toList.map (·.2) ++ s.outputRefs
+    let allRefs := HashSet.ofArray <| s.refs.toArray.map (·.2) ++ s.outputRefs
     -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
-    let mut cs := cs.filter (¬ ·.hasAnyFVar (¬ allRefs.contains ·))
-    -- Take the conjunction of all remaining conditions
-    let e := cs.toExpr
-    let refs := s.refs.toList.reverse
+    let cs := cs.filter (¬ ·.hasAnyFVar (¬ allRefs.contains ·))
     -- Partition fvars into input variables and intermediate variables
-    let (inRefs, intRefs) := refs.partition (·.1 ∈ finputs.map (·.1))
+    let refs := s.refs.toList.reverse
+    let (inRefs, intRefs) := (refs.partition (·.1 ∈ finputs.map (·.1)))
+    -- Contract equalities in the tree
+    let cs := cs.contractEqs (Prod.snd <$> intRefs).contains
+    -- Compile the three into a single expression
+    let e := cs.toExpr
     -- Filter out intermediate variables which do not actually appear in the expression
-    --let intRefs := intRefs.filter (e.containsFVar ·.2)  
+    let intRefs := intRefs.filter (e.containsFVar ·.2)  
     -- Existentially close over intermediate references
     let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e
     -- Lambda-close over output references
@@ -151,6 +153,7 @@ partial def processState
       let inOutArgs := st.args ++ (st.branches.get! branchIdx).results
       let fvs := .fvar <$> (← getOrMkNewRefs inOutArgs.reverse (types.map SierraType.toQuote).reverse)
       let c := bd.condition.apply fvs
+      let c ← whnf c
       let s ← get
       let pc' := bi.target.getD <| s.pc + 1  -- Fallthrough is the default
       let refs' := bd.refsChange inOutArgs s.refs

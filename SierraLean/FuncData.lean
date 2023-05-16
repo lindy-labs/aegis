@@ -8,6 +8,7 @@ import SierraLean.FuncData.Box
 import SierraLean.FuncData.Snapshot
 import SierraLean.FuncData.Array
 import SierraLean.FuncData.FunctionCall
+import SierraLean.FuncData.Hash
 
 open Lean Qq
 
@@ -27,3 +28,4 @@ def libfuncs (typeRefs : HashMap Identifier SierraType)
   <|> snapshotLibfuncs typeRefs i
   <|> arrayLibfuncs typeRefs i
   <|> functionCallLibfuncs specs i
+  <|> hashLibfuncs i
