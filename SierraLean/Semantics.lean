@@ -51,8 +51,11 @@ def step_ok (imem : IMem)
   (pc' : Fin imem.N) (σ' : DMem) :=
   imem.inst pc σ = .Ok pc' σ'
 
-def Trace.isOk {imem : IMem} (trace : Trace imem) :=
-  ∀ N, ∃ pc : Fin imem.N, ∃ σ : DMem, trace.seq N = .Ok pc σ
+def step_noerr (imem : IMem) (pc : Fin imem.N) (σ : DMem) :=
+  imem.inst pc σ ≠ .Error
+
+--def Trace.isOk {imem : IMem} (trace : Trace imem) :=
+--  ∀ N, ∃ pc : Fin imem.N, ∃ σ : DMem, trace.seq N = .Ok pc σ
 
 def Trace.isError {imem : IMem} (trace : Trace imem) :=
   ∃ N, trace.seq N = .Error
@@ -61,6 +64,15 @@ def Trace.isInfinite {imem : IMem} (trace : Trace imem) :=
   ∀ n, match trace.seq n with
     | .Ok _ _ => True
     | _ => False
+
+def Trace.converges {imem : IMem} (trace : Trace imem) :=
+  ∃ n, ∃ σ, trace.seq n = .End σ
+
+theorem Trace.step_ok (imem : IMem) (τ : Trace imem)
+  {pc : Fin imem.N} {σ : DMem}
+  (h₁ : τ.seq n = .Ok pc σ)
+  : τ.seq (n+1) = imem.inst pc σ := by
+  rw [τ.compat n, h₁]
 
 def Trace.isFrom {imem : IMem} (trace : Trace imem)
   (pc : Fin imem.N) (σ : DMem) :=
@@ -72,12 +84,12 @@ def safeFrom (imem : IMem) (pc : Fin imem.N) (σ : DMem) :=
 def convergeFrom (imem : IMem) (pc : Fin imem.N) (σ : DMem) :=
   ∀ trace : Trace imem, trace.isFrom pc σ → ¬ trace.isInfinite
 
-theorem Trace.isOk_of_safeFrom_and_convergeFrom
+/-theorem Trace.isOk_of_safeFrom_and_convergeFrom
   (imem : IMem) (pc : Fin imem.N) (σ : DMem)
   (h₁ : safeFrom imem pc σ)
   (h₂ : convergeFrom imem pc σ) :
   ∀ trace : Trace imem, trace.isFrom pc σ → trace.isOk := by
-  sorry
+  sorry-/
 
 def exceptError (N : ℕ) : Option (Fin N × DMem) → StepResult N
   | .some (pc, σ) => .Ok pc σ
@@ -176,8 +188,6 @@ theorem toChecked_val
       expectType_val n τ v σ p, bind]
     apply ih
 
-#print cast
-
 theorem t
   {α β : Type}
   {x : α}
@@ -202,21 +212,6 @@ theorem toChecked_val'
   rw [h']
 
 end
-
-def boolAnd_signature : List SierraType := 
-  [ .SierraBool, .SierraBool, .SierraBool ]
-
-def boolAnd_cond : sig boolAnd_signature :=
-  fun (a b ρ : Bool) => ρ == (a && b)
-
-def boolAnd_semantics' : uncurried CheckT boolAnd_signature.length :=
-  toChecked boolAnd_signature boolAnd_cond
-
-def jmp_semantics (N : ℕ) (offset : ℕ) (pc : Fin N) (σ : DMem) : StepResult N :=
-  if p : pc + offset < N then
-    .Ok ⟨ pc + offset, p ⟩ σ
-  else
-    .Error
 
 def simple_check (N : ℕ) (s : List SierraType) (f : sig s) :
   uncurried (InstT N) s.length := fun x pc σ => exceptError N do
@@ -278,16 +273,13 @@ theorem simple_check_cond
   simp [p] at h''
   rfl
 
-def simple_semantics {N : ℕ} {σ : List SierraType} :
-  sig σ → curried (InstT N) σ.length :=
-  fun f => currifyParams <| simple_check N σ f
+structure SimpleSpec where
+  signature : List SierraType
+  cond : sig signature
 
-def std_interp (stmts : List Instruction) : IMem where
-  N := stmts.length
-  inst pc σ := match stmts.get pc with
-    | .BoolAnd a b ρ =>
-      simple_semantics boolAnd_cond a b ρ pc σ
-    | _ => .Error
+def simple_semantics {N : ℕ} (s : SimpleSpec)
+  : curried (InstT N) s.signature.length :=
+  currifyParams <| simple_check N s.signature s.cond
 
 theorem incrPc_change
   (N : ℕ)
@@ -305,80 +297,164 @@ theorem incrPc_change
     simp [p] at h
 
 theorem simple_check_no_state_change
-  (N : ℕ)
-  (pc : Fin N)
-  (σ : DMem)
-  (pc' : Fin N)
-  (σ' : DMem)
-  (s : List SierraType)
-  (f : sig s)
-  (x : Params s.length)
-  (h : simple_check N s f x pc σ = .Ok pc' σ' ) :
-  (pc : ℕ) + 1 = pc' ∧ σ = σ' := by
+  {N : ℕ}
+  {pc : Fin N}
+  {σ : DMem}
+  {s : List SierraType}
+  {f : sig s}
+  {x : Params s.length}
+  (h : simple_check N s f x pc σ ≠ .Error) :
+  ∃ (p : pc + 1 < N), simple_check N s f x pc σ
+    = .Ok (⟨ pc + 1, p ⟩) σ := by
   simp [simple_check, exceptError] at h
+  rw [simple_check, exceptError]
   match p : (do
     toChecked s f x σ
     incrPc N pc σ) with
   | none =>
     simp [p] at h
   | some (pc'', σ'') =>
-    simp [p] at h
+    simp only [p]
     simp [bind] at p
-    rw [h.1, h.2] at p
     simp [incrPc] at p
     by_cases q : pc + 1 < N
       <;> simp [q] at p
-    exact And.intro (Fin.noConfusion p.2.1 id) p.2.2
+    apply Exists.intro q
+    rw [← p.2.1, ← p.2.2]
 
-theorem eq₀ 
+theorem simple_check_noerr_state {imem : IMem} (τ : Trace imem)
+  (h : ¬ τ.isError)
+  {n : ℕ}
+  {pc : Fin imem.N}
+  {σ : DMem}
+  {s : List SierraType}
+  {f : sig s}
+  {x : Params s.length}
+  (h' : τ.seq n = simple_check imem.N s f x pc σ)
+  : ∃ (p : pc + 1 < imem.N), simple_check imem.N s f x pc σ
+    = .Ok (⟨ pc + 1, p ⟩) σ := by
+  apply simple_check_no_state_change
+  intro h''
+  apply h
+  apply Exists.intro n
+  rw [h']
+  exact h''
+
+theorem step_simple_check
+  -- a valid trace
+  (imem : IMem)
+  (τ : Trace imem)
+  (h : ¬ τ.isError)
+  {n : ℕ}
+  -- of which we know one state
+  {pc : Fin imem.N}
+  {σ : DMem}
+  (h' : τ.seq n = .Ok pc σ)
+  -- and that steps by a `simple_check`
+  {s : List SierraType}
+  {f : sig s}
+  {x : Params s.length}
+  (h'' : imem.inst pc σ = simple_check imem.N s f x pc σ)
+  -- and we know more about that step
+  (l : List (Σ n : ℕ, Σ τ : SierraType, Σ v : ⟦ τ ⟧, PLift (σ n = some ⟨ τ, v ⟩)))
+  (h₁ : s = l.map fun x => x.2.1)
+  (h₂ : x = (show (l.map fun x => x.2.1).length = s.length from h₁ ▸ rfl) ▸ listToParams σ l)
+  : -- We know the next state (pc+1; no memory change)
+    (∃ (p : pc + 1 < imem.N), τ.seq (n+1) = .Ok ⟨ pc + 1, p ⟩ σ)
+    -- And we know the check is respected
+    ∧ app σ l (h₁ ▸ f) = true := by
+  have r := Trace.step_ok _ τ h'
+  rw [h''] at r
+  have p' := simple_check_noerr_state τ h r
+  rw [r]
+  apply And.intro (r ▸ p')
+  apply simple_check_cond imem.N pc σ _ _ s f _ l h₁ h₂ p'.2
+
+/-
+# Now we specify our language
+-/
+
+def boolAnd_spec : SimpleSpec where
+  signature := [ .SierraBool, .SierraBool, .SierraBool ]
+  cond := fun (a b ρ : Bool) => ρ == (a && b)
+
+def jmp_semantics (N : ℕ) (offset : ℕ) (pc : Fin N) (σ : DMem) : StepResult N :=
+  if p : pc + offset < N then
+    .Ok ⟨ pc + offset, p ⟩ σ
+  else
+    .Error
+
+def std_interp (stmts : List Instruction) : IMem where
+  N := stmts.length
+  inst pc σ := match stmts.get pc with
+    | .BoolAnd a b ρ =>
+      simple_semantics boolAnd_spec a b ρ pc σ
+    | _ => .Error
+
+section
+
+/- The theorems in this section should be automatically generated.
+  They derive just from `SimpleSpec`s. -/
+
+theorem interp_boolAnd_lemma₁
   (stmts : List Instruction)
   (pc : Fin stmts.length)
   (σ : DMem)
   (a b ρ : ℕ) :
-  simple_semantics boolAnd_cond a b ρ pc σ =
-    simple_check stmts.length _ boolAnd_cond
+  simple_semantics boolAnd_spec a b ρ pc σ =
+    simple_check stmts.length _ boolAnd_spec.cond
       (.cons a <| .cons b <| .cons ρ <| .nil)
       pc σ := by
   rfl
 
-theorem interp_boolAnd
-  (stmts : List Instruction)
-  (pc : Fin stmts.length)
+theorem interp_boolAnd_lemma₂
+  {stmts : List Instruction}
+  {pc : Fin stmts.length}
+  {a b ρ : ℕ}
+  (h : stmts.get pc = .BoolAnd a b ρ)
   (σ : DMem)
-  (a b ρ : ℕ)
-  (h : stmts.get pc = .BoolAnd a b ρ) :
-  (std_interp stmts).inst pc σ =
-    simple_semantics boolAnd_cond a b ρ pc σ := by
+  : (std_interp stmts).inst pc σ =
+    simple_semantics boolAnd_spec a b ρ pc σ := by
   simp only [std_interp, h]
 
-theorem app_boolAnd_cond
-  (σ : DMem)
-  (a b ρ : ℕ)
-  (a' b' ρ' : Bool)
-  (h₁ : σ a = some ⟨ .SierraBool, a' ⟩)
-  (h₂ : σ b = some ⟨ .SierraBool, b' ⟩)
-  (h₃ : σ ρ = some ⟨ .SierraBool, ρ' ⟩) :
-  app σ [ ⟨ _, _, _, ⟨ h₁ ⟩ ⟩, ⟨ _, _, _, ⟨ h₂ ⟩ ⟩, ⟨ _, _, _, ⟨ h₃ ⟩ ⟩ ] boolAnd_cond =
-    boolAnd_cond a' b' ρ' := rfl
-
-example
-  (stmts : List Instruction)
-  (pc : Fin stmts.length)
-  (σ : DMem)
-  (pc' : Fin stmts.length)
-  (σ' : DMem)
-  (a b ρ : ℕ)
+theorem interp_boolAnd
+  {stmts : List Instruction}
+  {pc : Fin stmts.length}
+  {a b ρ : ℕ}
   (h : stmts.get pc = .BoolAnd a b ρ)
-  (h' : step_ok (std_interp stmts) pc σ pc' σ')
-  (a' b' ρ' : Bool)
+  (σ : DMem)
+  : (std_interp stmts).inst pc σ =
+    simple_check stmts.length _ boolAnd_spec.cond
+      (.cons a <| .cons b <| .cons ρ <| .nil)
+      pc σ := by
+  rw [interp_boolAnd_lemma₂ h σ, interp_boolAnd_lemma₁]
+
+end
+
+theorem step_boolAnd
+  -- a valid trace
+  (stmts : List Instruction)
+  (τ : Trace (std_interp stmts))
+  (h : ¬ τ.isError)
+  -- of which we know one state
+  {n : ℕ}
+  {pc : Fin stmts.length}
+  {σ : DMem}
+  (h' : τ.seq n = .Ok pc σ)
+  -- and that steps by `boolAnd`
+  {a b ρ : ℕ}
+  (h'' : stmts.get pc = .BoolAnd a b ρ)
+  {a' b' ρ' : Bool}
   (h₁ : σ a = some ⟨ .SierraBool, a' ⟩)
   (h₂ : σ b = some ⟨ .SierraBool, b' ⟩)
-  (h₃ : σ ρ = some ⟨ .SierraBool, ρ' ⟩) : ρ' == (a' && b') := by
-  simp only [step_ok, interp_boolAnd stmts pc σ a b ρ h, eq₀] at h'
-  let l : List (Σ n : ℕ, Σ τ : SierraType, Σ v : ⟦ τ ⟧, PLift (σ n = some ⟨ τ, v ⟩)) :=
-    [ ⟨ _, _, _, ⟨ h₁ ⟩ ⟩, ⟨ _, _, _, ⟨ h₂ ⟩ ⟩, ⟨ _, _, _, ⟨ h₃ ⟩ ⟩ ]
-  have r := simple_check_cond stmts.length pc σ pc' σ' boolAnd_signature boolAnd_cond _ l rfl rfl h'
-  rw [app_boolAnd_cond] at r
-  cases q : boolAnd_cond a' b' ρ'
-  simp [q] at r
-  exact q
+  (h₃ : σ ρ = some ⟨ .SierraBool, ρ' ⟩)
+  : -- We know the next state (pc+1; no change in memory)
+    (∃ (p : pc + 1 < stmts.length), τ.seq (n+1) = .Ok ⟨ pc + 1, p ⟩ σ)
+    -- The state respects boolAnd
+    ∧ ρ' == (a' && b') :=
+  step_simple_check (std_interp stmts) τ h h'
+    (interp_boolAnd h'' σ)
+    [ ⟨ _, _, _, ⟨ h₁ ⟩ ⟩
+    , ⟨ _, _, _, ⟨ h₂ ⟩ ⟩
+    , ⟨ _, _, _, ⟨ h₃ ⟩ ⟩ ]
+    rfl rfl
