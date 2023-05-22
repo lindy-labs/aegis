@@ -109,6 +109,8 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     -- Partition fvars into input variables and intermediate variables
     let refs := s.refs.toList.reverse
     let (inRefs, intRefs) := (refs.partition (·.1 ∈ finputs.map (·.1)))
+    -- Normalize conjunctions and disjunctions in the tree
+    let cs := cs.normalize
     -- Contract equalities in the tree
     let cs := cs.contractEqs (Prod.snd <$> intRefs).contains
     -- Compile the three into a single expression

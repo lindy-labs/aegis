@@ -13,6 +13,8 @@ theorem List.map_of_enumFin (xs : List α) : List.map (·.2) xs.enumFin = xs := 
 
 def Lean.Expr.getFVars (e : Expr) : Array FVarId := (Lean.CollectFVars.main e { }).fvarIds
 
+def Lean.Expr.or? (p : Expr) := p.app2? ``And
+
 namespace Sierra
 
 def Expr.mkAnds : List Expr → Expr
@@ -92,6 +94,24 @@ def AndOrTree.append (t : AndOrTree) (e : Expr) : AndOrTree :=
 
 /-- Apply a substitution to an `AndOrTree` -/
 def AndOrTree.applySubst (t : AndOrTree) (s : FVarSubst) := t.map s.apply
+
+/-- Splits conjunctions apperaing in nodes -/
+partial def AndOrTree.normalize (t : AndOrTree) : AndOrTree :=
+  match t with
+  | nil => nil
+  | cons e ts =>
+    match e.and? with
+    | .some (l, r) => normalize <| .cons l [.cons r ts]
+    | .none => .cons e (normalize <$> ts)
+      /-match ts with
+      | [] => .cons e []
+      | t :: ts =>
+        match t with
+        | nil => .cons e (nil :: normalize <$> ts)
+        | cons e' ts' =>
+          match e'.or? with
+          | .some (l, r) => normalize <| .cons e (.cons l ts' :: .cons r ts' :: ts)
+          | .none => .cons e (normalize <$> (t :: ts))-/
 
 /-- Contract equalities in an `AndOrTree` which fulfill a given criterion -/
 partial def AndOrTree.contractEqs (t : AndOrTree) (crit : FVarId → Bool)
