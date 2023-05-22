@@ -3,7 +3,9 @@ import Mathlib.Data.ZMod.Basic
 
 open Qq Sierra.SierraType
 
-namespace Sierra.FuncData
+namespace Sierra
+
+namespace FuncData
 
 def pedersen : FuncData where
   inputTypes := [Pedersen, Felt252, Felt252]

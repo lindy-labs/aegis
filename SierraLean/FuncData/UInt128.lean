@@ -3,9 +3,7 @@ import Mathlib.Data.ZMod.Basic
 
 open Qq Sierra.SierraType
 
-namespace Sierra
-
-namespace FuncData
+namespace Sierra.FuncData
 
 def u128_overflowing_add : FuncData where
   inputTypes := [U128, U128]

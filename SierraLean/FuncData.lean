@@ -1,5 +1,6 @@
 import SierraLean.FuncData.ControlFlow
 import SierraLean.FuncData.Felt252
+import SierraLean.FuncData.UInt8
 import SierraLean.FuncData.UInt128
 import SierraLean.FuncData.Bool
 import SierraLean.FuncData.Enum
@@ -9,6 +10,8 @@ import SierraLean.FuncData.Snapshot
 import SierraLean.FuncData.Array
 import SierraLean.FuncData.FunctionCall
 import SierraLean.FuncData.Hash
+import SierraLean.FuncData.BuiltinCosts
+import SierraLean.FuncData.GasBuiltin
 
 open Lean Qq
 
@@ -20,6 +23,7 @@ def libfuncs (typeRefs : HashMap Identifier SierraType)
     Option FuncData :=
   controlFlowLibfuncs typeRefs i
   <|> felt252Libfuncs i
+  <|> uint8Libfuncs i
   <|> uint128Libfuncs i
   <|> boolLibfuncs i
   <|> enumLibfuncs typeRefs i
@@ -29,3 +33,5 @@ def libfuncs (typeRefs : HashMap Identifier SierraType)
   <|> arrayLibfuncs typeRefs i
   <|> functionCallLibfuncs specs i
   <|> hashLibfuncs i
+  <|> builtinCostsLibfuncs i
+  <|> gasBuiltinLibfuncs i
