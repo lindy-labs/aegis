@@ -6,14 +6,24 @@ open Qq Sierra.SierraType
 namespace Sierra.FuncData
 
 def u128_overflowing_add : FuncData where
-  inputTypes := [U128, U128]
-  branches := [{ outputTypes := [U128]
-                 condition := fun (a b ρ : Q(UInt128)) => q($ρ = $a + $b) }]
+  inputTypes := [RangeCheck, U128, U128]
+  branches := [{ outputTypes := [RangeCheck, U128]
+                 condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) => 
+                   q(($a).val + ($b).val < 2^128 ∧ $ρ = $a + $b) },
+               -- TODO check branch order
+               { outputTypes := [RangeCheck, U128]
+                 condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
+                   q(($a).val + ($b).val ≥ 2^128 ∧ $ρ = $a + $b) }]
 
 def u128_overflowing_sub : FuncData where
-  inputTypes := [U128, U128]
-  branches := [{ outputTypes := [U128]
-                 condition := fun (a b ρ : Q(UInt128)) => q($ρ = $a - $b) }]
+  inputTypes := [RangeCheck, U128, U128]
+  branches := [{ outputTypes := [RangeCheck, U128]
+                 condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) => 
+                   q(($a).val ≥ ($b).val ∧ $ρ = $a - $b) },
+               -- TODO check branch order
+               { outputTypes := [RangeCheck, U128]
+                 condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
+                   q(($a).val < ($b).val ∧ $ρ = $a - $b) }]
 
 def u128_guarantee_mul : FuncData where
   inputTypes := [U128, U128]
