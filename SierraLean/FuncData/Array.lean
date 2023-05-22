@@ -12,7 +12,8 @@ def array_new (t : SierraType) : FuncData where
 def array_append (t : SierraType) : FuncData where
   inputTypes := [.Array t, t]
   branches := [{ outputTypes := [.Array t]
-                 condition := fun (a b ρ : Q(List $t.toQuote)) => q($ρ = $a ++ $b) }]
+                 condition := fun (a : Q(List $t.toQuote)) (b : Q($t.toQuote)) 
+                   (ρ : Q(List $t.toQuote)) => q($ρ = $a ++ [$b]) }]
 
 def array_pop_front (t : SierraType) : FuncData where
   inputTypes := [.Array t]
