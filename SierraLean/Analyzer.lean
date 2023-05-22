@@ -16,6 +16,8 @@ def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
 where go (acc : _) (ty : Identifier) : Except String SierraType :=
   match ty with
   | .name "felt252" [] .none => pure .Felt252
+  | .name "u8" [] .none => pure .U8
+  | .name "u16" [] .none => pure .U16
   | .name "u32" [] .none => pure .U32
   | .name "u64" [] .none => pure .U64
   | .name "u128" [] .none => pure .U128
@@ -47,6 +49,8 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
     | _ => throw "Expected ARray parameter to refer to a type"
   | .name "U128MulGuarantee" [] .none => pure .U128MulGuarantee
   | .name "Pedersen" [] .none => pure .Pedersen
+  | .name "BuiltinCosts" [] .none => pure .BuiltinCosts
+  | .name "GasBuiltin" [] .none => pure .GasBuiltin
   | _ => throw s!"Unhandled type {ty}"
 
 def buildFuncSignatures

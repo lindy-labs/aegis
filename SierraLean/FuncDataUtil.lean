@@ -10,6 +10,8 @@ def Addr := Nat
 
 inductive SierraType
 | Felt252
+| U8
+| U16
 | U32
 | U64
 | U128
@@ -25,6 +27,8 @@ inductive SierraType
 | Array (ty : SierraType)
 | U128MulGuarantee
 | Pedersen
+| BuiltinCosts
+| GasBuiltin
   deriving Inhabited, Repr
 
 abbrev RefTable := HashMap Nat FVarId
@@ -35,6 +39,8 @@ def PRIME := 3618502788666131213697322783095070105623107215331596699973092056135
 
 abbrev F := ZMod PRIME
 
+abbrev UInt8 := ZMod <| 2^8
+abbrev UInt16 := ZMod <| 2^16
 abbrev UInt32 := ZMod <| 2^32
 abbrev UInt64 := ZMod <| 2^64
 abbrev UInt128 := ZMod <| 2^128
@@ -42,6 +48,8 @@ abbrev UInt256 := ZMod <| 2^256
 
 partial def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
+  | .U8 => q(UInt8)
+  | .U16 => q(UInt16)
   | .U32 => q(UInt32)
   | .U64 => q(UInt64)
   | .U128 => q(UInt128)
@@ -61,6 +69,8 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .Array t => q(List $(toQuote t))
   | .U128MulGuarantee => q(Unit) -- We don't store the guarantee in the type
   | .Pedersen => q(Nat)
+  | .BuiltinCosts => q(Unit)
+  | .GasBuiltin => q(Unit)
 
 notation "⟦" t "⟧" => SierraType.toQuote t
 
