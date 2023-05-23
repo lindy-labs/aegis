@@ -77,7 +77,9 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
   | .error err => throwError err
   let val ← liftMacroM <| declValToTerm val 
   match Megaparsec.Parsec.parse identifierP name.getString with
-  | .ok i =>  
+  | .ok i =>
+    if (sierraSpecs.getState env).contains i then
+      throwError "A specification has already been given"
     withRef val do
       liftTermElabM do 
         let type ← getSpecTypeOfName sf i
