@@ -69,8 +69,8 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .Array t => q(List $(toQuote t))
   | .U128MulGuarantee => q(Unit) -- We don't store the guarantee in the type
   | .Pedersen => q(Nat)
-  | .BuiltinCosts => q(Unit)
-  | .GasBuiltin => q(Unit)
+  | .BuiltinCosts => q(Nat) -- TODO check whether we should run cairo to obtain the actual builtin costs
+  | .GasBuiltin => q(Nat)
 
 notation "⟦" t "⟧" => SierraType.toQuote t
 
