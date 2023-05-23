@@ -101,7 +101,7 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
                                       value := val
                                       hints := default
                                       safety := default }
-        withFindByIdentifier sf i fun _ _ inputArgs outputTypes =>
+        withFindByIdentifier sf i fun _ inputArgs outputTypes =>
           -- Generate the `FuncData`
           let fd := funcDataFromCondition typeDefs inputArgs outputTypes val
           -- Add the spec to the cache

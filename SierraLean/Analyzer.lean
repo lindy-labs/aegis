@@ -129,7 +129,7 @@ partial def processState
   (funcSigs : HashMap Identifier FuncData)
   (f : SierraFile)
   (finputs : List (Nat × Identifier))
-  (gas : ℕ := 25) : M (Statement × AndOrTree) := do
+  (gas : ℕ := 2500) : M (Statement × AndOrTree) := do
   let st := f.statements.get! (← get).pc
   if gas = 0 then return (st, .nil)
   match st.libfunc_id with
@@ -157,8 +157,7 @@ partial def processState
       let types := fd.inputTypes ++ bd.outputTypes
       let inOutArgs := st.args ++ (st.branches.get! branchIdx).results
       let fvs := .fvar <$> (← getOrMkNewRefs inOutArgs.reverse (types.map SierraType.toQuote).reverse)
-      let c := bd.condition.apply fvs
-      let c ← whnf c
+      let c := headBeta <| bd.condition.apply fvs  -- Apply fvars to condition and beta reduce
       let s ← get
       let pc' := bi.target.getD <| s.pc + 1  -- Fallthrough is the default
       let refs' := bd.refsChange inOutArgs s.refs
@@ -175,10 +174,10 @@ variable (sf : SierraFile) {n: Type → Type _} [MonadControlT MetaM n] [Monad n
 
 /-- Perform an action after finding a declaration in the file by its identifier. -/
 def withFindByIdentifier (ident : Identifier)
-    (k : (idx : ℕ) → (pc : ℕ) → List (ℕ × Identifier) → List Identifier → n α) : n α := do
-  match (sf.declarations.enum.filter (·.2.1 == ident)) with
+    (k : (pc : ℕ) → List (ℕ × Identifier) → List Identifier → n α) : n α := do
+  match (sf.declarations.filter (·.1 == ident)) with
   | [] => throwError "No function with matching identifier found in Sierra file"
-  | [(idx, ⟨_, pc, inputArgs, outputTypes⟩)] => k idx pc inputArgs outputTypes
+  | [⟨_, pc, inputArgs, outputTypes⟩] => k pc inputArgs outputTypes
   | _ => throwError "Ambiguous identifier, please edit Sierra file to make them unique"
 
 def funcDataFromCondition (typeDefs : HashMap Identifier SierraType) 
@@ -232,9 +231,9 @@ def getSpecsType (inputArgs : List (ℕ × Identifier)) (outputTypes : List Iden
   return OfInputsQ q(Prop) (inputs ++ outputs)
 
 def getSpecTypeOfName (ident : Identifier) : MetaM Q(Type) :=
-  withFindByIdentifier sf ident fun _ _ => getSpecsType sf
+  withFindByIdentifier sf ident fun _ => getSpecsType sf
 
-def getLocalDeclInfos (idx pc : ℕ) (inputArgs : List (ℕ × Identifier))
+def getLocalDeclInfos (pc : ℕ) (inputArgs : List (ℕ × Identifier))
     (outputTypes : List Identifier)
      : MetaM (Array (Name × (Array Expr → n Expr))) := do
   let typeDefs ← match buildTypeDefs sf.typedefs with
