@@ -1,0 +1,15 @@
+name: Build
+run-name: Building sierra-lean
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install elan
+        run: curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh
+      - name: Download mathlib4 cache
+        run: lake exe cache get
+      - name: Build the framework
+        run: lake build
