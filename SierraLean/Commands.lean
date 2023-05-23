@@ -19,7 +19,8 @@ private def declValToTerm (declVal : Syntax) : MacroM Syntax := withRef declVal 
   else
     Macro.throwErrorAt declVal "unexpected declaration body"
 
-/- Initialize environment extensions holding cairo path, sierra file and specs -/
+/- Initialize environment extensions holding cairo path, sierra file, specs, and soudness
+proofs. -/
 
 initialize cairoPath : SimplePersistentEnvExtension System.FilePath (Option System.FilePath) ←
   registerSimplePersistentEnvExtension {
@@ -30,11 +31,18 @@ initialize cairoPath : SimplePersistentEnvExtension System.FilePath (Option Syst
 initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun _ sf => sf
-    addImportedFn := fun _ => default -- Load the empty Sierra file by default
+    addImportedFn := fun _ => default  -- Load the empty Sierra file by default
   }
 
 initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × FuncData)
     (HashMap Identifier (Name × FuncData)) ←
+  registerSimplePersistentEnvExtension {
+    addEntryFn := fun specs (i, n) => specs.insert i n
+    addImportedFn := (HashMap.ofList ·.join.toList)
+  }
+
+initialize sierraSoundness : SimplePersistentEnvExtension (Identifier × Name)
+    (HashMap Identifier Name) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun specs (i, n) => specs.insert i n
     addImportedFn := (HashMap.ofList ·.join.toList)
@@ -97,7 +105,7 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
           -- Generate the `FuncData`
           let fd := funcDataFromCondition typeDefs inputArgs outputTypes val
           -- Add the spec to the cache
-          modifyEnv fun env => sierraSpecs.addEntry env (i, name, fd)
+          modifyEnv (sierraSpecs.addEntry · (i, name, fd))
   | .error str => throwError toString str
 
 elab "sierra_sound" name:str val:declVal : command => do
@@ -125,4 +133,14 @@ elab "sierra_sound" name:str val:declVal : command => do
                                 value := val
                                 hints := default
                                 safety := default }
+        modifyEnv (sierraSoundness.addEntry · (i, name))
   | .error str => throwError toString str
+
+elab "sierra_complete" : command => do
+  let env ← getEnv
+  let sf := loadedSierraFile.getState env
+  let mut missingDecls : Array Identifier := #[]
+  for (i, _) in sf.declarations do
+    unless (sierraSoundness.getState env).contains i do missingDecls := missingDecls.push i
+  unless missingDecls.size = 0 do throwError
+    "Soundness proof not provided for the following declarations: {missingDecls}"

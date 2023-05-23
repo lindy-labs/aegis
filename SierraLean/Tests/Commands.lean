@@ -55,3 +55,5 @@ sierra_load_string "type F = felt252;
 sierra_spec "rec" := fun _ ρ => ρ = 0
 
 sierra_sound "rec" := fun a ρ => by rintro (⟨rfl, rfl⟩|⟨_, rfl⟩) <;> rfl
+
+sierra_complete
