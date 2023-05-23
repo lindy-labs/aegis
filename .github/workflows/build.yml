@@ -7,11 +7,11 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      - name: Install elan
-        run: curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
-      - name: Install current toolchain
-        run: elan update
+      - name: Get the only thing that usually is reliable in CI
+        uses: cachix/install-nix-action@v20
+      with:
+        nix_path: nixpkgs=channel:nixos-23.05
       - name: Download mathlib4 cache
-        run: lake exe cache get
+        run: nix-shell -p elan --run "lake exe cache get"
       - name: Build the framework
-        run: lake build
+        run: nix-shell -p elan --run "lake build"
