@@ -56,9 +56,8 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
 def buildFuncSignatures
   (typedefs : HashMap Identifier SierraType)
   (funcdefs : List (Identifier × Identifier))
-  (specs : HashMap Identifier (Name × FuncData))
-  (userfuncs : HashMap Identifier FuncData) : HashMap Identifier FuncData := Id.run do
-  let mut acc := userfuncs
+  (specs : HashMap Identifier (Name × FuncData)) : HashMap Identifier FuncData := Id.run do
+  let mut acc := ∅
   for (name, sig) in funcdefs do
     match FuncData.libfuncs typedefs specs sig with
     | some sig => acc := acc.insert name sig
@@ -191,18 +190,13 @@ def funcDataFromCondition (typeDefs : HashMap Identifier SierraType)
 
 variable (specs : HashMap Identifier (Name × FuncData))
 
-partial def getFuncCondition (idx pc : ℕ) (inputArgs : List (ℕ × Identifier))
+partial def getFuncCondition (pc : ℕ) (inputArgs : List (ℕ × Identifier))
     (outputTypes : List Identifier) : MetaM Expr := do
   let typeDefs ← match buildTypeDefs sf.typedefs with
     | .ok x => pure x
     | .error err => throwError err
-  -- Build FuncData for user funcs mentioned before the current `idx`
-  let mut userfuncs := ∅
-  for (idx', ⟨i', pc', inputArgs', outputTypes'⟩) in sf.declarations.enum.take idx do
-    let cond' ← getFuncCondition idx' pc' inputArgs' outputTypes'
-    userfuncs := userfuncs.insert i' <| funcDataFromCondition typeDefs inputArgs' outputTypes' cond'
   -- Build the function signatures for the declared libfuncs
-  let funcSigs := buildFuncSignatures typeDefs sf.libfuncs specs userfuncs
+  let funcSigs := buildFuncSignatures typeDefs sf.libfuncs specs
   let mut lctx : LocalContext := .empty
   let mut outputRefs : Array FVarId := #[]
   for t in outputTypes do
@@ -254,7 +248,7 @@ def getLocalDeclInfos (idx pc : ℕ) (inputArgs : List (ℕ × Identifier))
     let n ← mkFreshUserName `ρ  -- TODO make anonymous?
     ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote <| typeDefs.find! t
   let n ← mkFreshUserName `h_auto
-  let e ← getFuncCondition sf specs idx pc inputArgs outputTypes
+  let e ← getFuncCondition sf specs pc inputArgs outputTypes
   ret := ret.push <| .mk n fun h_args => pure <| mkAppN e h_args
   return ret
 
@@ -267,7 +261,7 @@ def analyzeFile (s : String) (idx : ℕ := 0) : MetaM Format := do
   match parseGrammar s with
   | .ok sf =>
     let ⟨_, pc, inputArgs, outputTypes⟩ := sf.declarations.get! idx
-    let e ← getFuncCondition sf ∅ idx pc inputArgs outputTypes
+    let e ← getFuncCondition sf ∅ pc inputArgs outputTypes
     let esType ← inferType e
     return (← ppExpr e) ++ "\n Inferred Type:" ++ (← ppExpr esType)
     --return toString es.2.refs
