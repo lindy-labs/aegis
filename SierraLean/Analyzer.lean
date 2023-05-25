@@ -56,10 +56,12 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
 def buildFuncSignatures
   (typedefs : HashMap Identifier SierraType)
   (funcdefs : List (Identifier × Identifier))
-  (specs : HashMap Identifier (Name × FuncData)) : HashMap Identifier FuncData := Id.run do
+  (specs : HashMap Identifier (Name × (FVarId → FuncData)))
+  (metadataRef : FVarId) :
+  HashMap Identifier FuncData := Id.run do
   let mut acc := ∅
   for (name, sig) in funcdefs do
-    match FuncData.libfuncs typedefs specs sig with
+    match FuncData.libfuncs typedefs specs metadataRef sig with
     | some sig => acc := acc.insert name sig
     | none => () --throw <| toString name ++ " : no such libfunc"
   return acc
@@ -70,6 +72,7 @@ structure State where
   (lctx : LocalContext := .empty)
   (outputRefs : List FVarId)
   (outputTypes : List Identifier)
+  (metadataRef : FVarId)
   deriving Inhabited
 
 abbrev M := StateT State MetaM
@@ -122,6 +125,8 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     let e ← mkLambdaFVars (s.outputRefs.map .fvar).toArray e
     -- Lambda-close over input references
     let e ← mkLambdaFVars (inRefs.map (.fvar ·.2)).toArray e
+    -- Lambda-close over metadata reference
+    let e ← mkLambdaFVars #[.fvar s.metadataRef] e
     return e
 
 partial def processState
@@ -182,33 +187,41 @@ def withFindByIdentifier (ident : Identifier)
 
 def funcDataFromCondition (typeDefs : HashMap Identifier SierraType) 
     (inputArgs : List (ℕ × Identifier))
-    (outputTypes : List Identifier) (cond : Expr) : FuncData :=
+    (outputTypes : List Identifier)
+    (cond : Expr)
+    (metadataRef : FVarId) : FuncData :=
+  let cond := cond.beta #[.fvar metadataRef]
   { inputTypes := inputArgs.map fun (_, i) => typeDefs.find! i
     branches := [{ outputTypes := outputTypes.map typeDefs.find!
-                   condition := OfInputs.abstract fun ios => mkAppN cond ios.toArray }] }
+                   condition := OfInputs.abstract fun ios =>
+                     mkAppN cond ios.toArray }] }
 
-variable (specs : HashMap Identifier (Name × FuncData))
+variable (specs : HashMap Identifier (Name × (FVarId → FuncData)))
 
 partial def getFuncCondition (pc : ℕ) (inputArgs : List (ℕ × Identifier))
     (outputTypes : List Identifier) : MetaM Expr := do
   let typeDefs ← match buildTypeDefs sf.typedefs with
     | .ok x => pure x
     | .error err => throwError err
-  -- Build the function signatures for the declared libfuncs
-  let funcSigs := buildFuncSignatures typeDefs sf.libfuncs specs
   let mut lctx : LocalContext := .empty
   let mut outputRefs : Array FVarId := #[]
   for t in outputTypes do
     let name ← mkFreshUserName `ρ
     let fv ← mkFreshFVarId
-    let type := SierraType.toQuote <| typeDefs.find! t
-    lctx := lctx.mkLocalDecl fv name type
+    lctx := lctx.mkLocalDecl fv name <| SierraType.toQuote <| typeDefs.find! t
     outputRefs := outputRefs.push fv
+  -- Create fvar for the reference to the `Metadata` instance
+  let metadataRef ← mkFreshFVarId
+  lctx := lctx.mkLocalDecl metadataRef (← mkFreshUserName `m) q(Metadata)
+  -- Build initial state
   let s : State := { pc := pc
                      refs := ∅
                      lctx := lctx
                      outputRefs := outputRefs.toList
-                     outputTypes := outputTypes }
+                     outputTypes := outputTypes
+                     metadataRef := metadataRef }
+  -- Build the function signatures for the declared libfuncs
+  let funcSigs := buildFuncSignatures typeDefs sf.libfuncs specs metadataRef
   let es ← StateT.run (do
     let mut refs : RefTable := ∅
     -- Add input arguments to initial local context and refs table
@@ -228,7 +241,7 @@ def getSpecsType (inputArgs : List (ℕ × Identifier)) (outputTypes : List Iden
     | .error err => throwError err
   let inputs := inputArgs.map (SierraType.toQuote ∘ (typeDefs.find! ·.2))
   let outputs := outputTypes.map (SierraType.toQuote ∘ typeDefs.find!)
-  return OfInputsQ q(Prop) (inputs ++ outputs)
+  return OfInputsQ q(Prop) (q(Metadata) :: inputs ++ outputs)
 
 def getSpecTypeOfName (ident : Identifier) : MetaM Q(Type) :=
   withFindByIdentifier sf ident fun _ => getSpecsType sf
@@ -240,6 +253,7 @@ def getLocalDeclInfos (pc : ℕ) (inputArgs : List (ℕ × Identifier))
     | .ok x => pure x
     | .error err => throwError err
   let mut ret : Array (Name × (Array Expr → n Expr)) := #[]
+  ret := ret.push <| .mk (← mkFreshUserName `m) fun _ => pure q(Metadata)
   for (_, t) in inputArgs do
     let n ← mkFreshUserName `a  -- TODO make anonymous?
     ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote <| typeDefs.find! t
@@ -248,6 +262,7 @@ def getLocalDeclInfos (pc : ℕ) (inputArgs : List (ℕ × Identifier))
     ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote <| typeDefs.find! t
   let n ← mkFreshUserName `h_auto
   let e ← getFuncCondition sf specs pc inputArgs outputTypes
+  -- Add the auto spec, to which all previous args are applied
   ret := ret.push <| .mk n fun h_args => pure <| mkAppN e h_args
   return ret
 

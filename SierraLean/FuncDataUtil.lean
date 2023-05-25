@@ -72,6 +72,10 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .BuiltinCosts => q(Nat) -- TODO check whether we should run cairo to obtain the actual builtin costs
   | .GasBuiltin => q(Nat)
 
+/-- A type holding the metadata that will not be contained in Sierra's `System` type -/
+structure Metadata where
+  (costs : Identifier → Nat)
+
 notation "⟦" t "⟧" => SierraType.toQuote t
 
 /-- A structure contining the branch-specific data for a libfunc -/
@@ -79,7 +83,8 @@ structure BranchData (inputTypes : List SierraType) where
   /-- The return types -/
   (outputTypes : List SierraType := [])
   /-- The condition associated with the branch -/
-  (condition : OfInputs Q(Prop) (List.map SierraType.toQuote <| inputTypes ++ outputTypes) := OfInputs.const <| q(True))
+  (condition : OfInputs Q(Prop) 
+    (List.map SierraType.toQuote <| inputTypes ++ outputTypes) := OfInputs.const <| q(True))
   /-- Ref table changes, only used for memory management commands -/
   (refsChange : List Nat → RefTable → RefTable := fun _ rt => rt)
 

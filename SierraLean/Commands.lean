@@ -34,8 +34,8 @@ initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile
     addImportedFn := fun _ => default  -- Load the empty Sierra file by default
   }
 
-initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × FuncData)
-    (HashMap Identifier (Name × FuncData)) ←
+initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × (FVarId → FuncData))
+    (HashMap Identifier (Name × (FVarId → FuncData))) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun specs (i, n) => specs.insert i n
     addImportedFn := (HashMap.ofList ·.join.toList)

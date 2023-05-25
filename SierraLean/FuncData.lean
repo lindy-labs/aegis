@@ -71,11 +71,13 @@ private def libfuncs_aux (typeRefs : HashMap Identifier SierraType)
 
 /-- Compile-time function data registry -/
 def libfuncs (typeRefs : HashMap Identifier SierraType)
-    (specs : HashMap Identifier (Name × FuncData)) (i : Identifier) :
+    (specs : HashMap Identifier (Name × (FVarId → FuncData)))
+    (metadataRef : FVarId)
+    (i : Identifier) :
     Option FuncData :=
   libfuncs_aux typeRefs i
   <|> arrayLibfuncs typeRefs i
-  <|> functionCallLibfuncs specs i
+  <|> functionCallLibfuncs specs metadataRef i
   <|> hashLibfuncs i
   <|> builtinCostsLibfuncs i
   <|> gasBuiltinLibfuncs i
