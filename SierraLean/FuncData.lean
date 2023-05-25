@@ -70,7 +70,9 @@ private def libfuncs_aux (typeRefs : HashMap Identifier SierraType)
   <|> snapshotLibfuncs typeRefs i
 
 /-- Compile-time function data registry -/
-def libfuncs (typeRefs : HashMap Identifier SierraType)
+def libfuncs 
+    (currentFunc : Identifier)
+    (typeRefs : HashMap Identifier SierraType)
     (specs : HashMap Identifier (Name × (FVarId → FuncData)))
     (metadataRef : FVarId)
     (i : Identifier) :
@@ -79,6 +81,6 @@ def libfuncs (typeRefs : HashMap Identifier SierraType)
   <|> arrayLibfuncs typeRefs i
   <|> functionCallLibfuncs specs metadataRef i
   <|> hashLibfuncs i
-  <|> builtinCostsLibfuncs i
+  <|> builtinCostsLibfuncs currentFunc metadataRef i
   <|> gasBuiltinLibfuncs i
   <|> uint8Libfuncs i
