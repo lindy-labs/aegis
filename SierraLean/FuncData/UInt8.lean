@@ -25,10 +25,10 @@ def u8_overflowing_sub : FuncData where
                  condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) =>
                    q(($a).val < ($b).val ∧ $ρ = $a - $b) }]
 
-def u8_const (n : Q(Int)) : FuncData where
+def u8_const (n : Q(UInt8)) : FuncData where
   inputTypes := []
   branches := [{ outputTypes := [U8]
-                 condition := fun (ρ : Q(UInt8)) => q($ρ = ($n : F)) }]
+                 condition := fun (ρ : Q(UInt8)) => q($ρ = $n) }]
 
 def u8_eq : FuncData where
   inputTypes := [U8, U8]

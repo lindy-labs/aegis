@@ -66,10 +66,10 @@ def u128_is_zero : FuncData where
                { outputTypes := [NonZero U128]
                  condition := fun (a ρ : Q(UInt128)) => q($ρ = $a) }]
 
-def u128_const (n : Q(Int)) : FuncData where
+def u128_const (n : Q(UInt128)) : FuncData where
   inputTypes := []
   branches := [{ outputTypes := [U128]
-                 condition := fun (ρ : Q(UInt128)) => q($ρ = ($n : F)) }]
+                 condition := fun (ρ : Q(UInt128)) => q($ρ = $n) }]
 
 def u128_eq : FuncData where
   inputTypes := [U128, U128]

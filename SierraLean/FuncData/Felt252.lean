@@ -6,11 +6,11 @@ open Qq Sierra.SierraType
 namespace Sierra
 namespace FuncData
 
-def felt252_const (n : Q(Int)) : FuncData where
+def felt252_const (n : Q(F)) : FuncData where
   inputTypes := []
   branches := [{
     outputTypes := [Felt252],
-    condition := fun (a : Q(F)) => q($a = ($n : F))
+    condition := fun (a : Q(F)) => q($a = $n)
   }]
 
 def felt252_add : FuncData where
