@@ -97,4 +97,9 @@ structure FuncData where
   /-- The list of branches, one branch by default -/
   (branches : List (BranchData inputTypes) := [{ }])
 
+def FuncData.modifyConditions (fd : FuncData) (f : Expr → Expr) : FuncData where
+  inputTypes := fd.inputTypes
+  branches := fd.branches.map fun bd =>
+    { bd with condition := OfInputs.map f bd.condition }
+
 instance : Inhabited FuncData := ⟨{ }⟩

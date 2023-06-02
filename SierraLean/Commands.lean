@@ -1,10 +1,50 @@
 import SierraLean.Analyzer
 
-open Lean Meta Elab Command
+open Lean Meta Elab Command Qq
 
 namespace Sierra
 
 /- Utilities -/
+
+/-- A version of `BranchData` which we are able to persist in `.olean` files -/
+structure PersistantBranchData where
+  (outputTypes : List SierraType)
+  (ioRefs : List FVarId)
+  (condition : Q(Prop))
+
+/-- A version of `FuncData` which we are able to persist in `.olean` files -/
+structure PersistantFuncData where
+  (metadataRef : FVarId)
+  (inputTypes : List SierraType)
+  (branches : List PersistantBranchData)
+
+def BranchData.persist (inputTypes : List SierraType) (bd : BranchData inputTypes) 
+    : MetaM PersistantBranchData := do
+  let fds ← (inputTypes ++ bd.outputTypes).mapM fun _ => mkFreshFVarId
+  pure { outputTypes := bd.outputTypes
+         ioRefs := fds
+         condition := bd.condition.apply <| fds.map .fvar }
+
+def FuncData.persist (fd : FVarId → FuncData) : MetaM PersistantFuncData := do
+  let fv ← mkFreshFVarId
+  let bd ← (fd fv).branches.mapM (BranchData.persist (fd fv).inputTypes)
+  pure { metadataRef := fv
+         inputTypes := (fd fv).inputTypes
+         branches := bd }
+
+def PersistantBranchData.unpersist (inputTypes : List SierraType) (pbd : PersistantBranchData) :
+    BranchData inputTypes :=
+  { outputTypes := pbd.outputTypes
+    condition := OfInputs.abstract fun args => Id.run do
+      let mut subst : FVarSubst := .empty
+      for (r, a) in List.zip pbd.ioRefs args do
+        subst := subst.insert r a
+      FVarSubst.apply subst pbd.condition }
+
+def PersistantFuncData.unpersist (pfd : PersistantFuncData) (fv : FVarId) : FuncData :=
+  let fd : FuncData := { inputTypes := pfd.inputTypes
+                         branches := pfd.branches.map (PersistantBranchData.unpersist pfd.inputTypes) }
+  fd.modifyConditions <| FVarSubst.apply <| FVarSubst.empty.insert pfd.metadataRef <| .fvar fv
 
 /-- Copied from Lean.Elab.MutualDef -/
 private def declValToTerm (declVal : Syntax) : MacroM Syntax := withRef declVal do
@@ -34,8 +74,8 @@ initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile
     addImportedFn := fun _ => default  -- Load the empty Sierra file by default
   }
 
-initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × (FVarId → FuncData))
-    (HashMap Identifier (Name × (FVarId → FuncData))) ←
+initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × PersistantFuncData)
+    (HashMap Identifier (Name × PersistantFuncData)) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun specs (i, n) => specs.insert i n
     addImportedFn := (HashMap.ofList ·.join.toList)
@@ -101,12 +141,15 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
                                       value := val
                                       hints := default
                                       safety := default }
-        withFindByIdentifier sf i fun _ inputArgs outputTypes =>
+        withFindByIdentifier sf i fun _ inputArgs outputTypes => do
           -- Generate the `FuncData`
           let fd := funcDataFromCondition typeDefs inputArgs outputTypes val
+          let fd ← FuncData.persist fd
           -- Add the spec to the cache
           modifyEnv (sierraSpecs.addEntry · (i, name, fd))
   | .error str => throwError toString str
+
+#check HashMap.insert
 
 elab "sierra_sound" name:str val:declVal : command => do
   let env ← getEnv
@@ -117,6 +160,7 @@ elab "sierra_sound" name:str val:declVal : command => do
     withRef val do
       liftTermElabM do
         let specs := sierraSpecs.getState env
+        let specs := HashMap.ofList <| specs.toList.map fun (i, n, pfd) => (i, n, pfd.unpersist)
         let type ← withLocalDeclsD (← getLocalDeclInfosOfName specs sf i) fun fvs => do
           let ioArgs := fvs[:fvs.size - 1]
           let .some (specName, _) := (sierraSpecs.getState env).find? i

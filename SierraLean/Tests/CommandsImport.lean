@@ -12,8 +12,10 @@ return([3]);
 bar@0([0]: F) -> (F);
 bazz@2([2]: F) -> (F);"
 
-sierra_spec "bazz" := fun _ ρ => ρ = 5
+sierra_spec "bazz" := fun _ _ ρ => ρ = 5
 
-sierra_sound "bazz" := fun a ρ => by
+sierra_sound "bazz" := fun _ a ρ => by
   rintro ⟨r, rfl, rfl⟩
   rfl
+
+sierra_complete

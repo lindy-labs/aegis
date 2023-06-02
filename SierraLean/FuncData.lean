@@ -17,46 +17,6 @@ open Lean Qq
 
 namespace Sierra.FuncData
 
-def foo1 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo2 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo3 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo4 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo5 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo6 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo7 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo8 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo9 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo10 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo11 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo12 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-def foo13 : Nat → Option Nat
-| 1 => .some 6
-| _ => .none
-
 /-- The definition of `libfuncs` is split into pieces do to slow elaboration time. -/
 private def libfuncs_aux (typeRefs : HashMap Identifier SierraType)
     (i : Identifier) :=
