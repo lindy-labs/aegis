@@ -1,6 +1,9 @@
 import SierraLean.FuncData.ControlFlow
 import SierraLean.FuncData.Felt252
 import SierraLean.FuncData.UInt8
+import SierraLean.FuncData.UInt16
+import SierraLean.FuncData.UInt32
+import SierraLean.FuncData.UInt64
 import SierraLean.FuncData.UInt128
 import SierraLean.FuncData.Bool
 import SierraLean.FuncData.Enum
@@ -44,3 +47,6 @@ def libfuncs
   <|> builtinCostsLibfuncs currentFunc metadataRef i
   <|> gasBuiltinLibfuncs i
   <|> uint8Libfuncs i
+  <|> uint16Libfuncs i
+  <|> uint32Libfuncs i
+  <|> uint64Libfuncs i
