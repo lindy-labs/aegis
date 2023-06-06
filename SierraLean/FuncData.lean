@@ -15,6 +15,7 @@ import SierraLean.FuncData.FunctionCall
 import SierraLean.FuncData.Hash
 import SierraLean.FuncData.BuiltinCosts
 import SierraLean.FuncData.GasBuiltin
+import SierraLean.FuncData.NonZero
 
 open Lean Qq
 
@@ -31,6 +32,7 @@ private def libfuncs_aux (typeRefs : HashMap Identifier SierraType)
   <|> structLibfuncs typeRefs i
   <|> boxLibfuncs typeRefs i
   <|> snapshotLibfuncs typeRefs i
+  <|> nonZeroLibfuncs typeRefs i
 
 /-- Compile-time function data registry -/
 def libfuncs 
