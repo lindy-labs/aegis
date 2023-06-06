@@ -33,16 +33,32 @@ def array_len (t : SierraType) : FuncData where
 def array_get (t : SierraType) : FuncData where
   inputTypes := [.RangeCheck, .Snapshot (.Array t), .U32]
   branches := [{ outputTypes := [.RangeCheck, .Box t]
-                 condition := fun rc (a : Q(List $t.toQuote)) (i : Q(UInt32)) rc' (ρ : Q($t.toQuote)) =>
+                 condition := fun _ (a : Q(List $t.toQuote)) (i : Q(UInt32)) _ (ρ : Q($t.toQuote)) =>
                    q(Option.some $ρ = List.get? $a ($i).val) },
                { outputTypes := [.RangeCheck]
-                 condition := fun rc (a : Q(List $t.toQuote)) (i : Q(UInt32)) rc' =>
+                 condition := fun _ (a : Q(List $t.toQuote)) (i : Q(UInt32)) _ =>
                    q(($i).val ≥ ($a).length) }]
 
+def array_snapshot_pop_front (t : SierraType) : FuncData where
+  inputTypes := [.Snapshot (.Array t)]
+  branches := [{ outputTypes := [.Snapshot (.Array t), .Box t]
+                 condition := fun (a ρ₁ : Q(List $(⟦t⟧))) (ρ₂ : Q($(⟦t⟧))) =>
+                   q($ρ₂ :: $ρ₁ = $a) },
+               { outputTypes := [.Snapshot (.Array t)]
+                 condition := fun (a ρ : Q(List $(⟦t⟧))) =>
+                   q($a = [] ∧ $ρ = []) }]
+
 def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
-| .name "array_new" [.identifier ident] _ => return array_new (← typeRefs.find? ident)
-| .name "array_append" [.identifier ident] _ => return array_append (← typeRefs.find? ident)
-| .name "array_pop_front" [.identifier ident] _ => return array_pop_front (← typeRefs.find? ident)
-| .name "array_len" [.identifier ident] _ => return array_len (← typeRefs.find? ident)
-| .name "array_get" [.identifier ident] _ => return array_get (← typeRefs.find? ident)
+| .name "array_new" [.identifier ident] .none =>
+  return array_new (← typeRefs.find? ident)
+| .name "array_append" [.identifier ident] .none =>
+  return array_append (← typeRefs.find? ident)
+| .name "array_pop_front" [.identifier ident] .none =>
+  return array_pop_front (← typeRefs.find? ident)
+| .name "array_len" [.identifier ident] .none =>
+  return array_len (← typeRefs.find? ident)
+| .name "array_get" [.identifier ident] .none =>
+  return array_get (← typeRefs.find? ident)
+| .name "array_snapshot_pop_front" [.identifier ident] .none =>
+  return array_snapshot_pop_front (← typeRefs.find? ident)
 | _ => .none
