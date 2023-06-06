@@ -31,6 +31,7 @@ inductive SierraType
 | GasBuiltin
 | Bitwise
 | Uninitialized (ty : SierraType)
+| Nullable (ty : SierraType)
   deriving Inhabited, Repr
 
 abbrev RefTable := HashMap Nat FVarId
@@ -75,6 +76,7 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .GasBuiltin => q(Nat)
   | .Bitwise => q(Nat)
   | .Uninitialized _ => q(Unit) -- Since we have no info on uninialized variables
+  | .Nullable t => q(Option $(toQuote t))
 
 /-- A type holding the metadata that will not be contained in Sierra's `System` type -/
 structure Metadata where

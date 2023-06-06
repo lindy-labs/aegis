@@ -16,6 +16,7 @@ import SierraLean.FuncData.Hash
 import SierraLean.FuncData.BuiltinCosts
 import SierraLean.FuncData.GasBuiltin
 import SierraLean.FuncData.NonZero
+import SierraLean.FuncData.Nullable
 
 open Lean Qq
 
@@ -52,3 +53,4 @@ def libfuncs
   <|> uint16Libfuncs i
   <|> uint32Libfuncs i
   <|> uint64Libfuncs i
+  <|> nullableLibfuncs typeRefs i
