@@ -55,6 +55,8 @@ def alloc_local (t : SierraType) : FuncData where
 
 def revoke_ap_tracking : FuncData where
 
+def enable_ap_tracking : FuncData where
+
 def controlFlowLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "rename" [.identifier ident] .none => return rename (← typeRefs.find? ident)
 | .name "drop" [.identifier ident] .none => return drop (← typeRefs.find? ident)
@@ -66,4 +68,5 @@ def controlFlowLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier 
 | .name "finalize_locals" [] .none => finalize_locals
 | .name "alloc_local" [.identifier ident] .none => return alloc_local (← typeRefs.find? ident)
 | .name "revoke_ap_tracking" [] .none => revoke_ap_tracking
+| .name "enable_ap_tracking" [] .none => enable_ap_tracking
 | _  => .none
