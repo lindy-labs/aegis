@@ -32,6 +32,8 @@ inductive SierraType
 | Bitwise
 | Uninitialized (ty : SierraType)
 | Nullable (ty : SierraType)
+| StorageBaseAddress
+| StorageAddress
   deriving Inhabited, Repr
 
 abbrev RefTable := HashMap Nat FVarId
@@ -39,15 +41,18 @@ abbrev RefTable := HashMap Nat FVarId
 instance : ToString RefTable where toString x := toString $ repr x.toList
 
 def PRIME := 3618502788666131213697322783095070105623107215331596699973092056135872020481
+def BASE_MOD := 3618502788666131106986593281521497120414687020801267626233049500247285300992
+def ADDRESS_MOD := 2^251
 
 abbrev F := ZMod PRIME
-
 abbrev UInt8 := ZMod <| 2^8
 abbrev UInt16 := ZMod <| 2^16
 abbrev UInt32 := ZMod <| 2^32
 abbrev UInt64 := ZMod <| 2^64
 abbrev UInt128 := ZMod <| 2^128
 abbrev UInt256 := ZMod <| 2^256
+abbrev StorageBaseAddress := ZMod BASE_MOD
+abbrev StorageAddress := ZMod ADDRESS_MOD
 
 partial def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
@@ -77,6 +82,8 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .Bitwise => q(Nat)
   | .Uninitialized _ => q(Unit) -- Since we have no info on uninialized variables
   | .Nullable t => q(Option $(toQuote t))
+  | .StorageBaseAddress => q(Sierra.StorageBaseAddress)
+  | .StorageAddress => q(Sierra.StorageAddress)
 
 /-- A type holding the metadata that will not be contained in Sierra's `System` type -/
 structure Metadata where
