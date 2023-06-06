@@ -52,6 +52,10 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
   | .name "BuiltinCosts" [] .none => pure .BuiltinCosts
   | .name "GasBuiltin" [] .none => pure .GasBuiltin
   | .name "Bitwise" [] .none => pure .Bitwise
+  | .name "Uninitialized" [t] .none =>
+    match t with
+    | .identifier ident => pure <| .Array <| acc.find! ident
+    | _ => throw "Expected Uninitalized parameter to refer to a type"
   | _ => throw s!"Unhandled type {ty}"
 
 def buildFuncSignatures

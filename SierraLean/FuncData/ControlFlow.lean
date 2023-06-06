@@ -46,6 +46,13 @@ def jump : FuncData where
 
 def disable_ap_tracking : FuncData where
 
+def finalize_locals : FuncData where
+
+def alloc_local (t : SierraType) : FuncData where
+  inputTypes := []
+  branches := [{ outputTypes := [.Uninitialized t]
+                 condition := fun _ => q(True) }]
+
 def controlFlowLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "rename" [.identifier ident] .none => return rename (← typeRefs.find? ident)
 | .name "drop" [.identifier ident] .none => return drop (← typeRefs.find? ident)
@@ -54,4 +61,6 @@ def controlFlowLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier 
 | .name "branch_align" [] .none => branch_align
 | .name "jump" [] .none => jump
 | .name "disable_ap_tracking" [] .none => disable_ap_tracking
+| .name "finalize_locals" [] .none => finalize_locals
+| .name "alloc_local" [.identifier ident] .none => return alloc_local (← typeRefs.find? ident)
 | _  => .none

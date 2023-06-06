@@ -30,6 +30,7 @@ inductive SierraType
 | BuiltinCosts
 | GasBuiltin
 | Bitwise
+| Uninitialized (ty : SierraType)
   deriving Inhabited, Repr
 
 abbrev RefTable := HashMap Nat FVarId
@@ -59,10 +60,10 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .Addr => q(Sierra.Addr)
   | .RangeCheck => q(Nat)  -- TODO
   | .Enum []      => q(Unit)
-  | .Enum [t]     => q($(t.toQuote))
+  | .Enum [t]     => t.toQuote
   | .Enum (t::ts) => q($(t.toQuote) ⊕ $(toQuote (.Enum ts)))
   | .Struct []      => q(Unit)
-  | .Struct [t]     => q($(t.toQuote))
+  | .Struct [t]     => t.toQuote
   | .Struct (t::ts) => q($(t.toQuote) × $(toQuote (.Enum ts)))
   | .NonZero t => toQuote t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
   | .Box t => toQuote t
@@ -73,6 +74,7 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .BuiltinCosts => q(Nat) -- TODO check whether we should run cairo to obtain the actual builtin costs
   | .GasBuiltin => q(Nat)
   | .Bitwise => q(Nat)
+  | .Uninitialized _ => q(Unit) -- Since we have no info on uninialized variables
 
 /-- A type holding the metadata that will not be contained in Sierra's `System` type -/
 structure Metadata where
