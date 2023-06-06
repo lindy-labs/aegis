@@ -51,6 +51,7 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
   | .name "Pedersen" [] .none => pure .Pedersen
   | .name "BuiltinCosts" [] .none => pure .BuiltinCosts
   | .name "GasBuiltin" [] .none => pure .GasBuiltin
+  | .name "Bitwise" [] .none => pure .Bitwise
   | _ => throw s!"Unhandled type {ty}"
 
 def buildFuncSignatures

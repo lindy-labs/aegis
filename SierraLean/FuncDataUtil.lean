@@ -29,6 +29,7 @@ inductive SierraType
 | Pedersen
 | BuiltinCosts
 | GasBuiltin
+| Bitwise
   deriving Inhabited, Repr
 
 abbrev RefTable := HashMap Nat FVarId
@@ -71,6 +72,7 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .Pedersen => q(Nat)
   | .BuiltinCosts => q(Nat) -- TODO check whether we should run cairo to obtain the actual builtin costs
   | .GasBuiltin => q(Nat)
+  | .Bitwise => q(Nat)
 
 /-- A type holding the metadata that will not be contained in Sierra's `System` type -/
 structure Metadata where

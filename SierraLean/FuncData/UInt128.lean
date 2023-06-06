@@ -77,6 +77,14 @@ def u128_eq : FuncData where
   branches := [{ condition := fun (a b : Q(UInt128)) => q($a ≠ $b) },
                { condition := fun (a b : Q(UInt128)) => q($a = $b) }]
 
+def bitwise : FuncData where
+  inputTypes := [Bitwise, U128, U128]
+  branches := [{ outputTypes := [Bitwise, U128, U128, U128]
+                 condition := fun _ (lhs rhs : Q(UInt128)) _ (and xor or : Q(UInt128)) =>
+                   q($(and).val = Nat.land' $(lhs).val $(rhs).val
+                     ∧ $(xor).val = Nat.lxor' $(lhs).val $(rhs).val
+                     ∧ $(or).val = Nat.lor' $(lhs).val $(rhs).val) }]
+
 def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_overflowing_add" [] .none      => u128_overflowing_add
 | .name "u128_overflowing_sub" [] .none      => u128_overflowing_sub
@@ -88,4 +96,5 @@ def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_is_zero" [] .none              => u128_is_zero
 | .name "u128_const" [.const n] .none        => u128_const q($n)
 | .name "u128_eq" [] .none                   => u128_eq
+| .name "bitwise" [] .none                   => bitwise
 | _                                          => .none
