@@ -26,15 +26,30 @@ def enum_match (fields : List SierraType) : FuncData where
       condition := fun (a : Q($(⟦.Enum fields⟧))) ρ =>
         Expr.mkEq q($(⟦.Enum fields⟧)) (enum_selector fields idx ρ) a }
 
+def enum_snapshot_match (fields : List SierraType) : FuncData where
+  inputTypes := [.Snapshot <| .Enum fields]
+  branches := fields.enum.map fun (idx, field) =>
+    { outputTypes :=
+        [match field with
+         -- TODO check if `Array` is really the only thing that gets snapshotted
+         | .Array t => .Snapshot (.Array t)
+         | _ => field ]
+      condition := fun (a : Q($(⟦.Enum fields⟧))) ρ =>
+        Expr.mkEq q($(⟦.Enum fields⟧)) (enum_selector fields idx ρ) a }
+
 def enumLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
-| .name "enum_init" [.identifier ident, .const (.ofNat n)] _ =>
+| .name "enum_init" [.identifier ident, .const (.ofNat n)] .none =>
   match typeRefs.find? ident with
   | .some (.Enum fields) =>
     if hn : n < fields.length then enum_init fields ⟨n, hn⟩
     else .none
   | _ => .none
-| .name "enum_match" [.identifier ident] _ =>
+| .name "enum_match" [.identifier ident] .none =>
   match typeRefs.find? ident with
   | .some (.Enum fields) => enum_match fields
+  | _ => .none
+| .name "enum_snapshot_match" [.identifier ident] .none =>
+  match typeRefs.find? ident with
+  | .some (.Enum fields) => enum_snapshot_match fields
   | _ => .none
 | _ => .none

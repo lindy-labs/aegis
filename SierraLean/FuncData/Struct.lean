@@ -34,6 +34,17 @@ def struct_deconstruct (fields : List SierraType) : FuncData where
                  condition := fun a => OfInputs.map (fun ρ => Expr.mkEq q($(⟦.Struct fields⟧)) ρ a)
                    (struct_deconstruct_condition fields) }]
 
+def struct_snapshot_deconstruct (fields : List SierraType) : FuncData where
+  inputTypes := [.Snapshot <| .Struct fields]
+  branches := [{ outputTypes := fields.map fun
+                 -- TODO check if really only `Array`s are snapshotted
+                 | .Array t => .Snapshot <| .Array t
+                 | field => field
+                 -- TODO This is a bit dirty, just copies the condition of `struct_deconstruct`
+                 condition := fun a => OfInputs.abstract fun as =>
+                   OfInputs.apply (OfInputs.map (fun ρ => Expr.mkEq q($(⟦.Struct fields⟧)) ρ a)
+                   (struct_deconstruct_condition fields)) as }]
+
 def structLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "struct_construct" [.identifier ident] _ =>
   match typeRefs.find? ident with
@@ -42,5 +53,9 @@ def structLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → O
 | .name "struct_deconstruct" [.identifier ident] _ =>
   match typeRefs.find? ident with
   | .some (.Struct fields) => struct_deconstruct fields
+  | _ => .none
+| .name "struct_snapshot_deconstruct" [.identifier ident] _ =>
+  match typeRefs.find? ident with
+  | .some (.Struct fields) => struct_snapshot_deconstruct fields
   | _ => .none
 | _ => .none
