@@ -6,22 +6,27 @@ open Qq Sierra
 namespace Sierra
 
 def SierraType.BlockInfo : SierraType :=
-.Struct [.U64
-        , .U64
-        , .ContractAddress]
+.Struct [ .U64  -- block number
+        , .U64  -- block timestamp
+        , .ContractAddress ]  -- sequencer address
 
 def SierraType.TxInfo : SierraType :=
-.Struct [.Felt252
-        , .ContractAddress
-        , .U128
-        , .Snapshot <| .Array .Felt252
-        , .Felt252
-        , .Felt252
-        , .Felt252
+.Struct [ .Felt252  -- transaction version
+        , .ContractAddress  -- the account contract from which this tx originates
+        , .U128  -- max fee
+        , .Snapshot <| .Array .Felt252 -- signature of the tx
+        , .Felt252  -- transaction hash
+        , .Felt252  -- identifier of the chain
+        , .Felt252  -- nonce
         ]
 
 def SierraType.ExecutionInfo : SierraType :=
-.Struct [.BlockInfo, .TxInfo, .ContractAddress, .ContractAddress, .Felt252]
+.Struct [ .BlockInfo
+        , .TxInfo
+        , .ContractAddress  -- caller address
+        , .ContractAddress  -- contract address
+        , .Felt252  -- entry point selector
+        ]
 
 namespace FuncData
 
