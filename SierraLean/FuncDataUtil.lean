@@ -34,6 +34,8 @@ inductive SierraType
 | Nullable (ty : SierraType)
 | StorageBaseAddress
 | StorageAddress
+| System
+| ContractAddress
   deriving Inhabited, Repr
 
 abbrev RefTable := HashMap Nat FVarId
@@ -53,6 +55,9 @@ abbrev UInt128 := ZMod <| 2^128
 abbrev UInt256 := ZMod <| 2^256
 abbrev StorageBaseAddress := ZMod BASE_MOD
 abbrev StorageAddress := ZMod ADDRESS_MOD
+
+structure System where
+  -- TODO add all data the `System` type has to keep
 
 partial def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
@@ -84,6 +89,8 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .Nullable t => q(Option $(toQuote t))
   | .StorageBaseAddress => q(Sierra.StorageBaseAddress)
   | .StorageAddress => q(Sierra.StorageAddress)
+  | .System => q(Sierra.System)
+  | .ContractAddress => q(F) -- TODO check if this is correct, it's probably smaller
 
 /-- A type holding the metadata that will not be contained in Sierra's `System` type -/
 structure Metadata where

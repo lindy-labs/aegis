@@ -62,6 +62,8 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
     | _ => throw "Expected Nullable parameter to refer to a type"
   | .name "StorageBaseAddress" [] .none => pure .StorageBaseAddress
   | .name "BaseAddress" [] .none => pure .StorageAddress
+  | .name "System" [] .none => pure .System
+  | .name "ContractAddress" [] .none => pure .ContractAddress
   | _ => throw s!"Unhandled type {ty}"
 
 def buildFuncSignatures

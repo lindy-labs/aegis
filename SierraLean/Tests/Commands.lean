@@ -57,3 +57,13 @@ sierra_spec "rec" := fun _ _ ρ => ρ = 0
 sierra_sound "rec" := fun _ a ρ => by rintro (⟨rfl, rfl⟩|⟨_, rfl⟩) <;> rfl
 
 sierra_complete
+
+sierra_load_file "SierraLean/Tests/double.cairo"
+
+sierra_spec "double::double::double" := fun _ a ρ => ρ = a * a
+
+sierra_sound "double::double::double" := fun _ a ρ => by
+  rintro rfl
+  rfl
+
+sierra_complete
