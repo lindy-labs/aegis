@@ -75,11 +75,12 @@ declare_syntax_cat parameter
 declare_syntax_cat branch_info
 declare_syntax_cat sierra_file
 
-syntax (ident <|> "return") atomic("::"? "<" atomic(parameter,*) ">")?  ("::" identifier)? : identifier
+syntax (ident <|> "return") atomic("::"? "<" parameter,* ">")?  ("::" identifier)? : identifier
 syntax "[" num "]" : identifier
 
 syntax identifier : parameter
-syntax "-"? num : parameter
+syntax atomic("-" num) : parameter
+syntax num : parameter
 syntax "user@" identifier : parameter
 syntax "ut@" identifier : parameter
 syntax "lib@" identifier : parameter
@@ -168,9 +169,7 @@ def elabDeclarationLine : TSyntax `Sierra.declarationLine →
 | _ => .error "Could not elab declaration"
 
 def elabSierraFile : Syntax → Except String SierraFile
-| `(sierra_file|$[type $tlhs = $trhs;]*
-    $[libfunc $llhs = $lrhs;]*
-    $sts:statementLine*
+| `(sierra_file|$[type $tlhs = $trhs;]* $[libfunc $llhs = $lrhs;]*  $sts:statementLine*
     $ds:declarationLine*) => do
   let ts := (← tlhs.mapM elabIdentifier).zip <| ← trhs.mapM elabIdentifier
   let ls := (← llhs.mapM elabIdentifier).zip <| ← lrhs.mapM elabIdentifier
@@ -179,12 +178,16 @@ def elabSierraFile : Syntax → Except String SierraFile
   .ok { typedefs := ts.toList, libfuncs := ls.toList, statements := sts, declarations := ds }
 | _ => .error "Could not elab Sierra file"
 
+-- TODO solve this in a better way
+def replaceNaughtyBrackets (s : String) : String :=
+  (s.replace ">>" "> >").replace "<-" "< -"
+
 def parseGrammar (input : String) : CoreM (Except String SierraFile) := do
   let env ← getEnv
+  let input := replaceNaughtyBrackets input
   pure do elabSierraFile (← runParserCategory env `sierra_file input)
 
 def parseIdentifier (input : String) : CoreM (Except String Identifier) := do
   let env ← getEnv
+  let input := replaceNaughtyBrackets input
   pure do elabIdentifier (← runParserCategory env `identifier input)
-
-#eval parseIdentifier "y<x<z>>"
