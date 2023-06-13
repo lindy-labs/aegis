@@ -91,14 +91,14 @@ structure State where
 
 abbrev M := StateT State MetaM
 
-def getOrMkNewRef (n : ℕ) (type : Expr) : M FVarId := do
+def getOrMkNewRef (n : ℕ) (t : Expr) : M FVarId := do
   let s ← get
   match s.refs.find? n with
   | .some x => pure x
   | _ => do
     let name ← mkFreshUserName ("ref" ++ n.repr : String)
     let fv ← mkFreshFVarId
-    let lctx' := (← get).lctx.mkLocalDecl fv name type
+    let lctx' := (← get).lctx.mkLocalDecl fv name t
     set { s with lctx := lctx', refs := s.refs.insert n fv }
     return fv
 
@@ -156,8 +156,8 @@ partial def processState
   | .name "return" [] .none =>
     let s ← get
     let es := (s.outputRefs.zip (st.args.map fun n => s.refs.find! n)).zip s.outputTypes
-    let es := es.map fun ((ofv, rfv), type) =>
-      Expr.mkEq (SierraType.toQuote <| typeDefs.find! type) (.fvar rfv) (.fvar ofv)
+    let es := es.map fun ((ofv, rfv), t) =>
+      Expr.mkEq (SierraType.toQuote <| typeDefs.find! t) (.fvar rfv) (.fvar ofv)
     return (st, .cons (Expr.mkAnds es) [])
   | _ => do
     let .some st := f.statements.get? (← get).pc
@@ -288,7 +288,7 @@ def getLocalDeclInfosOfName (sf : SierraFile) (ident : Identifier) :
 
 -- TODO delete?
 def analyzeFile (s : String) (idx : ℕ := 0) : MetaM Format := do
-  match parseGrammar s with
+  match ← parseGrammar s with
   | .ok sf =>
     let ⟨ident, pc, inputArgs, outputTypes⟩ := sf.declarations.get! idx
     let e ← getFuncCondition sf ∅ ident pc inputArgs outputTypes

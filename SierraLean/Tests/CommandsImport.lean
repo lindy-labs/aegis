@@ -1,6 +1,7 @@
 import SierraLean.Tests.Commands
 
 sierra_load_string "type F = felt252;
+
 libfunc c5 = felt252_const<5>;
 libfunc call_bar = function_call<user@bar>;
 

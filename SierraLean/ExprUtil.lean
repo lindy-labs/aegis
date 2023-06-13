@@ -9,8 +9,6 @@ match xs with
 | []      => []
 | x :: xs => ((0 : Fin (length xs + 1)), x) :: xs.enumFin.map fun x => (Fin.succ x.1, x.2)
 
-theorem List.map_of_enumFin (xs : List α) : List.map (·.2) xs.enumFin = xs := sorry
-
 def Lean.Expr.getFVars (e : Expr) : Array FVarId := (Lean.CollectFVars.main e { }).fvarIds
 
 def Lean.Expr.or? (p : Expr) := p.app2? ``And

@@ -65,7 +65,7 @@ proofs. -/
 initialize cairoPath : SimplePersistentEnvExtension System.FilePath (Option System.FilePath) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun _ p => p
-    addImportedFn := fun pss => pss.join.back?
+    addImportedFn := fun ⟨pss⟩ => (pss.map Array.toList).join.getLast?
   }
 
 initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile ←
@@ -78,20 +78,20 @@ initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × Per
     (HashMap Identifier (Name × PersistantFuncData)) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun specs (i, n) => specs.insert i n
-    addImportedFn := (HashMap.ofList ·.join.toList)
+    addImportedFn := fun ⟨pss⟩ => (HashMap.ofList (pss.map Array.toList).join)
   }
 
 initialize sierraSoundness : SimplePersistentEnvExtension (Identifier × Name)
     (HashMap Identifier Name) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun specs (i, n) => specs.insert i n
-    addImportedFn := (HashMap.ofList ·.join.toList)
+    addImportedFn := fun ⟨pss⟩ => (HashMap.ofList (pss.map Array.toList).join)
   }
 
 /- Provide elaboration functions for the commands -/
 
-def sierraLoadString (s : String) : CommandElabM Unit :=
-  match parseGrammar s with
+def sierraLoadString (s : String) : CommandElabM Unit := do
+  match ← liftCoreM <| parseGrammar s with
   | .error str => throwError ("Unable to load string:\n" ++ str)
   | .ok sf => modifyEnv (loadedSierraFile.addEntry · sf)
 
@@ -124,19 +124,19 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
   | .ok x => pure x
   | .error err => throwError err
   let val ← liftMacroM <| declValToTerm val 
-  match Megaparsec.Parsec.parse identifierP name.getString with
+  match ← liftCoreM <| parseIdentifier name.getString with
   | .ok i =>
     if (sierraSpecs.getState env).contains i then
       throwError "A specification has already been given"
     withRef val do
       liftTermElabM do 
-        let type ← getSpecTypeOfName sf i
-        let val ← Term.elabTermEnsuringType val type
+        let ty ← getSpecTypeOfName sf i
+        let val ← Term.elabTermEnsuringType val ty
         Term.synthesizeSyntheticMVarsNoPostponing
         let val ← instantiateMVars val
         let name : String := "spec_" ++ name.getString  -- TODO handle name clashes
         addAndCompile <| .defnDecl {  name := name
-                                      type := type
+                                      type := ty
                                       levelParams := []
                                       value := val
                                       hints := default
@@ -149,13 +149,11 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
           modifyEnv (sierraSpecs.addEntry · (i, name, fd))
   | .error str => throwError toString str
 
-#check HashMap.insert
-
 elab "sierra_sound" name:str val:declVal : command => do
   let env ← getEnv
   let sf := loadedSierraFile.getState env
   let val ← liftMacroM <| declValToTerm val
-  match Megaparsec.Parsec.parse identifierP name.getString with
+  match ← liftCoreM <| parseIdentifier name.getString with
   | .ok i =>  
     withRef val do
       liftTermElabM do

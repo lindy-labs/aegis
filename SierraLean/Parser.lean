@@ -1,9 +1,10 @@
-import Megaparsec.Parsec
-import Megaparsec.MonadParsec
-import Megaparsec.Common
-import Megaparsec.Char
+import Lean.Parser
+import Lean
+import Mathlib.Tactic.DeriveToExpr
 
-open MonadParsec Megaparsec Megaparsec.Char Megaparsec.Parsec Megaparsec.Common Lean
+open Lean Parser
+
+namespace Sierra
 
 mutual
 
@@ -20,9 +21,6 @@ inductive Parameter where
   | libfunc (i : Identifier)
   | tuple (ps : List Parameter)
   deriving Repr, Inhabited, Hashable, BEq
-
--- TODO differentiate functions and types, or even better, builtin types, user types,
--- libfuncs, and user functions
 
 end
 
@@ -72,159 +70,121 @@ instance : ToString Parameter where toString := parameterToString
 instance : ToString Statement where toString x := toString $ repr x
 instance : ToString SierraFile where toString x := toString $ repr x
 
+declare_syntax_cat identifier
+declare_syntax_cat parameter
+declare_syntax_cat branch_info
+declare_syntax_cat sierra_file
 
-abbrev P := Parsec Char String Unit  -- TODO replace the `Unit` by a proper error type
+syntax (ident <|> "return") atomic("::"? "<" atomic(parameter,*) ">")?  ("::" identifier)? : identifier
+syntax "[" num "]" : identifier
 
-/-- Parses a natural number -/
-def numP : P Nat := do return String.toNat! <| String.mk <| ← some' (satisfy Char.isDigit)
+syntax identifier : parameter
+syntax "-"? num : parameter
+syntax "user@" identifier : parameter
+syntax "ut@" identifier : parameter
+syntax "lib@" identifier : parameter
+syntax "(" parameter,+ ")" : parameter
 
-/-- Parses an integer -/
-partial def intP : P Int := do
-  match ← option <| discard <| single '-' with
-  | .none    => numP
-  | .some () => intP >>= fun x => pure <| -x
+syntax refTuple := "(" ("[" num "]"),* ")"
+syntax declarationArg := "[" num "]" ":" identifier
 
-/-- Discard whitespace and line breaks -/
-def blanksP : P Unit := discard $ many' (satisfy <| ([' ', '\n', '\t'].contains ·))
+syntax "fallthrough" refTuple : branch_info
+syntax num refTuple : branch_info
 
--- Discard a single `,` and blanks
-def commaP : P Unit := do
-  blanksP
-  discard (single ',')
-  blanksP
+syntax typedefLine := &"type" identifier "=" identifier ";"
+syntax libfuncLine := "libfunc" identifier "=" identifier ";"
+syntax statementLine := identifier refTuple 
+  (("->" refTuple) <|> ("{" branch_info* "}"))? ";"
+syntax declarationLine := identifier "@" num "(" declarationArg,* ")" "->" "(" identifier,* ")" ";"
 
-/-- Discard a single `;` -/
-def semicolonP : P Unit := discard (single ';') *> blanksP
-
-/-- The name is maybe a bit misleading, this parses a whole identifier, including namespace ids -/
-def atomP : P String := do
-  let c : Char ← satisfy fun c => c.isAlpha || c == '_'
-  let cs : List Char ← many' (satisfy fun c => c.isAlphanum || c == '_')
-  return String.mk (c :: cs)
-
-/-- Parses a reference to a type or memory cell -/
-def refP : P Nat := between '[' ']' numP
-
-/-- Wraps a refernce into an identifier -/
-def refIdentifierP : P Identifier := .ref <$> refP
+syntax typedefLine* libfuncLine* atomic(statementLine)* declarationLine* : sierra_file
 
 mutual
 
-/-- Parses a name-based identifier -/
-partial def nameP : P Identifier := do
-  let s ← atomP
-  let is ← attempt (do
-    discard <| optional <| string "::"
-    between '<' '>' <| sepEndBy' parameterP commaP) <|> (pure [])
-  let tl ← optional (do discard <| string "::"; nameP)
-  return .name s is tl
+partial def elabIdentifier : Syntax → Except String Identifier
+| `(identifier|$i:ident $[$[::]? <$ps,*>]? $[:: $tl:identifier]?) => do
+  let i := i.getId.toString
+  let ps := (← ps.mapM fun ps => ps.getElems.mapM elabParameter).getD #[]
+  let tl ← tl.mapM elabIdentifier
+  .ok <| .name i ps.toList tl
+| `(identifier|return) => .ok <| .name "return" [] .none
+| `(identifier|[$n:num]) => .ok <| .ref n.getNat
+| _ => .error "Could not elab identifier"
 
-/-- Parses a reference-based identifier -/
-partial def identifierP := 
-  nameP
-  <|> (do discard <| single '@'; nameP)
-  <|> refIdentifierP
-
-/-- Parses a parameter, i.e. a constant or an identifier -/
-partial def parameterP : P Parameter :=
-  (.const <$> intP)
-  <|> attempt (do discard <| string "ut@"; return .usertype (← identifierP))
-  <|> attempt (do discard <| string "user@"; return .userfunc (← identifierP))
-  <|> attempt (do discard <| string "lib@"; return .libfunc (← identifierP))
-  <|> attempt (do
-    let foo ← between '(' ')' <| sepEndBy' parameterP commaP
-    return .tuple foo )
-  <|> (.identifier <$> identifierP)
+partial def elabParameter : TSyntax `parameter → Except String Parameter
+| `(parameter|-$n:num) => .ok <| .const <| -n.getNat
+| `(parameter|user@$i) => do
+  let i ← elabIdentifier i
+  .ok <| .userfunc i
+| `(parameter|ut@$i) => do
+  let i ← elabIdentifier i
+  .ok <| .usertype i
+| `(parameter|lib@$i) => do
+  let i ← elabIdentifier i
+  .ok <| .libfunc i
+| `(parameter|$n:num) => .ok <| .const <| n.getNat
+| `(parameter|$i:identifier) => do
+  let i ← elabIdentifier i
+  .ok <| .identifier i
+| _ => .error "Could not elab parameter"
 
 end
 
-/-- Parses an equality between two identifiers -/
-def identifierEqualityP : P (Identifier × Identifier) := do
-  let lhs ← identifierP
-  blanksP
-  discard <| single '='
-  blanksP
-  let rhs ← nameP
-  semicolonP
-  return (lhs, rhs)
+def elabBranchInfo : TSyntax `branch_info → Except String BranchInfo
+| `(branch_info|fallthrough($[[$rs]],*)) =>
+  .ok { target := .none, results := (rs.map TSyntax.getNat).toList }
+| `(branch_info|$t:num($[[$rs]],*)) =>
+  .ok { target := .some t.getNat, results := (rs.map TSyntax.getNat).toList }
+| _ => .error "Could not elab branch info"
 
-/-- Parses a type definition line -/
-def typedefLineP : P (Identifier × Identifier) := do
-  discard <| string "type "
-  blanksP
-  identifierEqualityP
+def elabStatementLine : TSyntax `Sierra.statementLine → Except String Statement
+| `(statementLine|return($[[$args]],*);) => do
+  .ok { libfunc_id := .name "return" [] none, args := (args.map (·.getNat)).toList, branches := [] }
+| `(statementLine|$i:identifier($[[$args]],*) -> ($[[$ress]],*);) => do
+  let i ← elabIdentifier i
+  .ok { libfunc_id := i, args := (args.map (·.getNat)).toList,
+        branches := [{ target := .none, results := (ress.map (·.getNat)).toList }] }
+| `(statementLine|$i:identifier($[[$args]],*) $[{ $bs* }]?;) => do
+  let i ← elabIdentifier i
+  let bs := bs.getD #[]
+  let b ← (bs.mapM elabBranchInfo)
+  .ok { libfunc_id := i, args := (args.map (·.getNat)).toList, branches := b.toList }
+| `(statementLine|$i:identifier($[[$args]],*);) => do
+  let i ← elabIdentifier i
+  .ok { libfunc_id := i, args := (args.map (·.getNat)).toList, branches := [] }
+| x => .error s!"Could not elab statement {x}"
 
-/-- Parses a libfunc reference line -/
-def libfuncLineP : P (Identifier × Identifier) := do
-  discard <| string "libfunc "
-  blanksP
-  identifierEqualityP
+def elabDeclarationArg : TSyntax `Sierra.declarationArg → Except String (Nat × Identifier)
+| `(declarationArg|[$n:num]:$i) => do .ok <| (n.getNat, ← elabIdentifier i)
+| _ => .error "Could not elab declaration argument"
 
-/-- Parses tuples of references, as in `([0], [1])` -/
-def refTupleP : P (List Nat) := between '(' ')' <| sepEndBy' refP commaP
+def elabDeclarationLine : TSyntax `Sierra.declarationLine →
+    Except String (Identifier × Nat × List (Nat × Identifier) × List Identifier)
+| `(declarationLine|$i:identifier@$n($args,*) -> ($rets,*);) => do
+  let i ← elabIdentifier i
+  let rets ← rets.getElems.mapM elabIdentifier
+  let args ← args.getElems.mapM elabDeclarationArg
+  .ok (i, n.getNat, args.toList, rets.toList)
+| _ => .error "Could not elab declaration"
 
-/-- Parses a simple `BranchInfo` as it appears in a `{` `}` branching -/
-def branchInfoP : P BranchInfo := do
-  blanksP
-  let t ← (do discard <| string "fallthrough"; pure Option.none)
-    <|> (.some <$> numP)
-  return { target := t, results := ← refTupleP }
+def elabSierraFile : Syntax → Except String SierraFile
+| `(sierra_file|$[type $tlhs = $trhs;]*
+    $[libfunc $llhs = $lrhs;]*
+    $sts:statementLine*
+    $ds:declarationLine*) => do
+  let ts := (← tlhs.mapM elabIdentifier).zip <| ← trhs.mapM elabIdentifier
+  let ls := (← llhs.mapM elabIdentifier).zip <| ← lrhs.mapM elabIdentifier
+  let sts := (← sts.mapM elabStatementLine).toList
+  let ds := (← ds.mapM elabDeclarationLine).toList
+  .ok { typedefs := ts.toList, libfuncs := ls.toList, statements := sts, declarations := ds }
+| _ => .error "Could not elab Sierra file"
 
-/-- Parses a statement line -/
-def statementLineP : P Statement := do
-  let ident ← identifierP
-  let args ← refTupleP
-  blanksP
-  let branches : List BranchInfo ← (do  -- Parse non-branching statmeent
-      discard <| string "->"; blanksP
-      return [{ target := .none, results := ← refTupleP }])
-    -- Parse branching statement
-    <|> (do between '{' '}' <| sepEndBy' branchInfoP blanksP)
-    -- To parse the return (TODO make cleaner)
-    <|> pure []
-  semicolonP
-  return { libfunc_id := ident, args := args, branches := branches }
+def parseGrammar (input : String) : CoreM (Except String SierraFile) := do
+  let env ← getEnv
+  pure do elabSierraFile (← runParserCategory env `sierra_file input)
 
-/-- Parses a tuple of identifiers -/
-def identifierTupleP : P (List Identifier) := between '(' ')' <| sepEndBy' identifierP commaP
+def parseIdentifier (input : String) : CoreM (Except String Identifier) := do
+  let env ← getEnv
+  pure do elabIdentifier (← runParserCategory env `identifier input)
 
-/-- Parses a single declaration argument, containing argument position and type -/
-def declarationArgP : P (Nat × Identifier) := do
-  let n ← refP
-  blanksP
-  discard <| single ':'
-  blanksP
-  let ident ← identifierP
-  return (n, ident)
-
-/-- Parses a list of declaration arguments -/
-def declarationArgListP := between '(' ')' <| sepEndBy' declarationArgP commaP
-
-/-- Parses a function declaration line -/
-def declarationLineP : P (Identifier × Nat × List (Nat × Identifier) × List Identifier) := do
-  let ident ← identifierP
-  discard <| single '@'
-  let n ← numP
-  let args ← declarationArgListP
-  blanksP
-  discard <| string "->"
-  blanksP
-  let retTypes ← identifierTupleP
-  semicolonP
-  return (ident, n, args, retTypes)
-
-/-- Parses a Sierra file -/
-def sierraFileP : P SierraFile := do
-  blanksP
-  let typedefs ← many' (attempt typedefLineP)
-  blanksP
-  let libfuncs ← many' (attempt libfuncLineP)
-  blanksP
-  let statements ← many' (attempt statementLineP)
-  blanksP
-  let declarations ← many' declarationLineP
-  blanksP
-  return ⟨typedefs, libfuncs, statements, declarations⟩
-
-def parseGrammar (code : String) : Except String SierraFile :=
-  Except.mapError toString $ parse sierraFileP code
+#eval parseIdentifier "y<x<z>>"
