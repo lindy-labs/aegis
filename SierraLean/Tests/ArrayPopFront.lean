@@ -34,10 +34,12 @@ return([9], [10]);
 
 test::foo@0([0]: Array<felt252>) -> (Array<felt252>, core::option::Option::<core::box::Box::<core::felt252>>);"
 
-sierra_spec "test::foo" := fun a ρ₁ ρ₂ =>
+sierra_spec "test::foo" := fun _ a ρ₁ ρ₂ =>
   ρ₁ = a.tail ∧ ρ₂ = if a.length = 0 then .inr () else .inl a.head!
 
-sierra_sound "test::foo" := fun a ρ₁ ρ₂ => by
-  rintro ⟨_, _, _, _, _, _, _, _, _, _, (⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩ 
+sierra_sound "test::foo" := fun _ a ρ₁ ρ₂ => by
+  rintro ⟨_, _, (⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩ 
     | ⟨⟨rfl, rfl⟩, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩)⟩
   <;> simp [«spec_test::foo»]
+
+sierra_complete

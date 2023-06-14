@@ -75,7 +75,7 @@ declare_syntax_cat parameter
 declare_syntax_cat branch_info
 declare_syntax_cat sierra_file
 
-syntax (ident <|> "return") atomic("::"? "<" parameter,* ">")?  ("::" identifier)? : identifier
+syntax (("@"? ident) <|> "return") atomic("::"? "<" parameter,* ">")?  ("::" identifier)? : identifier
 syntax "[" num "]" : identifier
 
 syntax identifier : parameter
@@ -103,7 +103,7 @@ syntax typedefLine* libfuncLine* atomic(statementLine)* declarationLine* : sierr
 mutual
 
 partial def elabIdentifier : Syntax → Except String Identifier
-| `(identifier|$i:ident $[$[::]? <$ps,*>]? $[:: $tl:identifier]?) => do
+| `(identifier|$[@]? $i:ident $[$[::]? <$ps,*>]? $[:: $tl:identifier]?) => do
   let i := i.getId.toString
   let ps := (← ps.mapM fun ps => ps.getElems.mapM elabParameter).getD #[]
   let tl ← tl.mapM elabIdentifier
@@ -180,7 +180,7 @@ def elabSierraFile : Syntax → Except String SierraFile
 
 -- TODO solve this in a better way
 def replaceNaughtyBrackets (s : String) : String :=
-  (s.replace ">>" "> >").replace "<-" "< -"
+  (s.replace ">" "> ").replace "<" " <"
 
 def parseGrammar (input : String) : CoreM (Except String SierraFile) := do
   let env ← getEnv

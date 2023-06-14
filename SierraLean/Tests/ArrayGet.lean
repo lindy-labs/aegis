@@ -1,5 +1,7 @@
 import SierraLean.Commands
 
+open Sierra
+
 sierra_load_string "type RangeCheck = RangeCheck;
 type felt252 = felt252;
 type Array<felt252> = Array<felt252>;
@@ -37,15 +39,15 @@ return([11], [12]);
 
 test::foo@0([0]: RangeCheck, [1]: Snapshot<Array<felt252>>, [2]: u32) -> (RangeCheck, core::option::Option::<core::box::Box::<@core::felt252>>);"
 
-sierra_spec "test::foo" := fun _ a i _ ρ =>
+sierra_spec "test::foo" := fun _ _ a i _ ρ =>
   ρ = if hl : i.val ≥ a.length then .inr ()
       else .inl (a.get ⟨i.val, lt_of_not_ge hl⟩)
 
-sierra_sound "test::foo" := fun _ a i _ ρ => by
-  rintro ⟨_, _, _, _, _, _, _, _, _, _, (h | h)⟩
-  · rcases h with ⟨h, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+sierra_sound "test::foo" := fun _ _ a i _ ρ => by
+  rintro ⟨_, (h | h)⟩
+  · rcases h with ⟨h, rfl⟩
     rw [eq_comm, List.get?_eq_some] at h
     rcases h with ⟨hl, rfl⟩
     simp [«spec_test::foo», not_le_of_gt hl]
-  · rcases h with ⟨h, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+  · rcases h with ⟨h, rfl⟩
     simp [«spec_test::foo», h]
