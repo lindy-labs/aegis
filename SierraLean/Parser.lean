@@ -84,7 +84,7 @@ syntax num : parameter
 syntax "user@" identifier : parameter
 syntax "ut@" identifier : parameter
 syntax "lib@" identifier : parameter
-syntax "(" parameter,+,? ")" : parameter
+syntax "(" parameter,*,? ")" : parameter
 
 syntax refTuple := "(" ("[" num "]"),* ")"
 syntax declarationArg := "[" num "]" ":" identifier
