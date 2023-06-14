@@ -84,7 +84,7 @@ syntax num : parameter
 syntax "user@" identifier : parameter
 syntax "ut@" identifier : parameter
 syntax "lib@" identifier : parameter
-syntax "(" parameter,+ ")" : parameter
+syntax "(" parameter,+,? ")" : parameter
 
 syntax refTuple := "(" ("[" num "]"),* ")"
 syntax declarationArg := "[" num "]" ":" identifier
@@ -127,6 +127,9 @@ partial def elabParameter : TSyntax `parameter → Except String Parameter
 | `(parameter|$i:identifier) => do
   let i ← elabIdentifier i
   .ok <| .identifier i
+| `(parameter|($ps:parameter,*)) => do
+  let ps ← ps.getElems.mapM elabParameter
+  .ok <| .tuple ps.toList
 | _ => .error "Could not elab parameter"
 
 end
