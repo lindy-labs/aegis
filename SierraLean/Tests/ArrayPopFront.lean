@@ -38,8 +38,6 @@ sierra_spec "test::foo" := fun _ a ρ₁ ρ₂ =>
   ρ₁ = a.tail ∧ ρ₂ = if a.length = 0 then .inr () else .inl a.head!
 
 sierra_sound "test::foo" := fun _ a ρ₁ ρ₂ => by
-  rintro ⟨_, _, (⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩ 
-    | ⟨⟨rfl, rfl⟩, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩)⟩
-  <;> simp [«spec_test::foo»]
+  rintro ⟨_,_,(⟨rfl,rfl,rfl⟩|⟨rfl,rfl,rfl⟩)⟩ <;> simp [«spec_test::foo»]
 
 sierra_complete
