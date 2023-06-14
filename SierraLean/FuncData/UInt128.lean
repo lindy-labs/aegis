@@ -40,11 +40,11 @@ def u128s_from_felt252 : FuncData where
   inputTypes := [RangeCheck, Felt252]
   branches := [{ outputTypes := [RangeCheck, U128]
                  condition := fun _ (a : Q(F)) _ (ρ : Q(UInt128)) =>
-                   q(($ρ).val = ($a).val) },
+                   q(($a).val < 2^128 ∧ $ρ = ($a).cast) },
                { outputTypes := [RangeCheck, U128, U128]
                  -- TODO check that `ρ_high` and `ρ_low` are really in the correct order
                  condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt128)) =>
-                   q(2^128 * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
+                   q($ρ_high ≠ 0 ∧ 2^128 * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
 
 def u128_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U128, NonZero U128]
