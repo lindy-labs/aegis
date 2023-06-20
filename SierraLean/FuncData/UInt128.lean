@@ -57,7 +57,7 @@ def u128_to_felt252 : FuncData where
   inputTypes := [U128]
   branches := [{ outputTypes := [Felt252]
                  condition := fun (a : Q(UInt128)) (ρ : Q(F)) =>
-                   q($(ρ).val = $(a).val) }]
+                   q($ρ = $(a).cast) }]
 
 def u128_is_zero : FuncData where
   inputTypes := [U128]
