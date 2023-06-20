@@ -18,6 +18,7 @@ import SierraLean.FuncData.GasBuiltin
 import SierraLean.FuncData.NonZero
 import SierraLean.FuncData.Nullable
 import SierraLean.FuncData.Storage
+import SierraLean.FuncData.Syscall
 
 open Lean Qq
 
@@ -47,7 +48,7 @@ def libfuncs
   libfuncs_aux typeRefs i
   <|> arrayLibfuncs typeRefs i
   <|> functionCallLibfuncs specs metadataRef i
-  <|> hashLibfuncs i
+  <|> syscallLibfuncs metadataRef i
   <|> builtinCostsLibfuncs currentFunc metadataRef i
   <|> gasBuiltinLibfuncs i
   <|> uint8Libfuncs i

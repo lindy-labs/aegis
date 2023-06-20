@@ -44,7 +44,7 @@ instance : ToString RefTable where toString x := toString $ repr x.toList
 
 def PRIME := 3618502788666131213697322783095070105623107215331596699973092056135872020481
 def BASE_MOD := 3618502788666131106986593281521497120414687020801267626233049500247285300992
-def ADDRESS_MOD := 2^251
+def ADDRESS_MOD := 3618502788666131106986593281521497120414687020801267626233049500247285301248
 
 abbrev F := ZMod PRIME
 abbrev UInt8 := ZMod <| 2^8
@@ -56,8 +56,13 @@ abbrev UInt256 := ZMod <| 2^256
 abbrev StorageBaseAddress := ZMod BASE_MOD
 abbrev StorageAddress := ZMod ADDRESS_MOD
 
+structure ContractState where
+  (class_hash : F)
+  (storage :  StorageAddress → F)
+  (nonce : ℕ)
+
 structure System where
-  -- TODO add all data the `System` type has to keep
+  (contracts : F → ContractState)  -- TODO check if the domain is really `F`
 
 partial def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
@@ -95,6 +100,7 @@ partial def SierraType.toQuote : SierraType → Q(Type)
 /-- A type holding the metadata that will not be contained in Sierra's `System` type -/
 structure Metadata where
   (costs : Identifier → Nat)
+  (contractAddress : F)  -- TODO check if this is correct
 
 notation "⟦" t "⟧" => SierraType.toQuote t
 
