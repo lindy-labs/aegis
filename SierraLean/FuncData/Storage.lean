@@ -27,8 +27,22 @@ def storage_address_try_from_felt252 : FuncData where
                    q($(a).val < ADDRESS_MOD ∧ $(ρ).val = $(a).val) },
                { outputTypes := [.RangeCheck] }]
 
+def storage_address_from_base : FuncData where
+  inputTypes := [.StorageBaseAddress]
+  branches := [{ outputTypes := [.StorageAddress]
+                 condition := fun (a : Q(ZMod 3618502788666131106986593281521497120414687020801267626233049500247285300992))
+                   (ρ : Q(ZMod 3618502788666131106986593281521497120414687020801267626233049500247285301248)) =>
+                     q($ρ = $(a).cast) }]
+
+def storage_base_address_const (n : Q(StorageBaseAddress)) : FuncData where
+  inputTypes := []
+  branches := [{ outputTypes := [.StorageBaseAddress]
+                 condition := fun (ρ : Q(StorageBaseAddress)) => q($ρ = $n) }]
+
 def storageLibfuncs : Identifier → Option FuncData
 | .name "storage_base_address_from_felt252" [] .none => storage_base_address_from_felt252
 | .name "storage_address_from_base_and_offset" [] .none => storage_address_from_base_and_offset
 | .name "storage_address_try_from_felt252" [] .none => storage_address_try_from_felt252
+| .name "storage_address_from_base" [] .none => storage_address_from_base
+| .name "storage_base_address_const" [.const n] .none => storage_base_address_const q($n)
 | _ => .none
