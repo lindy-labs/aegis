@@ -24,7 +24,7 @@ def storage_address_try_from_felt252 : FuncData where
   inputTypes := [.Felt252]
   branches := [{ outputTypes := [.RangeCheck, .StorageAddress]
                  condition := fun (a : Q(F)) _ (ρ : Q(StorageAddress)) =>
-                   q($(a).val < ADDRESS_MOD ∧ $(ρ).val = $(a).val) },
+                   q($(a).val < ADDRESS_MOD ∧ $ρ = $(a).cast) },
                { outputTypes := [.RangeCheck] }]
 
 def storage_address_from_base : FuncData where
