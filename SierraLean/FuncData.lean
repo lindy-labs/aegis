@@ -19,14 +19,18 @@ import SierraLean.FuncData.NonZero
 import SierraLean.FuncData.Nullable
 import SierraLean.FuncData.Storage
 import SierraLean.FuncData.Syscall
+import SierraLean.FuncData.ContractAddress
 
 open Lean Qq
 
 namespace Sierra.FuncData
 
+variable (currentFunc : Identifier) (typeRefs : HashMap Identifier SierraType)
+  (specs : HashMap Identifier (Name × (FVarId → FuncData)))  (metadataRef : FVarId)
+  (i : Identifier) 
+
 /-- The definition of `libfuncs` is split into pieces do to slow elaboration time. -/
-private def libfuncs_aux (typeRefs : HashMap Identifier SierraType)
-    (i : Identifier) :=
+private def libfuncs_aux :=
   controlFlowLibfuncs typeRefs i
   <|> felt252Libfuncs i
   <|> uint128Libfuncs i
@@ -37,14 +41,7 @@ private def libfuncs_aux (typeRefs : HashMap Identifier SierraType)
   <|> snapshotLibfuncs typeRefs i
   <|> nonZeroLibfuncs typeRefs i
 
-/-- Compile-time function data registry -/
-def libfuncs 
-    (currentFunc : Identifier)
-    (typeRefs : HashMap Identifier SierraType)
-    (specs : HashMap Identifier (Name × (FVarId → FuncData)))
-    (metadataRef : FVarId)
-    (i : Identifier) :
-    Option FuncData :=
+private def libfuncs_aux2 :=
   libfuncs_aux typeRefs i
   <|> arrayLibfuncs typeRefs i
   <|> functionCallLibfuncs specs metadataRef i
@@ -52,8 +49,14 @@ def libfuncs
   <|> builtinCostsLibfuncs currentFunc metadataRef i
   <|> gasBuiltinLibfuncs i
   <|> uint8Libfuncs i
+
+/-- Compile-time function data registry -/
+def libfuncs :
+    Option FuncData :=
+  libfuncs_aux2 currentFunc typeRefs specs metadataRef i
   <|> uint16Libfuncs i
   <|> uint32Libfuncs i
   <|> uint64Libfuncs i
   <|> nullableLibfuncs typeRefs i
   <|> storageLibfuncs i
+  <|> contractAddressLibfuncs i

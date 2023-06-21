@@ -42,9 +42,17 @@ abbrev RefTable := HashMap Nat FVarId
 
 instance : ToString RefTable where toString x := toString $ repr x.toList
 
-def PRIME := 3618502788666131213697322783095070105623107215331596699973092056135872020481
-def BASE_MOD := 3618502788666131106986593281521497120414687020801267626233049500247285300992
-def ADDRESS_MOD := 3618502788666131106986593281521497120414687020801267626233049500247285301248
+def PRIME :=
+  3618502788666131213697322783095070105623107215331596699973092056135872020481
+
+def BASE_MOD :=
+  3618502788666131106986593281521497120414687020801267626233049500247285300992
+
+def ADDRESS_MOD :=
+  3618502788666131106986593281521497120414687020801267626233049500247285301248
+
+def CONTRACT_ADDRESS_MOD :=
+  3618502788666131106986593281521497120414687020801267626233049500247285301248
 
 abbrev F := ZMod PRIME
 abbrev UInt8 := ZMod <| 2^8
@@ -55,6 +63,7 @@ abbrev UInt128 := ZMod <| 2^128
 abbrev UInt256 := ZMod <| 2^256
 abbrev StorageBaseAddress := ZMod BASE_MOD
 abbrev StorageAddress := ZMod ADDRESS_MOD
+abbrev ContractAddress := ZMod CONTRACT_ADDRESS_MOD
 
 structure ContractState where
   (class_hash : F)
@@ -95,7 +104,7 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .StorageBaseAddress => q(Sierra.StorageBaseAddress)
   | .StorageAddress => q(Sierra.StorageAddress)
   | .System => q(Sierra.System)
-  | .ContractAddress => q(F) -- TODO check if this is correct, it's probably smaller
+  | .ContractAddress => q(Sierra.ContractAddress)
 
 /-- A type holding the metadata that will not be contained in Sierra's `System` type -/
 structure Metadata where

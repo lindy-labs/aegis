@@ -3,8 +3,7 @@ import Mathlib.Data.ZMod.Basic
 
 open Qq Sierra.SierraType
 
-namespace Sierra
-namespace FuncData
+namespace Sierra.FuncData
 
 def felt252_const (n : Q(F)) : FuncData where
   inputTypes := []
