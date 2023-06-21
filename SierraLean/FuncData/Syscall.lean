@@ -53,16 +53,20 @@ def storage_read_syscall : FuncData where
                    _ (s' : Q(System)) (v : Q(F)) =>
                      let m : Q(Metadata) := .fvar metadataRef
                      q(($(s).contracts $(m).contractAddress).storage $a = $v ∧ $s' = $s) },
-               -- TODO check if we have nothing to say about a condition for the 2nd branch
-               { outputTypes := [.GasBuiltin, .System, .Array .Felt252] }]
+               { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
+                 condition := fun _ (sys : Q(System)) _ _
+                   _ (sys' : Q(System)) _ => q($sys' = $sys) }]
 
 def storage_write_syscall : FuncData where
   inputTypes := [.GasBuiltin, .System, .U32, .StorageAddress, .Felt252]
   branches := [{ outputTypes := [.GasBuiltin, .System]
                  condition := fun _ _ _ (a : Q(StorageAddress)) (v : Q(F)) _ (s' : Q(System)) =>
                    let m : Q(Metadata) := .fvar metadataRef
+                   -- TODO replace by exact semantics (`s'` is "almost" the same as `s`)
                    q(($(s').contracts $(m).contractAddress).storage $a = $v) },
-               { outputTypes := [.GasBuiltin, .System, .Array .Felt252] }]
+               { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
+                 condition := fun _ (sys : Q(System)) _ _ _ _ (sys' : Q(System)) _ =>
+                   q($sys' = $sys) }]
 
 def syscallLibfuncs : Identifier → Option FuncData
 | .name "emit_event_syscall" [] .none => emit_event_syscall
