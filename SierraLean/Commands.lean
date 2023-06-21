@@ -117,6 +117,20 @@ elab "sierra_load_file " s:str : command => do
     sierraLoadString child.stdout
   | _ => throwError "Wrong file extension, must be .cairo or .sierra!"
 
+
+elab "sierra_info" name:str : command => do  -- TODO change from `str` to `ident`
+  let env ← getEnv
+  let sf := loadedSierraFile.getState env
+  match ← liftCoreM <| parseIdentifier name.getString with
+  | .ok i => do
+    withFindByIdentifier sf i fun pc inputs outputs =>
+    dbg_trace "Starting pc: {pc}"
+    dbg_trace "Input types: {inputs.map (·.2)}"
+    dbg_trace "Output types: {outputs}"
+    return ()
+  | .error str => throwError toString str
+  
+
 elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `str` to `ident`
   let env ← getEnv
   let sf := loadedSierraFile.getState env

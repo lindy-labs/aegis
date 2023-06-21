@@ -4,6 +4,8 @@ open Sierra
 
 sierra_load_file "SierraLean/Tests/ternary_add.sierra"
 
+sierra_info "ternary_add"
+
 sierra_spec "ternary_add" := fun _ a b c ρ => ρ = a + b + c
 
 sierra_sound "ternary_add" := fun _ a b c ρ => by rintro rfl; rfl

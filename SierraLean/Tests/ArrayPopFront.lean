@@ -34,6 +34,8 @@ return([9], [10]);
 
 test::foo@0([0]: Array<felt252>) -> (Array<felt252>, core::option::Option::<core::box::Box::<core::felt252>>);"
 
+sierra_info "test::foo"
+
 sierra_spec "test::foo" := fun _ a ρ₁ ρ₂ =>
   ρ₁ = a.tail ∧ ρ₂ = if a.length = 0 then .inr () else .inl a.head!
 
