@@ -89,7 +89,7 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .Enum (t::ts) => q($(t.toQuote) ⊕ $(toQuote (.Enum ts)))
   | .Struct []      => q(Unit)
   | .Struct [t]     => t.toQuote
-  | .Struct (t::ts) => q($(t.toQuote) × $(toQuote (.Enum ts)))
+  | .Struct (t::ts) => q($(t.toQuote) × $(toQuote (.Struct ts)))
   | .NonZero t => toQuote t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
   | .Box t => toQuote t
   | .Snapshot t => toQuote t
@@ -106,12 +106,47 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .System => q(Sierra.System)
   | .ContractAddress => q(Sierra.ContractAddress)
 
-/-- A type holding the metadata that will not be contained in Sierra's `System` type -/
-structure Metadata where
-  (costs : Identifier → Nat)
-  (contractAddress : F)  -- TODO check if this is correct
-
 notation "⟦" t "⟧" => SierraType.toQuote t
+
+def SierraType.BlockInfo : SierraType :=
+.Struct [ .U64  -- block number
+        , .U64  -- block timestamp
+        , .ContractAddress ]  -- sequencer address
+
+def SierraType.TxInfo : SierraType :=
+.Struct [ .Felt252  -- transaction version
+        , .ContractAddress  -- the account contract from which this tx originates
+        , .U128  -- max fee
+        , .Snapshot <| .Array .Felt252 -- signature of the tx
+        , .Felt252  -- transaction hash
+        , .Felt252  -- identifier of the chain
+        , .Felt252  -- nonce
+        ]
+
+def SierraType.ExecutionInfo : SierraType :=
+.Struct [ .BlockInfo
+        , .TxInfo
+        , .ContractAddress  -- caller address
+        , .ContractAddress  -- contract address
+        , .Felt252  -- entry point selector
+        ]
+
+/-- A type holding the metadata that will not be contained in Sierra's `System` type -/
+structure Metadata : Type where
+  (costs : Identifier → Nat)
+  (callerAddress : ContractAddress)
+  (contractAddress : ContractAddress)
+  (entryPointSelector : F)
+  (txVersion : F)
+  (txContract : ContractAddress)
+  (txMaxFee : UInt128)
+  (txSignature : List F)
+  (txHash : F)
+  (txChainIdentifier : F)
+  (txNonce : F)
+  (blockNumber : UInt64)
+  (blockTimestamp : UInt64)
+  (sequencerAddress : ContractAddress)
 
 /-- A structure contining the branch-specific data for a libfunc -/
 structure BranchData (inputTypes : List SierraType) where

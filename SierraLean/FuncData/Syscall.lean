@@ -3,32 +3,7 @@ import Mathlib.Data.ZMod.Basic
 
 open Qq Sierra Lean
 
-namespace Sierra
-
-def SierraType.BlockInfo : SierraType :=
-.Struct [ .U64  -- block number
-        , .U64  -- block timestamp
-        , .ContractAddress ]  -- sequencer address
-
-def SierraType.TxInfo : SierraType :=
-.Struct [ .Felt252  -- transaction version
-        , .ContractAddress  -- the account contract from which this tx originates
-        , .U128  -- max fee
-        , .Snapshot <| .Array .Felt252 -- signature of the tx
-        , .Felt252  -- transaction hash
-        , .Felt252  -- identifier of the chain
-        , .Felt252  -- nonce
-        ]
-
-def SierraType.ExecutionInfo : SierraType :=
-.Struct [ .BlockInfo
-        , .TxInfo
-        , .ContractAddress  -- caller address
-        , .ContractAddress  -- contract address
-        , .Felt252  -- entry point selector
-        ]
-
-namespace FuncData
+namespace Sierra.FuncData
 
 variable (metadataRef : FVarId)
 
@@ -39,12 +14,23 @@ def emit_event_syscall : FuncData where
                { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
                  condition := fun _ _ _ _ _ _ _ => q(True) }]
 
+open Sierra
+
 def get_execution_info_syscall : FuncData where
   inputTypes := [.GasBuiltin, .System]
   branches := [{ outputTypes := [.GasBuiltin, .System, .Box <| .ExecutionInfo]
-                 condition := fun _ _ _ _ _ => q(True) },  -- TODO
+                 condition := fun _ (sys : Q(System)) _ (sys' : Q(System))
+                     (ρ: Q((UInt64 × UInt64 × ContractAddress) × (F × ContractAddress × UInt128 ×
+                      List F × F × F × F) × ContractAddress × ContractAddress × F)) =>
+                     let m : Q(Metadata) := .fvar metadataRef
+                     q($sys' = $sys ∧
+                       $ρ = ⟨⟨$(m).blockNumber, $(m).blockTimestamp, $(m).sequencerAddress⟩,
+                         ⟨$(m).txVersion, $(m).txContract, $(m).txMaxFee, $(m).txSignature,
+                           $(m).txHash, $(m).txChainIdentifier, $(m).txNonce⟩, 
+                         $(m).callerAddress, $(m).contractAddress, $(m).entryPointSelector⟩) },
                { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
-                 condition := fun _ _ _ _ _ => q(True) }]  -- TODO
+                 condition := fun _ (sys : Q(System)) _ (sys' : Q(System)) _ =>
+                   q($sys' = $sys) }]
 
 def storage_read_syscall : FuncData where
   inputTypes := [.GasBuiltin, .System, .U32, .StorageAddress]
@@ -70,7 +56,7 @@ def storage_write_syscall : FuncData where
 
 def syscallLibfuncs : Identifier → Option FuncData
 | .name "emit_event_syscall" [] .none => emit_event_syscall
-| .name "get_execution_info_syscall" [] .none => get_execution_info_syscall
+| .name "get_execution_info_syscall" [] .none => get_execution_info_syscall metadataRef
 | .name "storage_read_syscall" [] .none => storage_read_syscall metadataRef
 | .name "storage_write_syscall" [] .none => storage_write_syscall metadataRef
 | _                         => .none
