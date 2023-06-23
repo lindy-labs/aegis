@@ -49,6 +49,7 @@ private def libfuncs_aux2 :=
   <|> builtinCostsLibfuncs currentFunc metadataRef i
   <|> gasBuiltinLibfuncs i
   <|> uint8Libfuncs i
+  <|> hashLibfuncs metadataRef i
 
 /-- Compile-time function data registry -/
 def libfuncs :
