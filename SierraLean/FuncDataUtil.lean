@@ -133,6 +133,7 @@ def SierraType.ExecutionInfo : SierraType :=
 
 /-- A type holding the metadata that will not be contained in Sierra's `System` type -/
 structure Metadata : Type where
+  (pedersen : F → F → F)  -- TODO this dummy should be replaced by a real reimplementation
   (costs : Identifier → Nat)
   (callerAddress : ContractAddress)
   (contractAddress : ContractAddress)
