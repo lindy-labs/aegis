@@ -4,41 +4,50 @@ import Mathlib.Data.Bool.Basic
 
 open Qq Sierra.SierraType
 
-namespace Sierra.FuncData
+namespace Sierra
+
+def SierraType.Bool : SierraType := .Enum [.Struct [], .Struct []]
+
+instance : Coe (Unit ⊕ Unit) Bool :=
+{ coe := fun x => match x with
+                  | .inl () => false
+                  | .inr () => true }
+
+namespace FuncData
 
 def bool_xor_impl : FuncData where
-  inputTypes := [SierraBool, SierraBool]
+  inputTypes := [.Bool, .Bool]
   branches := [{
-    outputTypes := [SierraBool],
-    condition := fun (a : Q(Bool)) (b : Q(Bool)) (ρ : Q(Bool)) => q($ρ = xor $a $b)
+    outputTypes := [.Bool],
+    condition := fun (a : Q(Unit ⊕ Unit)) (b : Q(Unit ⊕ Unit)) (ρ : Q(Unit ⊕ Unit)) => q($ρ = xor $a $b)
   }]
 
 def bool_or_impl : FuncData where
-  inputTypes := [SierraBool, SierraBool]
+  inputTypes := [.Bool, .Bool]
   branches := [{
-    outputTypes := [SierraBool],
-    condition := fun (a : Q(Bool)) (b : Q(Bool)) (ρ : Q(Bool)) => q($ρ = $a || $b)
+    outputTypes := [.Bool],
+    condition := fun (a : Q(Unit ⊕ Unit)) (b : Q(Unit ⊕ Unit)) (ρ : Q(Unit ⊕ Unit)) => q($ρ = $a || $b)
   }]
 
 def bool_and_impl : FuncData where
-  inputTypes := [SierraBool, SierraBool]
+  inputTypes := [.Bool, .Bool]
   branches := [{
-    outputTypes := [SierraBool],
-    condition := fun (a : Q(Bool)) (b : Q(Bool)) (ρ : Q(Bool)) => q($ρ = $a && $b)
+    outputTypes := [.Bool],
+    condition := fun (a : Q(Unit ⊕ Unit)) (b : Q(Unit ⊕ Unit)) (ρ : Q(Unit ⊕ Unit)) => q($ρ = $a && $b)
   }]
 
 def bool_not_impl : FuncData where
-  inputTypes := [SierraBool]
+  inputTypes := [.Bool]
   branches := [{
-    outputTypes := [SierraBool],
-    condition := fun (a : Q(Bool)) (ρ : Q(Bool)) => q($ρ = !$a)
+    outputTypes := [.Bool],
+    condition := fun (a : Q(Unit ⊕ Unit)) (ρ : Q(Unit ⊕ Unit)) => q($ρ = !$a)
   }]
 
 def bool_to_felt252 : FuncData where
-  inputTypes := [SierraBool]
+  inputTypes := [.Bool]
   branches := [{
     outputTypes := [Felt252],
-    condition := fun (a : Q(Bool)) (ρ : Q(F)) => q($ρ = if $a then 1 else 0)
+    condition := fun (a : Q(Unit ⊕ Unit)) (ρ : Q(F)) => q($ρ = if $a then 1 else 0)
   }]
 
 def boolLibfuncs : Identifier → Option FuncData

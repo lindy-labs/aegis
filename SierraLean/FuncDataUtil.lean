@@ -16,7 +16,6 @@ inductive SierraType
 | U64
 | U128
 | U256
-| SierraBool
 | Addr
 | RangeCheck
 | Enum (fields : List SierraType)
@@ -81,7 +80,6 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .U64 => q(UInt64)
   | .U128 => q(UInt128)
   | .U256 => q(UInt256)
-  | .SierraBool => q(Bool)
   | .Addr => q(Sierra.Addr)
   | .RangeCheck => q(Nat)  -- TODO
   | .Enum []      => q(Unit)

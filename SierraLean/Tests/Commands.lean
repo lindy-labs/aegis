@@ -75,4 +75,22 @@ sierra_sound "double::double::double" := fun _ a ρ => by
   rintro rfl
   rfl
 
+
+sierra_load_string "type Unit = Struct<ut@Tuple>;
+type core::bool = Enum<ut@core::bool, Unit, Unit>;
+
+libfunc bool_xor_impl = bool_xor_impl;
+libfunc store_temp<core::bool> = store_temp<core::bool>;
+
+bool_xor_impl([0], [1]) -> ([2]);
+store_temp<core::bool>([2]) -> ([3]);
+return([3]);
+
+test::foo@0([0]: core::bool, [1]: core::bool) -> (core::bool);"
+
+sierra_spec "test::foo" := fun _ a b ρ => (ρ : Bool) = xor a b
+
+sierra_sound "test::foo" := fun _ a b ρ => by
+  aesop
+
 sierra_complete
