@@ -7,7 +7,7 @@ namespace Sierra.FuncData
 def storage_base_address_from_felt252 : FuncData where
   inputTypes := [.RangeCheck, .Felt252]
   branches := [{ outputTypes := [.RangeCheck, .StorageBaseAddress]
-                 condition := fun _ (a : Q(F)) _ (ρ : Q(StorageAddress)) =>
+                 condition := fun _ (a : Q(F)) _ (ρ : Q(StorageBaseAddress)) =>
                    q($ρ = $(a).cast) }]
 
 def storage_address_from_base_and_offset : FuncData where
