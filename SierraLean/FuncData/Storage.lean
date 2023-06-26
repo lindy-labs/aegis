@@ -5,10 +5,10 @@ open Qq Lean Sierra
 namespace Sierra.FuncData
 
 def storage_base_address_from_felt252 : FuncData where
-  inputTypes := [.Felt252]
-  branches := [{ outputTypes := [.StorageBaseAddress]
-                 condition := fun (a : Q(F)) (ρ : Q(StorageAddress)) =>
-                   q($(ρ).val = $(a).val % BASE_MOD) }]
+  inputTypes := [.RangeCheck, .Felt252]
+  branches := [{ outputTypes := [.RangeCheck, .StorageBaseAddress]
+                 condition := fun _ (a : Q(F)) _ (ρ : Q(StorageAddress)) =>
+                   q($ρ = $(a).cast) }]
 
 def storage_address_from_base_and_offset : FuncData where
   inputTypes := [.StorageBaseAddress, .U8]
