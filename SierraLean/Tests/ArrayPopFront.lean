@@ -32,14 +32,14 @@ rename<Array<felt252>>([5]) -> ([9]);
 rename<core::option::Option::<core::box::Box::<core::felt252>>>([6]) -> ([10]);
 return([9], [10]);
 
-test::foo@0([0]: Array<felt252>) -> (Array<felt252>, core::option::Option::<core::box::Box::<core::felt252>>);"
+test::pop_front@0([0]: Array<felt252>) -> (Array<felt252>, core::option::Option::<core::box::Box::<core::felt252>>);"
 
-sierra_info "test::foo"
+sierra_info "test::pop_front"
 
-sierra_spec "test::foo" := fun _ a ρ₁ ρ₂ =>
+sierra_spec "test::pop_front" := fun _ a ρ₁ ρ₂ =>
   ρ₁ = a.tail ∧ ρ₂ = if a.length = 0 then .inr () else .inl a.head!
 
-sierra_sound "test::foo" := fun _ a ρ₁ ρ₂ => by
-  rintro ⟨_,_,(⟨rfl,rfl,rfl⟩|⟨rfl,rfl,rfl⟩)⟩ <;> simp [«spec_test::foo»]
+sierra_sound "test::pop_front" := fun _ a ρ₁ ρ₂ => by
+  rintro ⟨_,_,(⟨rfl,rfl,rfl⟩|⟨rfl,rfl,rfl⟩)⟩ <;> simp [«spec_test::pop_front»]
 
 sierra_complete

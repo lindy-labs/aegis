@@ -10,9 +10,14 @@ variable (metadataRef : FVarId)
 def emit_event_syscall : FuncData where
   inputTypes := [.GasBuiltin, .System, .Snapshot (.Array .Felt252), .Snapshot (.Array .Felt252)]
   branches := [{ outputTypes := [.GasBuiltin, .System]
-                 condition := fun _ _ _ _ _ _ => q(True) },  -- TODO
+                 condition := fun _ (s : Q(System)) (k : Q(List F)) (d : Q(List F)) 
+                   _ (s' : Q(System)) =>
+                     let m : Q(Metadata) := .fvar metadataRef
+                     q($(s').events = $(s).events.append [{ contract := $(m).contractAddress
+                                                            keys := $k
+                                                            data := $d }]) },
                { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
-                 condition := fun _ _ _ _ _ _ _ => q(True) }]
+                 condition := fun _ (s : Q(System)) _ _ _ (s' : Q(System)) _ => q($s' = $s) }]
 
 open Sierra
 
@@ -55,7 +60,7 @@ def storage_write_syscall : FuncData where
                    q($sys' = $sys) }]
 
 def syscallLibfuncs : Identifier → Option FuncData
-| .name "emit_event_syscall" [] .none => emit_event_syscall
+| .name "emit_event_syscall" [] .none => emit_event_syscall metadataRef
 | .name "get_execution_info_syscall" [] .none => get_execution_info_syscall metadataRef
 | .name "storage_read_syscall" [] .none => storage_read_syscall metadataRef
 | .name "storage_write_syscall" [] .none => storage_write_syscall metadataRef

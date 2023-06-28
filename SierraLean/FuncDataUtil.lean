@@ -69,8 +69,14 @@ structure ContractState where
   (storage :  StorageAddress → F)
   (nonce : ℕ)
 
+structure EventData where
+  (contract : ContractAddress)
+  (keys : List F)
+  (data : List F)
+
 structure System where
   (contracts : F → ContractState)  -- TODO check if the domain is really `F`
+  (events : List EventData)
 
 partial def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
