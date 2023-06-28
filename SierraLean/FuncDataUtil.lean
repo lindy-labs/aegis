@@ -78,6 +78,12 @@ structure System where
   (contracts : F → ContractState)  -- TODO check if the domain is really `F`
   (events : List EventData)
 
+def System.emitEvent (s : System) (e : EventData): System := { s with events := s.events ++ [e] }
+
+def System.writeStorage (s : System) (contract : F) (addr : StorageAddress) (val : F) : System :=
+  { s with contracts := Function.update s.contracts contract <|
+             { s.contracts contract with storage := Function.update (s.contracts contract).storage addr val } }
+
 partial def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
   | .U8 => q(UInt8)

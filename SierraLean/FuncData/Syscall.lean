@@ -13,9 +13,9 @@ def emit_event_syscall : FuncData where
                  condition := fun _ (s : Q(System)) (k : Q(List F)) (d : Q(List F)) 
                    _ (s' : Q(System)) =>
                      let m : Q(Metadata) := .fvar metadataRef
-                     q($(s').events = $(s).events.append [{ contract := $(m).contractAddress
-                                                            keys := $k
-                                                            data := $d }]) },
+                     q($s' = $(s).emitEvent { contract := $(m).contractAddress
+                                              keys := $k
+                                              data := $d }) },
                { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
                  condition := fun _ (s : Q(System)) _ _ _ (s' : Q(System)) _ => q($s' = $s) }]
 
@@ -51,10 +51,10 @@ def storage_read_syscall : FuncData where
 def storage_write_syscall : FuncData where
   inputTypes := [.GasBuiltin, .System, .U32, .StorageAddress, .Felt252]
   branches := [{ outputTypes := [.GasBuiltin, .System]
-                 condition := fun _ _ _ (a : Q(StorageAddress)) (v : Q(F)) _ (s' : Q(System)) =>
-                   let m : Q(Metadata) := .fvar metadataRef
-                   -- TODO replace by exact semantics (`s'` is "almost" the same as `s`)
-                   q(($(s').contracts $(m).contractAddress).storage $a = $v) },
+                 condition := fun _ (s : Q(System)) _ (a : Q(StorageAddress)) (v : Q(F)) 
+                   _ (s' : Q(System)) =>
+                     let m : Q(Metadata) := .fvar metadataRef
+                     q($s' = ($s).writeStorage ($m).contractAddress $a $v) },
                { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
                  condition := fun _ (sys : Q(System)) _ _ _ _ (sys' : Q(System)) _ =>
                    q($sys' = $sys) }]
