@@ -224,3 +224,24 @@ return([3]);
 bar@0([0]: F) -> (F);
 baz@2([2]: F) -> (F);"
 #eval parseGrammar test_parser_change
+
+
+def test_square_brackets :=
+"type F = felt252;
+
+libfunc c5 = felt252_const<5>;
+libfunc call_bar = function_call<user@bar[expr42]>;
+
+c5() -> ([1]);
+return([1]);
+call_bar([2]) -> ([3]);
+return([3]);
+
+bar[expr42]@0([0]: F) -> (F);
+baz@2([2]: F) -> (F);"
+#eval parseGrammar test_square_brackets
+#eval analyzeFile test_square_brackets
+
+def test_end :=
+"libfunc function_call<user@foo::end> = function_call<user@foo::end::bar>;"
+#eval parseGrammar test_end

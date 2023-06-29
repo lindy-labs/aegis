@@ -75,7 +75,7 @@ declare_syntax_cat parameter
 declare_syntax_cat branch_info
 declare_syntax_cat sierra_file
 
-syntax (("@"? ident) <|> "return") atomic("::"? "<" parameter,* ">")?  ("::" identifier)? : identifier
+syntax (("@"? ident) <|> "return" <|> "end") ("[" ident "]")? atomic("::"? "<" parameter,* ">")?  ("::" identifier)? : identifier
 syntax "[" num "]" : identifier
 
 syntax identifier : parameter
@@ -100,14 +100,23 @@ syntax declarationLine := identifier "@" num "(" declarationArg,* ")" "->" "(" i
 
 syntax typedefLine* libfuncLine* atomic(statementLine)* declarationLine* : sierra_file
 
+
 mutual
 
-partial def elabIdentifier : Syntax → Except String Identifier
-| `(identifier|$[@]? $i:ident $[$[::]? <$ps,*>]? $[:: $tl:identifier]?) => do
-  let i := i.getId.toString
+private partial def elabIdentifierAux (i : String) (j: Option (TSyntax `ident))
+    (ps : Option (Syntax.TSepArray `parameter ",")) (tl: Option (TSyntax `identifier)) :
+    Except String Identifier := do
+  let j := (j.map ("[" ++ ·.getId.toString ++ "]")).getD ""
+  let i := i ++ j
   let ps := (← ps.mapM fun ps => ps.getElems.mapM elabParameter).getD #[]
   let tl ← tl.mapM elabIdentifier
   .ok <| .name i ps.toList tl
+
+partial def elabIdentifier : Syntax → Except String Identifier
+| `(identifier|$[@]? $i:ident $[[$j:ident]]? $[$[::]? <$ps,*>]? $[:: $tl:identifier]?) => do
+  elabIdentifierAux i.getId.toString j ps tl
+| `(identifier|end $[[$j:ident]]? $[$[::]? <$ps,*>]? $[:: $tl:identifier]?) => do
+  elabIdentifierAux "end" j ps tl
 | `(identifier|return) => .ok <| .name "return" [] .none
 | `(identifier|[$n:num]) => .ok <| .ref n.getNat
 | _ => .error "Could not elab identifier"
