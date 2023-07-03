@@ -53,7 +53,7 @@ def u64_is_zero : FuncData where
   branches := [{ outputTypes := []
                  condition := fun (a : Q(UInt64)) => q($a = 0) },
                { outputTypes := [NonZero U64]
-                 condition := fun (a ρ : Q(UInt64)) => q($ρ = $a) }]
+                 condition := fun (a ρ : Q(UInt64)) => q($a ≠ 0 ∧ $ρ = $a) }]
 
 def u64_const (n : Q(UInt64)) : FuncData where
   inputTypes := []

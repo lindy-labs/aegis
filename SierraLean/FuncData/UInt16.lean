@@ -53,7 +53,7 @@ def u16_is_zero : FuncData where
   branches := [{ outputTypes := []
                  condition := fun (a : Q(UInt16)) => q($a = 0) },
                { outputTypes := [NonZero U16]
-                 condition := fun (a ρ : Q(UInt16)) => q($ρ = $a) }]
+                 condition := fun (a ρ : Q(UInt16)) => q($a ≠ 0 ∧ $ρ = $a) }]
 
 def u16_const (n : Q(UInt16)) : FuncData where
   inputTypes := []

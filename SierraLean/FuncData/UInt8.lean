@@ -53,7 +53,7 @@ def u8_is_zero : FuncData where
   branches := [{ outputTypes := []
                  condition := fun (a : Q(UInt8)) => q($a = 0) },
                { outputTypes := [NonZero U8]
-                 condition := fun (a ρ : Q(UInt8)) => q($ρ = $a) }]
+                 condition := fun (a ρ : Q(UInt8)) => q($a ≠ 0 ∧ $ρ = $a) }]
 
 def u8_const (n : Q(UInt8)) : FuncData where
   inputTypes := []

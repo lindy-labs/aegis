@@ -53,7 +53,7 @@ def u32_is_zero : FuncData where
   branches := [{ outputTypes := []
                  condition := fun (a : Q(UInt32)) => q($a = 0) },
                { outputTypes := [NonZero U32]
-                 condition := fun (a ρ : Q(UInt32)) => q($ρ = $a) }]
+                 condition := fun (a ρ : Q(UInt32)) => q($a ≠ 0 ∧ $ρ = $a) }]
 
 def u32_const (n : Q(UInt32)) : FuncData where
   inputTypes := []
