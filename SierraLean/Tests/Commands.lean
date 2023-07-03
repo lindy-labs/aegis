@@ -86,11 +86,10 @@ bool_xor_impl([0], [1]) -> ([2]);
 store_temp<core::bool>([2]) -> ([3]);
 return([3]);
 
-test::foo@0([0]: core::bool, [1]: core::bool) -> (core::bool);"
+test::foo@0([0]: core::bool, [1]: core::bool) -> (core::bool);
+test::bar@0([0]: core::bool, [1]: core::bool) -> (core::bool);"
 
 sierra_spec "test::foo" := fun _ a b ρ => (ρ : Bool) = xor a b
 
 sierra_sound "test::foo" := fun _ a b ρ => by
   aesop
-
-sierra_complete

@@ -68,10 +68,15 @@ initialize cairoPath : SimplePersistentEnvExtension System.FilePath (Option Syst
     addImportedFn := fun ⟨pss⟩ => (pss.map Array.toList).join.getLast?
   }
 
-initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile ←
+initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile (Option SierraFile) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun _ sf => sf
-    addImportedFn := fun sfss => (sfss.back?.getD #[]).back?.getD default
+    addImportedFn := fun sfss => Id.run do
+      let mut sf? : Option SierraFile := default
+      for sfs in sfss do
+        for sf in sfs do
+          sf? := sf
+      sf?
   }
 
 initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × PersistantFuncData)
@@ -120,7 +125,7 @@ elab "sierra_load_file " s:str : command => do
 
 elab "sierra_info" name:str : command => do  -- TODO change from `str` to `ident`
   let env ← getEnv
-  let sf := loadedSierraFile.getState env
+  let sf := (loadedSierraFile.getState env).get!
   match ← liftCoreM <| parseIdentifier name.getString with
   | .ok i => do
     withFindByIdentifier sf i fun pc inputs outputs =>
@@ -133,7 +138,7 @@ elab "sierra_info" name:str : command => do  -- TODO change from `str` to `ident
 
 elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `str` to `ident`
   let env ← getEnv
-  let sf := loadedSierraFile.getState env
+  let sf := (loadedSierraFile.getState env).get!
   let typeDefs ← match buildTypeDefs sf.typedefs with
   | .ok x => pure x
   | .error err => throwError err
@@ -165,7 +170,7 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
 
 elab "sierra_sound" name:str val:declVal : command => do
   let env ← getEnv
-  let sf := loadedSierraFile.getState env
+  let sf := (loadedSierraFile.getState env).get!
   let val ← liftMacroM <| declValToTerm val
   match ← liftCoreM <| parseIdentifier name.getString with
   | .ok i =>  
@@ -194,9 +199,10 @@ elab "sierra_sound" name:str val:declVal : command => do
 
 elab "sierra_complete" : command => do
   let env ← getEnv
-  let sf := loadedSierraFile.getState env
+  let sf := (loadedSierraFile.getState env).get!
   let mut missingDecls : Array Identifier := #[]
   for (i, _) in sf.declarations do
     unless (sierraSoundness.getState env).contains i do missingDecls := missingDecls.push i
   unless missingDecls.size = 0 do throwError
     "Soundness proof not provided for the following declarations: {missingDecls}"
+  modifyEnv (loadedSierraFile.addEntry · default)  -- remove saved Sierra file after the command
