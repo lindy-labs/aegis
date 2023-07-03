@@ -70,21 +70,27 @@ instance : ToString Parameter where toString := parameterToString
 instance : ToString Statement where toString x := toString $ repr x
 instance : ToString SierraFile where toString x := toString $ repr x
 
+declare_syntax_cat atom
 declare_syntax_cat identifier
 declare_syntax_cat parameter
 declare_syntax_cat branch_info
+declare_syntax_cat statement_lhs
 declare_syntax_cat sierra_file
 
-syntax (("@"? ident) <|> "return" <|> "end") ("[" ident "]")? atomic("::"? "<" parameter,* ">")?  ("::" identifier)? : identifier
+syntax "@"? ident : atom
+syntax "return" : atom
+syntax "end" : atom
+
+syntax atom ("[" ident "]")? atomic("::"? "<" parameter,* ">")?  ("::" identifier)? : identifier
 syntax "[" num "]" : identifier
 
-syntax identifier : parameter
 syntax atomic("-" num) : parameter
 syntax num : parameter
 syntax "user@" identifier : parameter
 syntax "ut@" identifier : parameter
 syntax "lib@" identifier : parameter
 syntax "(" parameter,*,? ")" : parameter
+syntax identifier : parameter
 
 syntax refTuple := "(" ("[" num "]"),* ")"
 syntax declarationArg := "[" num "]" ":" identifier
@@ -92,14 +98,15 @@ syntax declarationArg := "[" num "]" ":" identifier
 syntax "fallthrough" refTuple : branch_info
 syntax num refTuple : branch_info
 
+syntax "->" refTuple : statement_lhs
+syntax "{" branch_info* "}" : statement_lhs
+
 syntax typedefLine := &"type" identifier "=" identifier ";"
 syntax libfuncLine := "libfunc" identifier "=" identifier ";"
-syntax statementLine := identifier refTuple 
-  (("->" refTuple) <|> ("{" branch_info* "}"))? ";"
+syntax statementLine := identifier refTuple (statement_lhs)? ";"
 syntax declarationLine := identifier "@" num "(" declarationArg,* ")" "->" "(" identifier,* ")" ";"
 
 syntax typedefLine* libfuncLine* atomic(statementLine)* declarationLine* : sierra_file
-
 
 mutual
 
@@ -197,7 +204,9 @@ def replaceNaughtyBrackets (s : String) : String :=
 def parseGrammar (input : String) : CoreM (Except String SierraFile) := do
   let env ← getEnv
   let input := replaceNaughtyBrackets input
-  pure do elabSierraFile (← runParserCategory env `sierra_file input)
+  pure do
+    let stx ← runParserCategory env `sierra_file input
+    elabSierraFile stx
 
 def parseIdentifier (input : String) : CoreM (Except String Identifier) := do
   let env ← getEnv
