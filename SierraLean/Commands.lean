@@ -71,7 +71,7 @@ initialize cairoPath : SimplePersistentEnvExtension System.FilePath (Option Syst
 initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile SierraFile ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun _ sf => sf
-    addImportedFn := fun _ => default  -- Load the empty Sierra file by default
+    addImportedFn := fun sfss => (sfss.back?.getD #[]).back?.getD default
   }
 
 initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × PersistantFuncData)
