@@ -76,7 +76,6 @@ initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile (Option Si
       for sfs in sfss do
         for sf in sfs do
           if sf.declarations.length > 0 then
-            dbg_trace "overwrite sierra file with one that contains decls {sf.declarations.head!.1}, ..."
             sf? := sf
       sf?
   }
