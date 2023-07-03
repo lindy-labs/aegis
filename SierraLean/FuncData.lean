@@ -20,6 +20,7 @@ import SierraLean.FuncData.Nullable
 import SierraLean.FuncData.Storage
 import SierraLean.FuncData.Syscall
 import SierraLean.FuncData.ContractAddress
+import SierraLean.FuncData.UInt256
 
 open Lean Qq
 
@@ -58,6 +59,7 @@ def libfuncs :
   <|> uint16Libfuncs i
   <|> uint32Libfuncs i
   <|> uint64Libfuncs i
+  <|> uint256Libfuncs i
   <|> nullableLibfuncs typeRefs i
   <|> storageLibfuncs i
   <|> contractAddressLibfuncs i
