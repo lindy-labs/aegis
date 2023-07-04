@@ -9,11 +9,11 @@ def u32_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U32, U32]
   branches := [{ outputTypes := [RangeCheck, U32]
                  condition := fun _ (a b : Q(UInt32)) _ (ρ : Q(UInt32)) => 
-                   q(($a).val + ($b).val < 2^32 ∧ $ρ = $a + $b) },
+                   q(($a).val + ($b).val < U32_MOD ∧ $ρ = $a + $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U32]
                  condition := fun _ (a b : Q(UInt32)) _ (ρ : Q(UInt32)) =>
-                   q(($a).val + ($b).val ≥ 2^32 ∧ $ρ = $a + $b) }]
+                   q(($a).val + ($b).val ≥ U32_MOD ∧ $ρ = $a + $b) }]
 
 def u32_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U32, U32]
@@ -33,7 +33,7 @@ def u32s_from_felt252 : FuncData where
                { outputTypes := [RangeCheck, U32, U32]
                  -- TODO check that `ρ_high` and `ρ_low` are really in the correct order
                  condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt32)) =>
-                   q(2^32 * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
+                   q(U32_MOD * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
 
 def u32_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U32, NonZero U32]
@@ -70,9 +70,9 @@ def u32_try_from_felt252 : FuncData where
   inputTypes := [.RangeCheck, .Felt252]
   branches := [{ outputTypes := [.RangeCheck, .U32]
                  condition := fun _ (a : Q(F)) _ (ρ : Q(UInt32)) => 
-                   q($(a).val < 2^32 ∧ $ρ = $(a).cast) },
+                   q($(a).val < U32_MOD ∧ $ρ = $(a).cast) },
                { outputTypes := [.RangeCheck]
-                 condition := fun _ (a : Q(F)) _ => q(2^32 ≤ $(a).val) }]
+                 condition := fun _ (a : Q(F)) _ => q(U32_MOD ≤ $(a).val) }]
 
 def uint32Libfuncs : Identifier → Option FuncData
 | .name "u32_overflowing_add" [] .none      => u32_overflowing_add

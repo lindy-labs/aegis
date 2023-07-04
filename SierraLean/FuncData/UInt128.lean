@@ -9,11 +9,11 @@ def u128_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U128, U128]
   branches := [{ outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) => 
-                   q(($a).val + ($b).val < 2^128 ∧ $ρ = $a + $b) },
+                   q(($a).val + ($b).val < U128_MOD ∧ $ρ = $a + $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
-                   q(($a).val + ($b).val ≥ 2^128 ∧ $ρ = $a + $b) }]
+                   q(($a).val + ($b).val ≥ U128_MOD ∧ $ρ = $a + $b) }]
 
 def u128_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U128, U128]
@@ -29,7 +29,7 @@ def u128_guarantee_mul : FuncData where
   inputTypes := [U128, U128]
   branches := [{ outputTypes := [U128, U128, U128MulGuarantee]
                  condition := fun (a b ρ_high ρ_low : Q(UInt128)) _ =>
-                   q(2^128 * ($ρ_high).val + ($ρ_low).val = ($a).val * ($b).val) }]
+                   q(U128_MOD * ($ρ_high).val + ($ρ_low).val = ($a).val * ($b).val) }]
 
 def u128_mul_guarantee_verify : FuncData where
   inputTypes := [RangeCheck, U128MulGuarantee]
@@ -40,11 +40,11 @@ def u128s_from_felt252 : FuncData where
   inputTypes := [RangeCheck, Felt252]
   branches := [{ outputTypes := [RangeCheck, U128]
                  condition := fun _ (a : Q(F)) _ (ρ : Q(UInt128)) =>
-                   q(($a).val < 2^128 ∧ $ρ = ($a).cast) },
+                   q(($a).val < U128_MOD ∧ $ρ = ($a).cast) },
                { outputTypes := [RangeCheck, U128, U128]
                  -- TODO check that `ρ_high` and `ρ_low` are really in the correct order
                  condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt128)) =>
-                   q($ρ_high ≠ 0 ∧ 2^128 * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
+                   q($ρ_high ≠ 0 ∧ U128_MOD * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
 
 def u128_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U128, NonZero U128]

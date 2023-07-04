@@ -9,11 +9,11 @@ def u8_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U8, U8]
   branches := [{ outputTypes := [RangeCheck, U8]
                  condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) => 
-                   q(($a).val + ($b).val < 2^8 ∧ $ρ = $a + $b) },
+                   q(($a).val + ($b).val < U8_MOD ∧ $ρ = $a + $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U8]
                  condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) =>
-                   q(($a).val + ($b).val ≥ 2^8 ∧ $ρ = $a + $b) }]
+                   q(($a).val + ($b).val ≥ U8_MOD ∧ $ρ = $a + $b) }]
 
 def u8_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U8, U8]
@@ -33,7 +33,7 @@ def u8s_from_felt252 : FuncData where
                { outputTypes := [RangeCheck, U8, U8]
                  -- TODO check that `ρ_high` and `ρ_low` are really in the correct order
                  condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt8)) =>
-                   q(2^8 * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
+                   q(U8_MOD * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
 
 def u8_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U8, NonZero U8]
@@ -70,9 +70,9 @@ def u8_try_from_felt252 : FuncData where
   inputTypes := [.RangeCheck, .Felt252]
   branches := [{ outputTypes := [.RangeCheck, .U8]
                  condition := fun _ (a : Q(F)) _ (ρ : Q(UInt8)) => 
-                   q($(a).val < 2^8 ∧ $ρ = $(a).cast) },
+                   q($(a).val < U8_MOD ∧ $ρ = $(a).cast) },
                { outputTypes := [.RangeCheck]
-                 condition := fun _ (a : Q(F)) _ => q(2^8 ≤ $(a).val) }]
+                 condition := fun _ (a : Q(F)) _ => q(U8_MOD ≤ $(a).val) }]
 
 def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_overflowing_add" [] .none      => u8_overflowing_add

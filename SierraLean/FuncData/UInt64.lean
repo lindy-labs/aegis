@@ -9,11 +9,11 @@ def u64_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U64, U64]
   branches := [{ outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) => 
-                   q(($a).val + ($b).val < 2^64 ∧ $ρ = $a + $b) },
+                   q(($a).val + ($b).val < U64_MOD ∧ $ρ = $a + $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
-                   q(($a).val + ($b).val ≥ 2^64 ∧ $ρ = $a + $b) }]
+                   q(($a).val + ($b).val ≥ U64_MOD ∧ $ρ = $a + $b) }]
 
 def u64_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U64, U64]
@@ -33,7 +33,7 @@ def u64s_from_felt252 : FuncData where
                { outputTypes := [RangeCheck, U64, U64]
                  -- TODO check that `ρ_high` and `ρ_low` are really in the correct order
                  condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt64)) =>
-                   q(2^64 * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
+                   q(U64_MOD * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
 
 def u64_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U64, NonZero U64]
@@ -70,9 +70,9 @@ def u64_try_from_felt252 : FuncData where
   inputTypes := [.RangeCheck, .Felt252]
   branches := [{ outputTypes := [.RangeCheck, .U64]
                  condition := fun _ (a : Q(F)) _ (ρ : Q(UInt64)) => 
-                   q($(a).val < 2^64 ∧ $ρ = $(a).cast) },
+                   q($(a).val < U64_MOD ∧ $ρ = $(a).cast) },
                { outputTypes := [.RangeCheck]
-                 condition := fun _ (a : Q(F)) _ => q(2^64 ≤ $(a).val) }]
+                 condition := fun _ (a : Q(F)) _ => q(U64_MOD ≤ $(a).val) }]
 
 def uint64Libfuncs : Identifier → Option FuncData
 | .name "u64_overflowing_add" [] .none      => u64_overflowing_add

@@ -9,11 +9,11 @@ def u16_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U16, U16]
   branches := [{ outputTypes := [RangeCheck, U16]
                  condition := fun _ (a b : Q(UInt16)) _ (ρ : Q(UInt16)) => 
-                   q(($a).val + ($b).val < 2^16 ∧ $ρ = $a + $b) },
+                   q(($a).val + ($b).val < U16_MOD ∧ $ρ = $a + $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U16]
                  condition := fun _ (a b : Q(UInt16)) _ (ρ : Q(UInt16)) =>
-                   q(($a).val + ($b).val ≥ 2^16 ∧ $ρ = $a + $b) }]
+                   q(($a).val + ($b).val ≥ U16_MOD ∧ $ρ = $a + $b) }]
 
 def u16_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U16, U16]
@@ -33,7 +33,7 @@ def u16s_from_felt252 : FuncData where
                { outputTypes := [RangeCheck, U16, U16]
                  -- TODO check that `ρ_high` and `ρ_low` are really in the correct order
                  condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt16)) =>
-                   q(2^16 * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
+                   q(U16_MOD * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
 
 def u16_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U16, NonZero U16]
@@ -70,9 +70,9 @@ def u16_try_from_felt252 : FuncData where
   inputTypes := [.RangeCheck, .Felt252]
   branches := [{ outputTypes := [.RangeCheck, .U16]
                  condition := fun _ (a : Q(F)) _ (ρ : Q(UInt16)) => 
-                   q($(a).val < 2^16 ∧ $ρ = $(a).cast) },
+                   q($(a).val < U16_MOD ∧ $ρ = $(a).cast) },
                { outputTypes := [.RangeCheck]
-                 condition := fun _ (a : Q(F)) _ => q(2^16 ≤ $(a).val) }]
+                 condition := fun _ (a : Q(F)) _ => q(U16_MOD ≤ $(a).val) }]
 
 def uint16Libfuncs : Identifier → Option FuncData
 | .name "u16_overflowing_add" [] .none      => u16_overflowing_add
