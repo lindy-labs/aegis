@@ -66,6 +66,14 @@ def u32_eq : FuncData where
   branches := [{ condition := fun (a b : Q(UInt32)) => q($a ≠ $b) },
                { condition := fun (a b : Q(UInt32)) => q($a = $b) }]
 
+def u32_try_from_felt252 : FuncData where
+  inputTypes := [.RangeCheck, .Felt252]
+  branches := [{ outputTypes := [.RangeCheck, .U32]
+                 condition := fun _ (a : Q(F)) _ (ρ : Q(UInt32)) => 
+                   q($(a).val < 2^32 ∧ $ρ = $(a).cast) },
+               { outputTypes := [.RangeCheck]
+                 condition := fun _ (a : Q(F)) _ => q(2^32 ≤ $(a).val) }]
+
 def uint32Libfuncs : Identifier → Option FuncData
 | .name "u32_overflowing_add" [] .none      => u32_overflowing_add
 | .name "u32_overflowing_sub" [] .none      => u32_overflowing_sub
@@ -75,4 +83,5 @@ def uint32Libfuncs : Identifier → Option FuncData
 | .name "u32_is_zero" [] .none              => u32_is_zero
 | .name "u32_const" [.const n] .none        => u32_const q($n)
 | .name "u32_eq" [] .none                   => u32_eq
+| .name "u32_try_from_felt252" [] .none     => u32_try_from_felt252
 | _                                         => .none
