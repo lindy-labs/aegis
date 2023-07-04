@@ -66,6 +66,14 @@ def u64_eq : FuncData where
   branches := [{ condition := fun (a b : Q(UInt64)) => q($a ≠ $b) },
                { condition := fun (a b : Q(UInt64)) => q($a = $b) }]
 
+def u64_try_from_felt252 : FuncData where
+  inputTypes := [.RangeCheck, .Felt252]
+  branches := [{ outputTypes := [.RangeCheck, .U64]
+                 condition := fun _ (a : Q(F)) _ (ρ : Q(UInt64)) => 
+                   q($(a).val < 2^64 ∧ $ρ = $(a).cast) },
+               { outputTypes := [.RangeCheck]
+                 condition := fun _ (a : Q(F)) _ => q(2^64 ≤ $(a).val) }]
+
 def uint64Libfuncs : Identifier → Option FuncData
 | .name "u64_overflowing_add" [] .none      => u64_overflowing_add
 | .name "u64_overflowing_sub" [] .none      => u64_overflowing_sub
@@ -75,4 +83,5 @@ def uint64Libfuncs : Identifier → Option FuncData
 | .name "u64_is_zero" [] .none              => u64_is_zero
 | .name "u64_const" [.const n] .none        => u64_const q($n)
 | .name "u64_eq" [] .none                   => u64_eq
+| .name "u64_try_from_felt252" [] .none     => u64_try_from_felt252
 | _                                         => .none

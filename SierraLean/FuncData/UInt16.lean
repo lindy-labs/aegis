@@ -66,6 +66,14 @@ def u16_eq : FuncData where
   branches := [{ condition := fun (a b : Q(UInt16)) => q($a ≠ $b) },
                { condition := fun (a b : Q(UInt16)) => q($a = $b) }]
 
+def u16_try_from_felt252 : FuncData where
+  inputTypes := [.RangeCheck, .Felt252]
+  branches := [{ outputTypes := [.RangeCheck, .U16]
+                 condition := fun _ (a : Q(F)) _ (ρ : Q(UInt16)) => 
+                   q($(a).val < 2^16 ∧ $ρ = $(a).cast) },
+               { outputTypes := [.RangeCheck]
+                 condition := fun _ (a : Q(F)) _ => q(2^16 ≤ $(a).val) }]
+
 def uint16Libfuncs : Identifier → Option FuncData
 | .name "u16_overflowing_add" [] .none      => u16_overflowing_add
 | .name "u16_overflowing_sub" [] .none      => u16_overflowing_sub
@@ -75,4 +83,5 @@ def uint16Libfuncs : Identifier → Option FuncData
 | .name "u16_is_zero" [] .none              => u16_is_zero
 | .name "u16_const" [.const n] .none        => u16_const q($n)
 | .name "u16_eq" [] .none                   => u16_eq
+| .name "u16_try_from_felt252" [] .none     => u16_try_from_felt252
 | _                                         => .none

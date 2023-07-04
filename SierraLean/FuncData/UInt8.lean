@@ -66,6 +66,14 @@ def u8_eq : FuncData where
   branches := [{ condition := fun (a b : Q(UInt8)) => q($a ≠ $b) },
                { condition := fun (a b : Q(UInt8)) => q($a = $b) }]
 
+def u8_try_from_felt252 : FuncData where
+  inputTypes := [.RangeCheck, .Felt252]
+  branches := [{ outputTypes := [.RangeCheck, .U8]
+                 condition := fun _ (a : Q(F)) _ (ρ : Q(UInt8)) => 
+                   q($(a).val < 2^8 ∧ $ρ = $(a).cast) },
+               { outputTypes := [.RangeCheck]
+                 condition := fun _ (a : Q(F)) _ => q(2^8 ≤ $(a).val) }]
+
 def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_overflowing_add" [] .none      => u8_overflowing_add
 | .name "u8_overflowing_sub" [] .none      => u8_overflowing_sub
@@ -75,4 +83,5 @@ def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_is_zero" [] .none              => u8_is_zero
 | .name "u8_const" [.const n] .none        => u8_const q($n)
 | .name "u8_eq" [] .none                   => u8_eq
-| _                                         => .none
+| .name "u8_try_from_felt252" [] .none     => u8_try_from_felt252
+| _                                        => .none
