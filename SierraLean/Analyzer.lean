@@ -21,7 +21,6 @@ where go (acc : _) (ty : Identifier) : Except String SierraType :=
   | .name "u32" [] .none => pure .U32
   | .name "u64" [] .none => pure .U64
   | .name "u128" [] .none => pure .U128
-  | .name "u256" [] .none => pure .U256
   | .name "RangeCheck" [] .none => pure .RangeCheck
   | .name "Enum" (.usertype _ :: l) .none => do
     let l ← flip mapM l fun x => match x with

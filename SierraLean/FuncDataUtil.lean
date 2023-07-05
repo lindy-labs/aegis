@@ -15,7 +15,6 @@ inductive SierraType
 | U32
 | U64
 | U128
-| U256
 | Addr
 | RangeCheck
 | Enum (fields : List SierraType)
@@ -53,8 +52,6 @@ def ADDRESS_MOD :=
 def CONTRACT_ADDRESS_MOD :=
   3618502788666131106986593281521497120414687020801267626233049500247285301248
 
-def U256_MOD :=
-  115792089237316195423570985008687907853269984665640564039457584007913129639936
 
 def U128_MOD :=
   340282366920938463463374607431768211456
@@ -77,7 +74,6 @@ abbrev UInt16 := ZMod U16_MOD
 abbrev UInt32 := ZMod U32_MOD
 abbrev UInt64 := ZMod U64_MOD
 abbrev UInt128 := ZMod U128_MOD
-abbrev UInt256 := ZMod U256_MOD
 abbrev StorageBaseAddress := ZMod BASE_MOD
 abbrev StorageAddress := ZMod ADDRESS_MOD
 abbrev ContractAddress := ZMod CONTRACT_ADDRESS_MOD
@@ -109,7 +105,6 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .U32 => q(UInt32)
   | .U64 => q(UInt64)
   | .U128 => q(UInt128)
-  | .U256 => q(UInt256)
   | .Addr => q(Sierra.Addr)
   | .RangeCheck => q(Nat)  -- TODO
   | .Enum []      => q(Unit)
