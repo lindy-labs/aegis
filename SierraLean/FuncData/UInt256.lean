@@ -5,11 +5,6 @@ open Qq Sierra.SierraType
 
 namespace Sierra
 
-def U256_MOD :=
-  115792089237316195423570985008687907853269984665640564039457584007913129639936
-
-abbrev UInt256 := ZMod U256_MOD
-
 namespace FuncData
 
 def u256_is_zero : FuncData where
