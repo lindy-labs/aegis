@@ -13,6 +13,9 @@ def Lean.Expr.getFVars (e : Expr) : Array FVarId := (Lean.CollectFVars.main e { 
 
 def Lean.Expr.or? (p : Expr) := p.app2? ``And
 
+def Lean.Expr.tuple? (e : Expr) : Option (Expr × Expr × Expr × Expr) :=
+e.app4? ``Prod.mk
+
 namespace Sierra
 
 def Expr.mkAnds : List Expr → Expr
@@ -101,15 +104,20 @@ partial def AndOrTree.normalize (t : AndOrTree) : AndOrTree :=
     match e.and? with
     | .some (l, r) => normalize <| .cons l [.cons r ts]
     | .none => .cons e (normalize <$> ts)
-      /-match ts with
-      | [] => .cons e []
-      | t :: ts =>
-        match t with
-        | nil => .cons e (nil :: normalize <$> ts)
-        | cons e' ts' =>
-          match e'.or? with
-          | .some (l, r) => normalize <| .cons e (.cons l ts' :: .cons r ts' :: ts)
-          | .none => .cons e (normalize <$> (t :: ts))-/
+
+partial def AndOrTree.separateTupleEqs (t : AndOrTree) : AndOrTree :=
+  match t with
+  | nil => nil
+  | cons e ts =>
+    match e.eq? with
+    | .some (_, lhs, rhs) =>
+      match lhs.tuple?, rhs.tuple? with
+      | .some ⟨α, β, x₁, y₁⟩, .some ⟨_, _, x₂, y₂⟩ =>
+        let fstEq := Sierra.Expr.mkEq α x₁ y₁
+        let sndEq := Sierra.Expr.mkEq β x₂ y₂
+        .cons fstEq [AndOrTree.separateTupleEqs (AndOrTree.cons sndEq ts)]
+      | _, _ => .cons e (AndOrTree.separateTupleEqs <$> ts)
+    | .none => .cons e (AndOrTree.separateTupleEqs <$> ts)
 
 /-- Contract equalities in an `AndOrTree` which fulfill a given criterion -/
 partial def AndOrTree.contractEqs (t : AndOrTree) (crit : FVarId → Bool)
