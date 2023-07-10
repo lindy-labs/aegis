@@ -90,6 +90,43 @@ sierra_spec "test::bool_or_impl" := fun _ _ _ _ => True
 
 sierra_sound "test::bool_or_impl" := fun _ _ _ _ _ => True.intro
 
+sierra_load_string "type u128 = u128;
+type Unit = Struct<ut@Tuple>;
+type core::bool = Enum<ut@core::bool, Unit, Unit>;
+
+libfunc u128_const<11> = u128_const<11>;
+libfunc u128_const<12> = u128_const<12>;
+libfunc store_temp<u128> = store_temp<u128>;
+libfunc u128_eq = u128_eq;
+libfunc branch_align = branch_align;
+libfunc struct_construct<Unit> = struct_construct<Unit>;
+libfunc enum_init<core::bool, 0> = enum_init<core::bool, 0>;
+libfunc store_temp<core::bool> = store_temp<core::bool>;
+libfunc jump = jump;
+libfunc enum_init<core::bool, 1> = enum_init<core::bool, 1>;
+libfunc rename<core::bool> = rename<core::bool>;
+
+u128_const<11>() -> ([0]);
+u128_const<12>() -> ([1]);
+store_temp<u128>([0]) -> ([0]);
+u128_eq([0], [1]) { fallthrough() 9() };
+branch_align() -> ();
+struct_construct<Unit>() -> ([2]);
+enum_init<core::bool, 0>([2]) -> ([3]);
+store_temp<core::bool>([3]) -> ([4]);
+jump() { 13() };
+branch_align() -> ();
+struct_construct<Unit>() -> ([5]);
+enum_init<core::bool, 1>([5]) -> ([6]);
+store_temp<core::bool>([6]) -> ([4]);
+rename<core::bool>([4]) -> ([7]);
+return([7]);
+
+test::u128_const@0() -> (core::bool);"
+
+sierra_spec "test::u128_const" := fun _ _ => True
+
+sierra_sound "test::u128_const" := fun _ _ _ => True.intro
 
 sierra_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
@@ -107,4 +144,6 @@ test::bar@0([0]: core::bool, [1]: core::bool) -> (core::bool);"
 sierra_spec "test::foo" := fun _ a b ρ => (ρ : Bool) = xor a b
 
 sierra_sound "test::foo" := fun _ a b ρ => by
+  unfold Bool.toSierraBool
+  unfold «spec_test::foo»
   aesop
