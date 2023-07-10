@@ -19,21 +19,21 @@ def bool_xor_impl : FuncData where
   inputTypes := [.Bool, .Bool]
   branches := [{
     outputTypes := [.Bool],
-    condition := fun (a : Q(Unit ⊕ Unit)) (b : Q(Unit ⊕ Unit)) (ρ : Q(Unit ⊕ Unit)) => q($ρ = xor $a $b)
+    condition := fun (a : Q(Unit ⊕ Unit)) (b : Q(Unit ⊕ Unit)) (ρ : Q(Unit ⊕ Unit)) => q($ρ = (xor $a $b))
   }]
 
 def bool_or_impl : FuncData where
   inputTypes := [.Bool, .Bool]
   branches := [{
     outputTypes := [.Bool],
-    condition := fun (a : Q(Unit ⊕ Unit)) (b : Q(Unit ⊕ Unit)) (ρ : Q(Unit ⊕ Unit)) => q($ρ = $a || $b)
+    condition := fun (a : Q(Unit ⊕ Unit)) (b : Q(Unit ⊕ Unit)) (ρ : Q(Unit ⊕ Unit)) => q($ρ = ($a || $b))
   }]
 
 def bool_and_impl : FuncData where
   inputTypes := [.Bool, .Bool]
   branches := [{
     outputTypes := [.Bool],
-    condition := fun (a : Q(Unit ⊕ Unit)) (b : Q(Unit ⊕ Unit)) (ρ : Q(Unit ⊕ Unit)) => q($ρ = $a && $b)
+    condition := fun (a : Q(Unit ⊕ Unit)) (b : Q(Unit ⊕ Unit)) (ρ : Q(Unit ⊕ Unit)) => q($ρ = ($a && $b))
   }]
 
 def bool_not_impl : FuncData where
