@@ -127,8 +127,8 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     let (inRefs, intRefs) := (refs.partition (·.1 ∈ finputs.map (·.1)))
     -- Normalize conjunctions and disjunctions in the tree
     let cs := cs.normalize
-    -- Disassemble equalities between tuples
-    let cs := cs.separateTupleEqs
+    -- Disassemble equalities between tuples (disabled for now)
+    -- let cs := cs.separateTupleEqs
     -- Contract equalities in the tree
     let cs := cs.contractEqs (Prod.snd <$> intRefs).contains
     -- Compile the three into a single expression
