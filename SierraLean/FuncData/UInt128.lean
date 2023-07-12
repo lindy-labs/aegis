@@ -13,13 +13,13 @@ def u128_overflowing_add : FuncData where
                -- TODO check branch order
                { outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
-                   q(($a).val + ($b).val ≥ U128_MOD ∧ $ρ = $a + $b) }]
+                   q(U128_MOD ≤ ($a).val + ($b).val ∧ $ρ = $a + $b) }]
 
 def u128_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U128, U128]
   branches := [{ outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) => 
-                   q(($a).val ≥ ($b).val ∧ $ρ = $a - $b) },
+                   q(($b).val ≤ ($a).val ∧ $ρ = $a - $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>

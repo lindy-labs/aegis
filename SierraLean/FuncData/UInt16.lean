@@ -13,13 +13,13 @@ def u16_overflowing_add : FuncData where
                -- TODO check branch order
                { outputTypes := [RangeCheck, U16]
                  condition := fun _ (a b : Q(UInt16)) _ (ρ : Q(UInt16)) =>
-                   q(($a).val + ($b).val ≥ U16_MOD ∧ $ρ = $a + $b) }]
+                   q(U16_MOD ≤ ($a).val + ($b).val ∧ $ρ = $a + $b) }]
 
 def u16_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U16, U16]
   branches := [{ outputTypes := [RangeCheck, U16]
                  condition := fun _ (a b : Q(UInt16)) _ (ρ : Q(UInt16)) => 
-                   q(($a).val ≥ ($b).val ∧ $ρ = $a - $b) },
+                   q(($b).val ≤ ($a).val ∧ $ρ = $a - $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U16]
                  condition := fun _ (a b : Q(UInt16)) _ (ρ : Q(UInt16)) =>

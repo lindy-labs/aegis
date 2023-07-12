@@ -10,7 +10,7 @@ def withdraw_gas_all : FuncData where
                    q($c ≤ $g ∧ $g' = $g - $c) },
                { outputTypes := [.RangeCheck, .GasBuiltin]
                  condition := fun _ (g c : Q(Nat)) _ (_ : Q(Nat)) =>
-                   q($c > $g) }]  -- TODO maybe we have `$g' = $g`, but that's just guesswork
+                   q($g < $c) }]  -- TODO maybe we have `$g' = $g`, but that's just guesswork
 
 def gasBuiltinLibfuncs : Identifier → Option FuncData
 | .name "withdraw_gas_all" [] .none => withdraw_gas_all

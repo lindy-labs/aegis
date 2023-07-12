@@ -13,13 +13,13 @@ def u8_overflowing_add : FuncData where
                -- TODO check branch order
                { outputTypes := [RangeCheck, U8]
                  condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) =>
-                   q(($a).val + ($b).val ≥ U8_MOD ∧ $ρ = $a + $b) }]
+                   q(U8_MOD ≤ ($a).val + ($b).val ∧ $ρ = $a + $b) }]
 
 def u8_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U8, U8]
   branches := [{ outputTypes := [RangeCheck, U8]
                  condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) => 
-                   q(($a).val ≥ ($b).val ∧ $ρ = $a - $b) },
+                   q(($b).val ≤ ($a).val ∧ $ρ = $a - $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U8]
                  condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) =>

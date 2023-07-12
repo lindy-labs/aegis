@@ -13,13 +13,13 @@ def u64_overflowing_add : FuncData where
                -- TODO check branch order
                { outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
-                   q(($a).val + ($b).val ≥ U64_MOD ∧ $ρ = $a + $b) }]
+                   q(U64_MOD ≤ ($a).val + ($b).val ∧ $ρ = $a + $b) }]
 
 def u64_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U64, U64]
   branches := [{ outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) => 
-                   q(($a).val ≥ ($b).val ∧ $ρ = $a - $b) },
+                   q(($b).val ≤ ($a).val ∧ $ρ = $a - $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
