@@ -1,22 +1,12 @@
 import SierraLean.FuncDataUtil
 import SierraLean.FuncData.Felt252
-import Mathlib.Data.Bool.Basic
+import SierraLean.Aux.Bool
 
 open Qq Sierra.SierraType
-
-def Bool.toSierraBool : Bool → Unit ⊕ Unit
-| false => .inl ()
-| true => .inr ()
 
 namespace Sierra
 
 def SierraType.Bool : SierraType := .Enum [.Struct [], .Struct []]
-
-def SierraBool.toBool : Unit ⊕ Unit → Bool
-| .inl () => false
-| .inr () => true
-
-instance : Coe (Unit ⊕ Unit) Bool := ⟨SierraBool.toBool⟩
 
 namespace FuncData
 

@@ -1,7 +1,9 @@
 import SierraLean.Tests.Commands
+import SierraLean.Tactic
 
 sierra_spec "test::bar" := fun _ a b ρ => (ρ : Bool) = xor a b
 
 sierra_sound "test::bar" := fun _ a b ρ => by
   simp only [Bool.toSierraBool, «spec_test::bar»]
+  sierra_simp
   aesop

@@ -1,3 +1,6 @@
+import SierraLean.Aux.ZMod.DivMod
+import SierraLean.Aux.Bool
+
 namespace Sierra
 
 syntax "sierra_simp" : tactic
