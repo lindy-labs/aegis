@@ -11,4 +11,3 @@ macro_rules
       Int.ofNat_eq_coe, Nat.cast_one, Nat.cast_zero, Int.cast_zero, ZMod.val_zero,
       exists_or, exists_const, ← or_and_right];
     simp only [← exists_and_left, ← exists_and_right, ← exists_or])
-set_option maxHeartbeats 0

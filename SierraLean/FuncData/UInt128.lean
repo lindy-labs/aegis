@@ -1,5 +1,5 @@
 import SierraLean.FuncDataUtil
-import Mathlib.Data.ZMod.Basic
+import SierraLean.ZMod.DivMod
 
 open Qq Sierra.SierraType
 
@@ -50,8 +50,7 @@ def u128_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U128, NonZero U128]
   branches := [{ outputTypes := [RangeCheck, U128, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ_div ρ_mod : Q(UInt128)) =>
-                   q($(a).val = $(b).val * $(ρ_div).val + $(ρ_mod).val
-                     ∧ $(ρ_mod).val < $(b).val) }]
+                   q($ρ_div = ZMod.ndiv $a $b ∧ $ρ_mod = ZMod.nmod $a $b) }]
 
 def u128_to_felt252 : FuncData where
   inputTypes := [U128]
