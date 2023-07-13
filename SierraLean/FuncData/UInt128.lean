@@ -1,5 +1,6 @@
 import SierraLean.FuncDataUtil
 import SierraLean.Aux.ZMod.DivMod
+import SierraLean.Aux.ZMod.HMul
 
 open Qq Sierra.SierraType
 
@@ -29,7 +30,7 @@ def u128_guarantee_mul : FuncData where
   inputTypes := [U128, U128]
   branches := [{ outputTypes := [U128, U128, U128MulGuarantee]
                  condition := fun (a b ρ_high ρ_low : Q(UInt128)) _ =>
-                   q(U128_MOD * ($ρ_high).val + ($ρ_low).val = ($a).val * ($b).val) }]
+                   q($ρ_low = $a * $b ∧ $ρ_high = ZMod.hmul $a $b) }]
 
 def u128_mul_guarantee_verify : FuncData where
   inputTypes := [RangeCheck, U128MulGuarantee]
