@@ -45,7 +45,7 @@ def u64_to_felt252 : FuncData where
   inputTypes := [U64]
   branches := [{ outputTypes := [Felt252]
                  condition := fun (a : Q(UInt64)) (ρ : Q(F)) =>
-                   q($(ρ).val = $(a).val) }]
+                   q($(ρ) = $(a).cast) }]
 
 def u64_is_zero : FuncData where
   inputTypes := [U64]

@@ -45,7 +45,7 @@ def u16_to_felt252 : FuncData where
   inputTypes := [U16]
   branches := [{ outputTypes := [Felt252]
                  condition := fun (a : Q(UInt16)) (ρ : Q(F)) =>
-                   q($(ρ).val = $(a).val) }]
+                   q($(ρ) = $(a).cast) }]
 
 def u16_is_zero : FuncData where
   inputTypes := [U16]
