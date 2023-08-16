@@ -27,7 +27,7 @@ def array_pop_front (t : SierraType) : FuncData where
 def array_len (t : SierraType) : FuncData where
   inputTypes := [.Snapshot (.Array t)]
   branches := [{ outputTypes := [.U32]
-                 condition := fun (a : Q(List $t.toQuote)) (ρ : Q(UInt128)) =>
+                 condition := fun (a : Q(List $t.toQuote)) (ρ : Q(UInt32)) =>
                    q($ρ = ($a).length) }]
 
 def array_get (t : SierraType) : FuncData where
