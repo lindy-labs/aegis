@@ -1,6 +1,6 @@
 import Lean.Parser
 import Lean
-import Mathlib.Tactic.DeriveToExpr
+import Mathlib.Tactic.ToExpr
 
 open Lean Parser
 
@@ -11,7 +11,7 @@ mutual
 inductive Identifier where
   | name (s : String) (ps : List Parameter) (tl : Option Identifier)
   | ref (n : Nat)
-  deriving Repr, Hashable, BEq, Inhabited
+  deriving Repr, Hashable, BEq, Inhabited, ToExpr
 
 inductive Parameter where
   | identifier (i : Identifier)
@@ -20,7 +20,7 @@ inductive Parameter where
   | userfunc (s : Identifier)
   | libfunc (i : Identifier)
   | tuple (ps : List Parameter)
-  deriving Repr, Inhabited, Hashable, BEq
+  deriving Repr, Inhabited, Hashable, BEq, ToExpr
 
 end
 
