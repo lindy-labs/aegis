@@ -2,7 +2,7 @@ import SierraLean.Parser
 
 open Lean Sierra PrettyPrinter Delaborator SubExpr
 
-elab "id!" s:str : term => do
+elab:max "id!" s:str : term => do
   let s := replaceNaughtyBrackets s.getString
   match ← parseIdentifier s with
   | .ok i => pure <| ToExpr.toExpr i
