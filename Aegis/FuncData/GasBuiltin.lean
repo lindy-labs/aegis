@@ -1,4 +1,4 @@
-import SierraLean.FuncDataUtil
+import Aegis.FuncDataUtil
 
 open Qq Sierra
 namespace Sierra.FuncData

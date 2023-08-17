@@ -3,16 +3,16 @@
 ## Usage
 
 ```lean
-import SierraLean.Commands
+import Aegis.Commands
 
 -- Load a Sierra file
-sierra_load_file "SierraLean/Tests/foo.sierra"
+aegis_load_file "Aegis/Tests/foo.sierra"
 
 -- Provide the specification of the function double
-sierra_spec "foo::foo::double" := fun _ a ρ => ρ = a * a
+aegis_spec "foo::foo::double" := fun _ a ρ => ρ = a * a
 
 -- Prove the correctness of the specification
-sierra_sound "foo::foo::double" := fun _ a ρ => by
+aegis_prove "foo::foo::double" := fun _ a ρ => by
   rintro rfl
   rfl
 
@@ -21,7 +21,7 @@ sierra_sound "foo::foo::double" := fun _ a ρ => by
 sierra_complete
 ```
 
-Further example usage can be found in `SierraLean.Tests.Commands`.
+Further example usage can be found in `Aegis.Tests.Commands`.
 
 ## To-Dos
 

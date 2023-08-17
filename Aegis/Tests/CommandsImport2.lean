@@ -1,6 +1,6 @@
-import SierraLean.Tests.CommandsImport
-import SierraLean.Tests.Commands
+import Aegis.Tests.CommandsImport
+import Aegis.Tests.Commands
 
-sierra_info "test::bar"
+aegis_info "test::bar"
 
 sierra_complete

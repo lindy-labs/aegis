@@ -1,4 +1,4 @@
-import SierraLean.Analyzer
+import Aegis.Analyzer
 
 open Lean Meta Qq
 namespace Sierra

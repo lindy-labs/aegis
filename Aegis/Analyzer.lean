@@ -1,6 +1,6 @@
-import SierraLean.Parser
-import SierraLean.FuncData
-import SierraLean.FuncDataUtil
+import Aegis.Parser
+import Aegis.FuncData
+import Aegis.FuncDataUtil
 
 open Lean Expr Meta Qq
 

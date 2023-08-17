@@ -1,6 +1,6 @@
-import SierraLean.FuncDataUtil
-import SierraLean.FuncData.Felt252
-import SierraLean.Aux.Bool
+import Aegis.FuncDataUtil
+import Aegis.FuncData.Felt252
+import Aegis.Aux.Bool
 
 open Qq Sierra.SierraType
 

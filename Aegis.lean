@@ -1,6 +1,6 @@
-import SierraLean.Commands
-import SierraLean.Macros
-import SierraLean.Tests.Test
-import SierraLean.Tests.Commands
-import SierraLean.Tests.CommandsImport
-import SierraLean.Tests.ArrayPopFront
+import Aegis.Commands
+import Aegis.Macros
+import Aegis.Tests.Test
+import Aegis.Tests.Commands
+import Aegis.Tests.CommandsImport
+import Aegis.Tests.ArrayPopFront

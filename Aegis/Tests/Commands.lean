@@ -1,16 +1,16 @@
-import SierraLean.Commands
+import Aegis.Commands
 
 open Sierra
 
-sierra_load_file "SierraLean/Tests/ternary_add.sierra"
+aegis_load_file "Aegis/Tests/ternary_add.sierra"
 
-sierra_info "ternary_add"
+aegis_info "ternary_add"
 
-sierra_spec "ternary_add" := fun _ a b c ρ => ρ = a + b + c
+aegis_spec "ternary_add" := fun _ a b c ρ => ρ = a + b + c
 
-sierra_sound "ternary_add" := fun _ a b c ρ => by rintro rfl; rfl
+aegis_prove "ternary_add" := fun _ a b c ρ => by rintro rfl; rfl
 
-sierra_load_string "type F = felt252;
+aegis_load_string "type F = felt252;
 type E::E::<test>::E = Enum<ut@foo, F, F>;
 
 libfunc init = enum_init<E::E::<test>::E, 1>;
@@ -23,11 +23,11 @@ return([3]);
 
 foo@0([0]: F) -> (F);"
 
-sierra_spec "foo" := fun _ a ρ => ρ = a
+aegis_spec "foo" := fun _ a ρ => ρ = a
 
-sierra_sound "foo" := fun _ a ρ => by rintro ⟨_, _, (⟨h, rfl⟩|⟨h, rfl⟩)⟩ <;> injection h
+aegis_prove "foo" := fun _ a ρ => by rintro ⟨_, _, (⟨h, rfl⟩|⟨h, rfl⟩)⟩ <;> injection h
 
-sierra_load_string "type F = felt252;
+aegis_load_string "type F = felt252;
 
 libfunc c5 = felt252_const<5>;
 libfunc call_bar = function_call<user@bar>;
@@ -40,15 +40,15 @@ return([3]);
 bar@0([0]: F) -> (F);
 baz@2([2]: F) -> (F);"
 
-sierra_spec "bar" := fun _ _ ρ => ρ = 5
+aegis_spec "bar" := fun _ _ ρ => ρ = 5
 
-sierra_sound "bar" := fun _ a ρ => by rintro ⟨rfl⟩; rfl
+aegis_prove "bar" := fun _ a ρ => by rintro ⟨rfl⟩; rfl
 
-sierra_spec "baz" := fun _ _ ρ => ρ = 5
+aegis_spec "baz" := fun _ _ ρ => ρ = 5
 
-sierra_sound "baz" := fun _ a ρ => by rintro ⟨rfl⟩; rfl
+aegis_prove "baz" := fun _ a ρ => by rintro ⟨rfl⟩; rfl
 
-sierra_load_string "type F = felt252;
+aegis_load_string "type F = felt252;
 
 libfunc is_zero = felt252_is_zero;
 libfunc call = function_call<user@rec>;
@@ -61,21 +61,21 @@ return([2]);
 
 rec@0([0]: F) -> (F);"
 
-sierra_spec "rec" := fun _ _ ρ => ρ = 0
+aegis_spec "rec" := fun _ _ ρ => ρ = 0
 
-sierra_sound "rec" := fun _ a ρ => by rintro (⟨rfl, rfl⟩|⟨_, rfl⟩) <;> rfl
+aegis_prove "rec" := fun _ a ρ => by rintro (⟨rfl, rfl⟩|⟨_, rfl⟩) <;> rfl
 
 sierra_complete
 
-sierra_load_file "SierraLean/Tests/double.sierra"
+aegis_load_file "Aegis/Tests/double.sierra"
 
-sierra_spec "double::double::double" := fun _ a ρ => ρ = a * a
+aegis_spec "double::double::double" := fun _ a ρ => ρ = a * a
 
-sierra_sound "double::double::double" := fun _ a ρ => by
+aegis_prove "double::double::double" := fun _ a ρ => by
   rintro rfl
   rfl
 
-sierra_load_string "type Unit = Struct<ut@Tuple>;
+aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 
 libfunc bool_or_impl = bool_or_impl;
@@ -86,11 +86,11 @@ store_temp<core::bool>([2]) -> ([3]);
 return([3]);
 
 test::bool_or_impl@0([0]: core::bool, [1]: core::bool) -> (core::bool);"
-sierra_spec "test::bool_or_impl" := fun _ _ _ _ => True
+aegis_spec "test::bool_or_impl" := fun _ _ _ _ => True
 
-sierra_sound "test::bool_or_impl" := fun _ _ _ _ _ => True.intro
+aegis_prove "test::bool_or_impl" := fun _ _ _ _ _ => True.intro
 
-sierra_load_string "type u128 = u128;
+aegis_load_string "type u128 = u128;
 type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 
@@ -124,11 +124,11 @@ return([7]);
 
 test::u128_const@0() -> (core::bool);"
 
-sierra_spec "test::u128_const" := fun _ _ => True
+aegis_spec "test::u128_const" := fun _ _ => True
 
-sierra_sound "test::u128_const" := fun _ _ _ => True.intro
+aegis_prove "test::u128_const" := fun _ _ _ => True.intro
 
-sierra_load_string "type Unit = Struct<ut@Tuple>;
+aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 
 libfunc bool_xor_impl = bool_xor_impl;
@@ -141,9 +141,9 @@ return([3]);
 test::foo@0([0]: core::bool, [1]: core::bool) -> (core::bool);
 test::bar@0([0]: core::bool, [1]: core::bool) -> (core::bool);"
 
-sierra_spec "test::foo" := fun _ a b ρ => (ρ : Bool) = xor a b
+aegis_spec "test::foo" := fun _ a b ρ => (ρ : Bool) = xor a b
 
-sierra_sound "test::foo" := fun _ a b ρ => by
+aegis_prove "test::foo" := fun _ a b ρ => by
   unfold Bool.toSierraBool
   unfold «spec_test::foo»
   aesop

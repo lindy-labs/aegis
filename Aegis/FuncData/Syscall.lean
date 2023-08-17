@@ -1,4 +1,4 @@
-import SierraLean.FuncDataUtil
+import Aegis.FuncDataUtil
 import Mathlib.Data.ZMod.Basic
 
 open Qq Sierra Lean

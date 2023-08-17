@@ -1,6 +1,6 @@
-import SierraLean.FuncDataUtil
-import SierraLean.Aux.ZMod.DivMod
-import SierraLean.Aux.ZMod.HMul
+import Aegis.FuncDataUtil
+import Aegis.Aux.ZMod.DivMod
+import Aegis.Aux.ZMod.HMul
 
 open Qq Sierra.SierraType
 

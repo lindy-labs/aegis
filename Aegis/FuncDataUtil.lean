@@ -1,5 +1,5 @@
-import SierraLean.Parser
-import SierraLean.ExprUtil
+import Aegis.Parser
+import Aegis.ExprUtil
 import Mathlib.Data.ZMod.Basic
 
 open Lean Qq

@@ -1,5 +1,5 @@
-import SierraLean.Aux.ZMod.DivMod
-import SierraLean.Aux.Bool
+import Aegis.Aux.ZMod.DivMod
+import Aegis.Aux.Bool
 
 namespace Sierra
 

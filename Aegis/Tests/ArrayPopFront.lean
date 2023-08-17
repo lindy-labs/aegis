@@ -1,6 +1,6 @@
-import SierraLean.Commands
+import Aegis.Commands
 
-sierra_load_string "type felt252 = felt252;
+aegis_load_string "type felt252 = felt252;
 type Array<felt252> = Array<felt252>;
 type Box<felt252> = Box<felt252>;
 type Unit = Struct<ut@Tuple>;
@@ -34,12 +34,12 @@ return([9], [10]);
 
 test::pop_front@0([0]: Array<felt252>) -> (Array<felt252>, core::option::Option::<core::box::Box::<core::felt252>>);"
 
-sierra_info "test::pop_front"
+aegis_info "test::pop_front"
 
-sierra_spec "test::pop_front" := fun _ a ρ₁ ρ₂ =>
+aegis_spec "test::pop_front" := fun _ a ρ₁ ρ₂ =>
   ρ₁ = a.tail ∧ ρ₂ = if a.length = 0 then .inr () else .inl a.head!
 
-sierra_sound "test::pop_front" := fun _ a ρ₁ ρ₂ => by
+aegis_prove "test::pop_front" := fun _ a ρ₁ ρ₂ => by
   rintro ⟨_,_,(⟨rfl,rfl,rfl⟩|⟨rfl,rfl,rfl⟩)⟩ <;> simp [«spec_test::pop_front»]
 
 sierra_complete

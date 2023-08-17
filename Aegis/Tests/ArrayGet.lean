@@ -1,8 +1,8 @@
-import SierraLean.Commands
+import Aegis.Commands
 
 open Sierra
 
-sierra_load_string "type RangeCheck = RangeCheck;
+aegis_load_string "type RangeCheck = RangeCheck;
 type felt252 = felt252;
 type Array<felt252> = Array<felt252>;
 type Snapshot<Array<felt252>> = Snapshot<Array<felt252>>;
@@ -39,11 +39,11 @@ return([11], [12]);
 
 test::foo@0([0]: RangeCheck, [1]: Snapshot<Array<felt252>>, [2]: u32) -> (RangeCheck, core::option::Option::<core::box::Box::<@core::felt252>>);"
 
-sierra_spec "test::foo" := fun _ _ a i _ ρ =>
+aegis_spec "test::foo" := fun _ _ a i _ ρ =>
   ρ = if hl : i.val ≥ a.length then .inr ()
       else .inl (a.get ⟨i.val, lt_of_not_ge hl⟩)
 
-sierra_sound "test::foo" := fun _ _ a i _ ρ => by
+aegis_prove "test::foo" := fun _ _ a i _ ρ => by
   rintro ⟨_, (h | h)⟩
   · rcases h with ⟨h, rfl⟩
     rw [eq_comm, List.get?_eq_some] at h

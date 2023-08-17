@@ -1,4 +1,4 @@
-import SierraLean.Analyzer
+import Aegis.Analyzer
 
 open Lean Meta Elab Command Qq
 
@@ -101,14 +101,14 @@ def sierraLoadString (s : String) : CommandElabM Unit := do
   | .error str => throwError ("Unable to load string:\n" ++ str)
   | .ok sf => modifyEnv (loadedSierraFile.addEntry · sf)
 
-elab "sierra_load_string " s:str : command => sierraLoadString s.getString
+elab "aegis_load_string " s:str : command => sierraLoadString s.getString
 
-elab "sierra_set_path " s:str : command => do
+elab "aegis_set_path " s:str : command => do
   let fp : System.FilePath := ⟨s.getString⟩
   unless ← fp.pathExists do throwError "Could not find cairo directory"
   modifyEnv (cairoPath.addEntry · fp)
 
-elab "sierra_load_file " s:str : command => do
+elab "aegis_load_file " s:str : command => do
   let filePath : System.FilePath := ⟨s.getString⟩
   match filePath.extension with
   | .some "sierra" => sierraLoadString <| ← IO.FS.readFile filePath
@@ -124,7 +124,7 @@ elab "sierra_load_file " s:str : command => do
   | _ => throwError "Wrong file extension, must be .cairo or .sierra!"
 
 
-elab "sierra_info" name:str : command => do  -- TODO change from `str` to `ident`
+elab "aegis_info" name:str : command => do  -- TODO change from `str` to `ident`
   let env ← getEnv
   let sf := (loadedSierraFile.getState env).get!
   match ← liftCoreM <| parseIdentifier name.getString with
@@ -137,7 +137,7 @@ elab "sierra_info" name:str : command => do  -- TODO change from `str` to `ident
   | .error str => throwError toString str
   
 
-elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `str` to `ident`
+elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `str` to `ident`
   let env ← getEnv
   let sf := (loadedSierraFile.getState env).get!
   let typeDefs ← match buildTypeDefs sf.typedefs with
@@ -169,7 +169,7 @@ elab "sierra_spec " name:str val:declVal : command => do  -- TODO change from `s
           modifyEnv (sierraSpecs.addEntry · (i, name, fd))
   | .error str => throwError toString str
 
-elab "sierra_sound" name:str val:declVal : command => do
+elab "aegis_prove" name:str val:declVal : command => do
   let env ← getEnv
   let sf := (loadedSierraFile.getState env).get!
   let val ← liftMacroM <| declValToTerm val

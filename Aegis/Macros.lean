@@ -1,4 +1,4 @@
-import SierraLean.Parser
+import Aegis.Parser
 
 open Lean Sierra PrettyPrinter Delaborator SubExpr
 
