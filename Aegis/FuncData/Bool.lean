@@ -1,4 +1,4 @@
-import Aegis.FuncDataUtil
+import Aegis.Types
 import Aegis.FuncData.Felt252
 import Aegis.Aux.Bool
 

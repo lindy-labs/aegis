@@ -1,4 +1,4 @@
-import Aegis.FuncDataUtil
+import Aegis.Types
 import Aegis.Aux.ZMod.DivMod
 
 open Qq Sierra.SierraType

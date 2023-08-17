@@ -1,6 +1,6 @@
 import Aegis.Parser
 import Aegis.FuncData
-import Aegis.FuncDataUtil
+import Aegis.Types
 
 open Lean Expr Meta Qq
 

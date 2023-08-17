@@ -1,4 +1,4 @@
-import Aegis.FuncDataUtil
+import Aegis.Types
 import Mathlib.Data.ZMod.Basic
 
 open Qq Lean

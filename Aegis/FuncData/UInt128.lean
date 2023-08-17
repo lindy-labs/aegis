@@ -1,4 +1,4 @@
-import Aegis.FuncDataUtil
+import Aegis.Types
 import Aegis.Aux.ZMod.DivMod
 import Aegis.Aux.ZMod.HMul
 

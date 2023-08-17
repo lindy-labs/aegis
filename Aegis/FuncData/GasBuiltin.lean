@@ -1,4 +1,4 @@
-import Aegis.FuncDataUtil
+import Aegis.Types
 
 open Qq Sierra
 namespace Sierra.FuncData
