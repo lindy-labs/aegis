@@ -1,4 +1,6 @@
-# sierra-lean represents Sierra programs in Lean 4
+# Aegis 
+
+allows to verify Sierra programs in Lean 4.
 
 ## Usage
 
