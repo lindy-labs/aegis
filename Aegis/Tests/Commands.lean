@@ -65,7 +65,7 @@ aegis_spec "rec" := fun _ _ ρ => ρ = 0
 
 aegis_prove "rec" := fun _ a ρ => by rintro (⟨rfl, rfl⟩|⟨_, rfl⟩) <;> rfl
 
-sierra_complete
+aegis_complete
 
 aegis_load_file "Aegis/Tests/double.sierra"
 

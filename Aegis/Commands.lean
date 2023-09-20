@@ -198,7 +198,7 @@ elab "aegis_prove" name:str val:declVal : command => do
         modifyEnv (sierraSoundness.addEntry · (i, name))
   | .error str => throwError toString str
 
-elab "sierra_complete" : command => do
+elab "aegis_complete" : command => do
   let env ← getEnv
   let sf := (loadedSierraFile.getState env).get!
   let mut missingDecls : Array Identifier := #[]

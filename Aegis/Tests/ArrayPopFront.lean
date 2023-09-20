@@ -42,4 +42,4 @@ aegis_spec "test::pop_front" := fun _ a ρ₁ ρ₂ =>
 aegis_prove "test::pop_front" := fun _ a ρ₁ ρ₂ => by
   rintro ⟨_,_,(⟨rfl,rfl,rfl⟩|⟨rfl,rfl,rfl⟩)⟩ <;> simp [«spec_test::pop_front»]
 
-sierra_complete
+aegis_complete
