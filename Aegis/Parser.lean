@@ -101,10 +101,10 @@ syntax num refTuple : branch_info
 syntax "->" refTuple : statement_lhs
 syntax "{" branch_info* "}" : statement_lhs
 
-syntax typedefLine := &"type" identifier "=" identifier ";"
-syntax libfuncLine := "libfunc" identifier "=" identifier ";"
-syntax statementLine := identifier refTuple (statement_lhs)? ";"
-syntax declarationLine := identifier "@" num "(" declarationArg,* ")" "->" "(" identifier,* ")" ";"
+syntax typedefLine := &"type" identifier "=" identifier ";" ("//" num)?
+syntax libfuncLine := "libfunc" identifier "=" identifier ";"  ("//" num)?
+syntax statementLine := identifier refTuple (statement_lhs)? ";"  ("//" num)?
+syntax declarationLine := identifier "@" num "(" declarationArg,* ")" "->" "(" identifier,* ")" ";"  ("//" num)?
 
 syntax typedefLine* libfuncLine* atomic(statementLine)* declarationLine* : sierra_file
 
@@ -158,18 +158,18 @@ def elabBranchInfo : TSyntax `branch_info → Except String BranchInfo
 | _ => .error "Could not elab branch info"
 
 def elabStatementLine : TSyntax `Sierra.statementLine → Except String Statement
-| `(statementLine|return($[[$args]],*);) => do
+| `(statementLine|return($[[$args]],*); $[//$n]?) => do
   .ok { libfunc_id := .name "return" [] none, args := (args.map (·.getNat)).toList, branches := [] }
-| `(statementLine|$i:identifier($[[$args]],*) -> ($[[$ress]],*);) => do
+| `(statementLine|$i:identifier($[[$args]],*) -> ($[[$ress]],*); $[//$n]?) => do
   let i ← elabIdentifier i
   .ok { libfunc_id := i, args := (args.map (·.getNat)).toList,
         branches := [{ target := .none, results := (ress.map (·.getNat)).toList }] }
-| `(statementLine|$i:identifier($[[$args]],*) $[{ $bs* }]?;) => do
+| `(statementLine|$i:identifier($[[$args]],*) $[{ $bs* }]?; $[//$n]?) => do
   let i ← elabIdentifier i
   let bs := bs.getD #[]
   let b ← (bs.mapM elabBranchInfo)
   .ok { libfunc_id := i, args := (args.map (·.getNat)).toList, branches := b.toList }
-| `(statementLine|$i:identifier($[[$args]],*);) => do
+| `(statementLine|$i:identifier($[[$args]],*); $[//$n]?) => do
   let i ← elabIdentifier i
   .ok { libfunc_id := i, args := (args.map (·.getNat)).toList, branches := [] }
 | x => .error s!"Could not elab statement {x}"
