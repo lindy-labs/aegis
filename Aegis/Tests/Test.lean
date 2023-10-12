@@ -21,7 +21,7 @@ foo@0([0]: [0] , [1]: [0]) -> ([0]);"
 #eval analyzeFile code02
 
 def code03 :=
-"type [0] = felt252;
+"type [0] = felt252 [storable: true, drop: true, dup: false, zero_sized: false];
 
 libfunc [0] = felt252_add;
 libfunc [1] = drop<[0]>;

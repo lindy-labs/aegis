@@ -92,6 +92,10 @@ syntax "lib@" identifier : parameter
 syntax "(" parameter,*,? ")" : parameter
 syntax identifier : parameter
 
+syntax boolLit := "false" <|> "true"
+syntax typeInfo := "[storable:" boolLit ", drop:" boolLit ", dup:" boolLit ", zero_sized:" boolLit "]"
+
+
 syntax refTuple := "(" ("[" num "]"),* ")"
 syntax declarationArg := "[" num "]" ":" identifier
 
@@ -101,7 +105,7 @@ syntax num refTuple : branch_info
 syntax "->" refTuple : statement_lhs
 syntax "{" branch_info* "}" : statement_lhs
 
-syntax typedefLine := &"type" identifier "=" identifier ";" ("//" num)?
+syntax typedefLine := &"type" identifier "=" identifier (typeInfo)? ";" ("//" num)?
 syntax libfuncLine := "libfunc" identifier "=" identifier ";"  ("//" num)?
 syntax statementLine := identifier refTuple (statement_lhs)? ";"  ("//" num)?
 syntax declarationLine := identifier "@" num "(" declarationArg,* ")" "->" "(" identifier,* ")" ";"  ("//" num)?
@@ -187,10 +191,17 @@ def elabDeclarationLine : TSyntax `Sierra.declarationLine →
   .ok (i, n.getNat, args.toList, rets.toList)
 | _ => .error "Could not elab declaration"
 
+def elabTypedefLine : TSyntax `Sierra.typedefLine → Except String (Identifier × Identifier)
+| `(typedefLine|type $tlhs = $trhs $[[storable: $_, drop: $_, dup: $_, zero_sized: $_]]?; $[//$_]?) => do
+  let tlhs ← elabIdentifier tlhs
+  let trhs ← elabIdentifier trhs 
+  .ok (tlhs, trhs)
+| _ => .error "Could not elab type definition"
+
 def elabSierraFile : Syntax → Except String SierraFile
-| `(sierra_file|$[type $tlhs = $trhs; $[//$n]?]* $[libfunc $llhs = $lrhs; $[//$n]?]*  $sts:statementLine*
+| `(sierra_file|$ts:typedefLine* $[libfunc $llhs = $lrhs; $[//$n]?]*  $sts:statementLine*
     $ds:declarationLine*) => do
-  let ts := (← tlhs.mapM elabIdentifier).zip <| ← trhs.mapM elabIdentifier
+  let ts ← ts.mapM elabTypedefLine
   let ls := (← llhs.mapM elabIdentifier).zip <| ← lrhs.mapM elabIdentifier
   let sts := (← sts.mapM elabStatementLine).toList
   let ds := (← ds.mapM elabDeclarationLine).toList
