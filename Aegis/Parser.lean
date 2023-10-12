@@ -180,7 +180,7 @@ def elabDeclarationArg : TSyntax `Sierra.declarationArg → Except String (Nat �
 
 def elabDeclarationLine : TSyntax `Sierra.declarationLine →
     Except String (Identifier × Nat × List (Nat × Identifier) × List Identifier)
-| `(declarationLine|$i:identifier@$n($args,*) -> ($rets,*);) => do
+| `(declarationLine|$i:identifier@$n($args,*) -> ($rets,*); $[//$n]?) => do
   let i ← elabIdentifier i
   let rets ← rets.getElems.mapM elabIdentifier
   let args ← args.getElems.mapM elabDeclarationArg
@@ -188,7 +188,7 @@ def elabDeclarationLine : TSyntax `Sierra.declarationLine →
 | _ => .error "Could not elab declaration"
 
 def elabSierraFile : Syntax → Except String SierraFile
-| `(sierra_file|$[type $tlhs = $trhs;]* $[libfunc $llhs = $lrhs;]*  $sts:statementLine*
+| `(sierra_file|$[type $tlhs = $trhs; $[//$n]?]* $[libfunc $llhs = $lrhs; $[//$n]?]*  $sts:statementLine*
     $ds:declarationLine*) => do
   let ts := (← tlhs.mapM elabIdentifier).zip <| ← trhs.mapM elabIdentifier
   let ls := (← llhs.mapM elabIdentifier).zip <| ← lrhs.mapM elabIdentifier
