@@ -1,0 +1,99 @@
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type Box<issue2249::issue2249::Node> = Box<issue2249::issue2249::Node> [storable: true, drop: true, dup: false, zero_sized: false];
+type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
+type core::option::Option::<core::box::Box::<issue2249::issue2249::Node>> = Enum<ut@core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>, Box<issue2249::issue2249::Node>, Unit> [storable: true, drop: true, dup: false, zero_sized: false];
+type issue2249::issue2249::Node = Struct<ut@issue2249::issue2249::Node, felt252, core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>> [storable: true, drop: true, dup: false, zero_sized: false];
+type Tuple<issue2249::issue2249::Node> = Struct<ut@Tuple, issue2249::issue2249::Node> [storable: true, drop: true, dup: false, zero_sized: false];
+type core::panics::Panic = Struct<ut@core::panics::Panic> [storable: true, drop: true, dup: true, zero_sized: true];
+type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type Tuple<core::panics::Panic, Array<felt252>> = Struct<ut@Tuple, core::panics::Panic, Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
+type core::panics::PanicResult::<(issue2249::issue2249::Node,)> = Enum<ut@core::panics::PanicResult::<(issue2249::issue2249::Node,)>, Tuple<issue2249::issue2249::Node>, Tuple<core::panics::Panic, Array<felt252>>> [storable: true, drop: true, dup: false, zero_sized: false];
+type Snapshot<Box<issue2249::issue2249::Node>> = Snapshot<Box<issue2249::issue2249::Node>> [storable: true, drop: true, dup: true, zero_sized: false];
+type Snapshot<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>> = Snapshot<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>> [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<felt252> = NonZero<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc felt252_const<12> = felt252_const<12>;
+libfunc struct_construct<Unit> = struct_construct<Unit>;
+libfunc enum_init<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>, 1> = enum_init<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>, 1>;
+libfunc struct_construct<issue2249::issue2249::Node> = struct_construct<issue2249::issue2249::Node>;
+libfunc struct_deconstruct<issue2249::issue2249::Node> = struct_deconstruct<issue2249::issue2249::Node>;
+libfunc snapshot_take<felt252> = snapshot_take<felt252>;
+libfunc drop<felt252> = drop<felt252>;
+libfunc rename<felt252> = rename<felt252>;
+libfunc store_temp<felt252> = store_temp<felt252>;
+libfunc felt252_sub = felt252_sub;
+libfunc store_temp<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>> = store_temp<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>>;
+libfunc felt252_is_zero = felt252_is_zero;
+libfunc branch_align = branch_align;
+libfunc snapshot_take<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>> = snapshot_take<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>>;
+libfunc enum_snapshot_match<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>> = enum_snapshot_match<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>>;
+libfunc drop<Snapshot<Box<issue2249::issue2249::Node>>> = drop<Snapshot<Box<issue2249::issue2249::Node>>>;
+libfunc drop<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>> = drop<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>>;
+libfunc array_new<felt252> = array_new<felt252>;
+libfunc felt252_const<2417313685480782781771909291702505700829654629> = felt252_const<2417313685480782781771909291702505700829654629>;
+libfunc array_append<felt252> = array_append<felt252>;
+libfunc struct_construct<core::panics::Panic> = struct_construct<core::panics::Panic>;
+libfunc struct_construct<Tuple<core::panics::Panic, Array<felt252>>> = struct_construct<Tuple<core::panics::Panic, Array<felt252>>>;
+libfunc enum_init<core::panics::PanicResult::<(issue2249::issue2249::Node,)>, 1> = enum_init<core::panics::PanicResult::<(issue2249::issue2249::Node,)>, 1>;
+libfunc store_temp<core::panics::PanicResult::<(issue2249::issue2249::Node,)>> = store_temp<core::panics::PanicResult::<(issue2249::issue2249::Node,)>>;
+libfunc drop<Unit> = drop<Unit>;
+libfunc struct_construct<Tuple<issue2249::issue2249::Node>> = struct_construct<Tuple<issue2249::issue2249::Node>>;
+libfunc enum_init<core::panics::PanicResult::<(issue2249::issue2249::Node,)>, 0> = enum_init<core::panics::PanicResult::<(issue2249::issue2249::Node,)>, 0>;
+libfunc drop<NonZero<felt252>> = drop<NonZero<felt252>>;
+libfunc felt252_const<10312401295712411742946712252734735128736050> = felt252_const<10312401295712411742946712252734735128736050>;
+
+felt252_const<12>() -> ([0]); // 0
+struct_construct<Unit>() -> ([1]); // 1
+enum_init<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>, 1>([1]) -> ([2]); // 2
+struct_construct<issue2249::issue2249::Node>([0], [2]) -> ([3]); // 3
+struct_deconstruct<issue2249::issue2249::Node>([3]) -> ([4], [5]); // 4
+snapshot_take<felt252>([4]) -> ([6], [7]); // 5
+felt252_const<12>() -> ([8]); // 6
+snapshot_take<felt252>([8]) -> ([9], [10]); // 7
+drop<felt252>([9]) -> (); // 8
+rename<felt252>([7]) -> ([11]); // 9
+rename<felt252>([10]) -> ([12]); // 10
+store_temp<felt252>([11]) -> ([11]); // 11
+felt252_sub([11], [12]) -> ([13]); // 12
+store_temp<felt252>([13]) -> ([13]); // 13
+store_temp<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>>([5]) -> ([5]); // 14
+store_temp<felt252>([6]) -> ([6]); // 15
+felt252_is_zero([13]) { fallthrough() 40([14]) }; // 16
+branch_align() -> (); // 17
+snapshot_take<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>>([5]) -> ([15], [16]); // 18
+enum_snapshot_match<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>>([16]) { fallthrough([17]) 33([18]) }; // 19
+branch_align() -> (); // 20
+drop<Snapshot<Box<issue2249::issue2249::Node>>>([17]) -> (); // 21
+drop<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>>([15]) -> (); // 22
+drop<felt252>([6]) -> (); // 23
+array_new<felt252>() -> ([19]); // 24
+felt252_const<2417313685480782781771909291702505700829654629>() -> ([20]); // 25
+store_temp<felt252>([20]) -> ([20]); // 26
+array_append<felt252>([19], [20]) -> ([21]); // 27
+struct_construct<core::panics::Panic>() -> ([22]); // 28
+struct_construct<Tuple<core::panics::Panic, Array<felt252>>>([22], [21]) -> ([23]); // 29
+enum_init<core::panics::PanicResult::<(issue2249::issue2249::Node,)>, 1>([23]) -> ([24]); // 30
+store_temp<core::panics::PanicResult::<(issue2249::issue2249::Node,)>>([24]) -> ([25]); // 31
+return([25]); // 32
+branch_align() -> (); // 33
+drop<Unit>([18]) -> (); // 34
+struct_construct<issue2249::issue2249::Node>([6], [15]) -> ([26]); // 35
+struct_construct<Tuple<issue2249::issue2249::Node>>([26]) -> ([27]); // 36
+enum_init<core::panics::PanicResult::<(issue2249::issue2249::Node,)>, 0>([27]) -> ([28]); // 37
+store_temp<core::panics::PanicResult::<(issue2249::issue2249::Node,)>>([28]) -> ([29]); // 38
+return([29]); // 39
+branch_align() -> (); // 40
+drop<NonZero<felt252>>([14]) -> (); // 41
+drop<felt252>([6]) -> (); // 42
+drop<core::option::Option::<core::box::Box::<issue2249::issue2249::Node>>>([5]) -> (); // 43
+array_new<felt252>() -> ([30]); // 44
+felt252_const<10312401295712411742946712252734735128736050>() -> ([31]); // 45
+store_temp<felt252>([31]) -> ([31]); // 46
+array_append<felt252>([30], [31]) -> ([32]); // 47
+struct_construct<core::panics::Panic>() -> ([33]); // 48
+struct_construct<Tuple<core::panics::Panic, Array<felt252>>>([33], [32]) -> ([34]); // 49
+enum_init<core::panics::PanicResult::<(issue2249::issue2249::Node,)>, 1>([34]) -> ([35]); // 50
+store_temp<core::panics::PanicResult::<(issue2249::issue2249::Node,)>>([35]) -> ([36]); // 51
+return([36]); // 52
+
+issue2249::issue2249::simple_test@0() -> (core::panics::PanicResult::<(issue2249::issue2249::Node,)>);
