@@ -6,69 +6,74 @@ open Lean Expr Meta Qq
 
 namespace Sierra
 
-partial def identifyType (self : Identifier) (typedefs : HashMap Identifier Identifier) 
+partial def identifyType (self : Identifier)
+    (acc : HashMap Identifier SierraType)
+    (typedefs : HashMap Identifier Identifier) 
     (useSelfRef : Bool := .false) (i : Identifier) : Except String SierraType :=
   if useSelfRef && (i == self) then pure .SelfRef else
-  match typedefs.find? i with
-  | .none => throw s!"Unhandled type {i}, self is {self}"
-  | .some ty =>
-    match ty with
-    | .name "felt252" [] .none => pure .Felt252
-    | .name "u8" [] .none => pure .U8
-    | .name "u16" [] .none => pure .U16
-    | .name "u32" [] .none => pure .U32
-    | .name "u64" [] .none => pure .U64
-    | .name "u128" [] .none => pure .U128
-    | .name "RangeCheck" [] .none => pure .RangeCheck
-    | .name "Enum" (.usertype _ :: l) .none => do
-      let l ← flip mapM l fun x => match x with
-      | .identifier ident => pure ident
-      | _ => throw "Expected Enum parameter to refer a to a type"
-      pure <| .Enum (← l.mapM <| identifyType self typedefs .true)
-    | .name "Struct" (.usertype _ :: l) .none => do
-      let l ← flip mapM l fun x => match x with
-      | .identifier ident => pure ident
-      | _ => throw "Expected Enum parameter to refer a to a type"
-      pure <| .Struct (← l.mapM <| identifyType self typedefs .true)
-    | .name "NonZero" (Parameter.identifier ident :: []) .none => do
-      pure <| .NonZero <| ← identifyType self typedefs .true ident
-    | .name "Box" [l] .none => do
-      match l with
-      | .identifier ident => pure <| .Box <| ← identifyType self typedefs .true ident
-      | _ => throw "Expected Box parameter to refer to a type"
-    | .name "Snapshot" [l] .none => do
-      match l with
-      | .identifier ident => pure <| .Snapshot <| ← identifyType self typedefs .true ident
-      | _ => throw "Expected Snapshot parameter to refer to a type"
-    | .name "Array" [t] .none => do
-      match t with
-      | .identifier ident => pure <| .Array <| ← identifyType self typedefs .true ident
-      | _ => throw "Expected ARray parameter to refer to a type"
-    | .name "U128MulGuarantee" [] .none => pure .U128MulGuarantee
-    | .name "Pedersen" [] .none => pure .Pedersen
-    | .name "BuiltinCosts" [] .none => pure .BuiltinCosts
-    | .name "GasBuiltin" [] .none => pure .GasBuiltin
-    | .name "Bitwise" [] .none => pure .Bitwise
-    | .name "Uninitialized" [t] .none => do
-      match t with
-      | .identifier ident => pure <| .Array <| ← identifyType self typedefs .true ident
-      | _ => throw "Expected Uninitalized parameter to refer to a type"
-    | .name "Nullable" [t] .none => do
-      match t with
-      | .identifier ident => pure <| .Nullable <| ← identifyType self typedefs .true ident
-      | _ => throw "Expected Nullable parameter to refer to a type"
-    | .name "StorageBaseAddress" [] .none => pure .StorageBaseAddress
-    | .name "StorageAddress" [] .none => pure .StorageAddress
-    | .name "System" [] .none => pure .System
-    | .name "ContractAddress" [] .none => pure .ContractAddress
-    | _ => throw s!"Unhandled type {ty}, self is {self}"
+  match acc.find? i with
+  | .some t => pure t
+  | .none =>
+    match typedefs.find? i with
+    | .none => throw s!"Unhandled type {i}, self is {self}"
+    | .some ty =>
+      match ty with
+      | .name "felt252" [] .none => pure .Felt252
+      | .name "u8" [] .none => pure .U8
+      | .name "u16" [] .none => pure .U16
+      | .name "u32" [] .none => pure .U32
+      | .name "u64" [] .none => pure .U64
+      | .name "u128" [] .none => pure .U128
+      | .name "RangeCheck" [] .none => pure .RangeCheck
+      | .name "Enum" (.usertype _ :: l) .none => do
+        let l ← flip mapM l fun x => match x with
+        | .identifier ident => pure ident
+        | _ => throw "Expected Enum parameter to refer a to a type"
+        pure <| .Enum (← l.mapM <| identifyType self acc typedefs .true)
+      | .name "Struct" (.usertype _ :: l) .none => do
+        let l ← flip mapM l fun x => match x with
+        | .identifier ident => pure ident
+        | _ => throw "Expected Enum parameter to refer a to a type"
+        pure <| .Struct (← l.mapM <| identifyType self acc typedefs .true)
+      | .name "NonZero" (Parameter.identifier ident :: []) .none => do
+        pure <| .NonZero <| ← identifyType self acc typedefs .true ident
+      | .name "Box" [l] .none => do
+        match l with
+        | .identifier ident => pure <| .Box <| ← identifyType self acc typedefs .true ident
+        | _ => throw "Expected Box parameter to refer to a type"
+      | .name "Snapshot" [l] .none => do
+        match l with
+        | .identifier ident => pure <| .Snapshot <| ← identifyType self acc typedefs .true ident
+        | _ => throw "Expected Snapshot parameter to refer to a type"
+      | .name "Array" [t] .none => do
+        match t with
+        | .identifier ident => pure <| .Array <| ← identifyType self acc typedefs .true ident
+        | _ => throw "Expected ARray parameter to refer to a type"
+      | .name "U128MulGuarantee" [] .none => pure .U128MulGuarantee
+      | .name "Pedersen" [] .none => pure .Pedersen
+      | .name "BuiltinCosts" [] .none => pure .BuiltinCosts
+      | .name "GasBuiltin" [] .none => pure .GasBuiltin
+      | .name "Bitwise" [] .none => pure .Bitwise
+      | .name "Uninitialized" [t] .none => do
+        match t with
+        | .identifier ident => pure <| .Array <| ← identifyType self acc typedefs .true ident
+        | _ => throw "Expected Uninitalized parameter to refer to a type"
+      | .name "Nullable" [t] .none => do
+        match t with
+        | .identifier ident => pure <| .Nullable <| ← identifyType self acc typedefs .true ident
+        | _ => throw "Expected Nullable parameter to refer to a type"
+      | .name "StorageBaseAddress" [] .none => pure .StorageBaseAddress
+      | .name "StorageAddress" [] .none => pure .StorageAddress
+      | .name "System" [] .none => pure .System
+      | .name "ContractAddress" [] .none => pure .ContractAddress
+      | _ => throw s!"Unhandled type {i}, self is {self}"
 
 def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
     Except String (HashMap Identifier SierraType) := do
   let mut acc := HashMap.empty
   for (name, _) in typedefs do
     let typedefs : HashMap Identifier Identifier := HashMap.ofList typedefs
-    let v : SierraType ← identifyType name typedefs .false name
+    let v : SierraType ← identifyType name acc typedefs .false name
     acc := acc.insert name v
   return acc
 
