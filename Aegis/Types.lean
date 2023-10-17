@@ -8,7 +8,7 @@ namespace Sierra
 
 def Addr := Nat
 
-inductive SierraType
+inductive SierraType : Type
 | Felt252
 | U8
 | U16
@@ -34,7 +34,20 @@ inductive SierraType
 | StorageAddress
 | System
 | ContractAddress
+| SelfRef
   deriving Inhabited, Repr
+
+partial def SierraType.containsSelfRef : SierraType → Bool
+| .Enum fields
+| .Struct fields => fields.any containsSelfRef
+| .NonZero ty
+| .Box ty
+| .Snapshot ty
+| .Array ty
+| .Uninitialized ty
+| .Nullable ty => ty.containsSelfRef
+| .SelfRef => .true
+| _ => .false
 
 abbrev RefTable := HashMap Nat FVarId
 
@@ -98,6 +111,16 @@ def System.writeStorage (s : System) (contract : F) (addr : StorageAddress) (val
   { s with contracts := Function.update s.contracts contract <|
              { s.contracts contract with storage := Function.update (s.contracts contract).storage addr val } }
 
+partial def SierraType.Impl (S : SierraType) : SierraType → Type _
+| Felt252 => Sierra.F
+| Box ty => Impl S ty
+| Array ty => List $ Impl S ty
+| SelfRef => Impl S S
+| _ => Unit
+
+def SierraType.Impl' S := SierraType.Impl S S
+
+
 partial def SierraType.toQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
   | .U8 => q(UInt8)
@@ -128,8 +151,10 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .StorageAddress => q(Sierra.StorageAddress)
   | .System => q(Sierra.System)
   | .ContractAddress => q(Sierra.ContractAddress)
+  | .SelfRef => q(Unit)
 
 notation "⟦" t "⟧" => SierraType.toQuote t
+
 
 def SierraType.BlockInfo : SierraType :=
 .Struct [ .U64  -- block number
