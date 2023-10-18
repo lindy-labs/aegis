@@ -8,6 +8,8 @@ namespace Sierra
 
 def Addr := Nat
 
+/-- An inductive type containing "codes" for the types used in Sierra. The constructor `SelfRef`
+is a placeholder for a *self reference* in a self referential (recursive) type. -/
 inductive SierraType : Type
 | Felt252
 | U8
@@ -35,8 +37,9 @@ inductive SierraType : Type
 | System
 | ContractAddress
 | SelfRef
-  deriving Inhabited, Repr
+  deriving Inhabited, Repr, ToExpr
 
+/-- Checks whether a code for a Sierra type contains the self reference token. -/
 partial def SierraType.containsSelfRef : SierraType → Bool
 | .Enum fields
 | .Struct fields => fields.any containsSelfRef
@@ -111,17 +114,7 @@ def System.writeStorage (s : System) (contract : F) (addr : StorageAddress) (val
   { s with contracts := Function.update s.contracts contract <|
              { s.contracts contract with storage := Function.update (s.contracts contract).storage addr val } }
 
-partial def SierraType.Impl (S : SierraType) : SierraType → Type _
-| Felt252 => Sierra.F
-| Box ty => Impl S ty
-| Array ty => List $ Impl S ty
-| SelfRef => Impl S S
-| _ => Unit
-
-def SierraType.Impl' S := SierraType.Impl S S
-
-
-partial def SierraType.toQuote : SierraType → Q(Type)
+partial def SierraType.nonRefQuote : SierraType → Q(Type)
   | .Felt252 => q(F)
   | .U8 => q(UInt8)
   | .U16 => q(UInt16)
@@ -129,29 +122,49 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .U64 => q(UInt64)
   | .U128 => q(UInt128)
   | .Addr => q(Sierra.Addr)
-  | .RangeCheck => q(Nat)  -- TODO
-  | .Enum []      => q(Unit)
-  | .Enum [t]     => t.toQuote
-  | .Enum (t::ts) => q($(t.toQuote) ⊕ $(toQuote (.Enum ts)))
+  | .RangeCheck => q(Nat)
+  | .Enum []      => q(Empty)
+  | .Enum [t]     => t.nonRefQuote
+  | .Enum (t::ts) => q($(t.nonRefQuote) ⊕ $(nonRefQuote (.Enum ts)))
   | .Struct []      => q(Unit)
-  | .Struct [t]     => t.toQuote
-  | .Struct (t::ts) => q($(t.toQuote) × $(toQuote (.Struct ts)))
-  | .NonZero t => toQuote t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
-  | .Box t => toQuote t
-  | .Snapshot t => toQuote t
-  | .Array t => q(List $(toQuote t))
+  | .Struct [t]     => t.nonRefQuote
+  | .Struct (t::ts) => q($(t.nonRefQuote) × $(nonRefQuote (.Struct ts)))
+  | .NonZero t => nonRefQuote t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
+  | .Box t => nonRefQuote t
+  | .Snapshot t => nonRefQuote t
+  | .Array t => q(List $(nonRefQuote t))
   | .U128MulGuarantee => q(Unit) -- We don't store the guarantee in the type
   | .Pedersen => q(Nat)
   | .BuiltinCosts => q(Nat) -- TODO check whether we should run cairo to obtain the actual builtin costs
   | .GasBuiltin => q(Nat)
   | .Bitwise => q(Nat)
   | .Uninitialized _ => q(Unit) -- Since we have no info on uninialized variables
-  | .Nullable t => q(Option $(toQuote t))
+  | .Nullable t => q(Option $(nonRefQuote t))
   | .StorageBaseAddress => q(Sierra.StorageBaseAddress)
   | .StorageAddress => q(Sierra.StorageAddress)
   | .System => q(Sierra.System)
   | .ContractAddress => q(Sierra.ContractAddress)
-  | .SelfRef => q(Unit)
+  | .SelfRef => q(Unit)  -- we should never reach this
+
+/-- Because of restriction of nested types, this inlines all the constructors for the corresponding
+Lean type formers. This inductive type family is only used for self-referential branches of
+self-referential Sierra types. For this reason, we can omit constructors of `SierraType` which
+don't contain potential self references. -/
+inductive SierraType.Impl (self : SierraType) : SierraType → Type where
+| enumHd     : Impl self t → Impl self (.Enum (t :: ts))
+| enumTl     : Impl self (.Enum ts) → Impl self (.Enum (t :: ts))
+| structNil  : Impl self (.Struct [])
+| structCons : Impl self t → Impl self (.Struct ts) → Impl self (.Struct (t :: ts))
+| nonZero    : Impl self t → Impl self (.NonZero t)
+| box        : Impl self t → Impl self (.Box t)
+| snapshot   : Impl self t → Impl self (.Snapshot t)
+| arrayNil   : Impl self (.Array t)
+| arrayCons  : Impl self t → Impl self (.Array t) → Impl self (.Array t)
+| nullable   : Impl self (.Nullable t)
+| selfRef    : Impl self self → Impl self .SelfRef
+
+def SierraType.toQuote (t : SierraType) : Q(Type) :=
+if t.containsSelfRef then q(Impl $t $t) else nonRefQuote t
 
 notation "⟦" t "⟧" => SierraType.toQuote t
 
