@@ -114,60 +114,78 @@ def System.writeStorage (s : System) (contract : F) (addr : StorageAddress) (val
   { s with contracts := Function.update s.contracts contract <|
              { s.contracts contract with storage := Function.update (s.contracts contract).storage addr val } }
 
-partial def SierraType.nonRefQuote : SierraType → Q(Type)
-  | .Felt252 => q(F)
-  | .U8 => q(UInt8)
-  | .U16 => q(UInt16)
-  | .U32 => q(UInt32)
-  | .U64 => q(UInt64)
-  | .U128 => q(UInt128)
-  | .Addr => q(Sierra.Addr)
-  | .RangeCheck => q(Nat)
-  | .Enum []      => q(Empty)
+
+partial def SierraType.nonRefQuote : SierraType → Type
+  | .Felt252 => F
+  | .U8 => UInt8
+  | .U16 => UInt16
+  | .U32 => UInt32
+  | .U64 => UInt64
+  | .U128 => UInt128
+  | .Addr => Sierra.Addr
+  | .RangeCheck => Nat
+  | .Enum []      => Empty
   | .Enum [t]     => t.nonRefQuote
-  | .Enum (t::ts) => q($(t.nonRefQuote) ⊕ $(nonRefQuote (.Enum ts)))
-  | .Struct []      => q(Unit)
+  | .Enum (t::ts) => t.nonRefQuote ⊕ nonRefQuote (.Enum ts)
+  | .Struct []      => Unit
   | .Struct [t]     => t.nonRefQuote
-  | .Struct (t::ts) => q($(t.nonRefQuote) × $(nonRefQuote (.Struct ts)))
+  | .Struct (t::ts) => t.nonRefQuote × nonRefQuote (.Struct ts)
   | .NonZero t => nonRefQuote t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
   | .Box t => nonRefQuote t
   | .Snapshot t => nonRefQuote t
-  | .Array t => q(List $(nonRefQuote t))
-  | .U128MulGuarantee => q(Unit) -- We don't store the guarantee in the type
-  | .Pedersen => q(Nat)
-  | .BuiltinCosts => q(Nat) -- TODO check whether we should run cairo to obtain the actual builtin costs
-  | .GasBuiltin => q(Nat)
-  | .Bitwise => q(Nat)
-  | .Uninitialized _ => q(Unit) -- Since we have no info on uninialized variables
-  | .Nullable t => q(Option $(nonRefQuote t))
-  | .StorageBaseAddress => q(Sierra.StorageBaseAddress)
-  | .StorageAddress => q(Sierra.StorageAddress)
-  | .System => q(Sierra.System)
-  | .ContractAddress => q(Sierra.ContractAddress)
-  | .SelfRef => q(Unit)  -- we should never reach this
+  | .Array t => List <| nonRefQuote t
+  | .U128MulGuarantee => Unit -- We don't store the guarantee in the type
+  | .Pedersen => Nat
+  | .BuiltinCosts => Nat -- TODO check whether we should run cairo to obtain the actual builtin costs
+  | .GasBuiltin => Nat
+  | .Bitwise => Nat
+  | .Uninitialized _ => Unit -- Since we have no info on uninialized variables
+  | .Nullable t => Option (nonRefQuote t)
+  | .StorageBaseAddress => Sierra.StorageBaseAddress
+  | .StorageAddress => Sierra.StorageAddress
+  | .System => Sierra.System
+  | .ContractAddress => Sierra.ContractAddress
+  | .SelfRef => Unit  -- we should never reach this
 
 /-- Because of restriction of nested types, this inlines all the constructors for the corresponding
-Lean type formers. This inductive type family is only used for self-referential branches of
-self-referential Sierra types. For this reason, we can omit constructors of `SierraType` which
-don't contain potential self references. -/
+Lean type formers. -/
 inductive SierraType.Impl (self : SierraType) : SierraType → Type where
-| enumHd     : Impl self t → Impl self (.Enum (t :: ts))
-| enumTl     : Impl self (.Enum ts) → Impl self (.Enum (t :: ts))
-| structNil  : Impl self (.Struct [])
-| structCons : Impl self t → Impl self (.Struct ts) → Impl self (.Struct (t :: ts))
-| nonZero    : Impl self t → Impl self (.NonZero t)
-| box        : Impl self t → Impl self (.Box t)
-| snapshot   : Impl self t → Impl self (.Snapshot t)
-| arrayNil   : Impl self (.Array t)
-| arrayCons  : Impl self t → Impl self (.Array t) → Impl self (.Array t)
-| nullable   : Impl self (.Nullable t)
-| selfRef    : Impl self self → Impl self .SelfRef
+| enumHd             : Impl self t → Impl self (.Enum (t :: ts))
+| enumTl             : Impl self (.Enum ts) → Impl self (.Enum (t :: ts))
+| structNil          : Impl self (.Struct [])
+| structCons         : Impl self t → Impl self (.Struct ts) → Impl self (.Struct (t :: ts))
+| nonZero            : Impl self t → Impl self (.NonZero t)
+| box                : Impl self t → Impl self (.Box t)
+| snapshot           : Impl self t → Impl self (.Snapshot t)
+| arrayNil           : Impl self (.Array t)
+| arrayCons          : Impl self t → Impl self (.Array t) → Impl self (.Array t)
+| nullable           : Impl self (.Nullable t)
+| selfRef            : Impl self self → Impl self .SelfRef
+| felt252            : F → Impl self .Felt252
+| u8                 : UInt8 → Impl self .U8
+| u16                : UInt16 → Impl self .U16
+| u32                : UInt32 → Impl self .U32
+| u64                : UInt64 → Impl self .U64
+| u128               : UInt128 → Impl self .U128
+| addr               : Sierra.Addr → Impl self .Addr
+| rangeCheck         : ℕ → Impl self .RangeCheck
+| u128MulGuarantee   : Impl self .U128MulGuarantee
+| pedersen           : ℕ → Impl self .Pedersen
+| builtinCosts       : ℕ → Impl self .BuiltinCosts
+| gasBuiltin         : ℕ → Impl self .GasBuiltin
+| bitwise            : ℕ → Impl self .Bitwise
+| uninitialized      : Impl self (.Uninitialized _)
+| nullableNone       : Impl self (.Nullable t)
+| nullableSome       : Impl self t → Impl self (.Nullable t)
+| storageBaseAddress : Sierra.StorageBaseAddress → Impl self .StorageBaseAddress
+| storageAddress     : Sierra.StorageAddress → Impl self .StorageAddress
+| system             : Sierra.System → Impl self .System
+| contractAddress    : Sierra.ContractAddress → Impl self .ContractAddress
 
 def SierraType.toQuote (t : SierraType) : Q(Type) :=
-if t.containsSelfRef then q(Impl $t $t) else nonRefQuote t
+if t.containsSelfRef then q(Impl $t $t) else q(nonRefQuote $t)
 
 notation "⟦" t "⟧" => SierraType.toQuote t
-
 
 def SierraType.BlockInfo : SierraType :=
 .Struct [ .U64  -- block number
