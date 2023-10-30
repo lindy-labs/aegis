@@ -1,5 +1,6 @@
 import Aegis.Parser
 import Aegis.ExprUtil
+import Aegis.Macros
 import Mathlib.Data.ZMod.Basic
 
 open Lean Qq
@@ -17,7 +18,6 @@ inductive SierraType : Type
 | U32
 | U64
 | U128
-| Addr
 | RangeCheck
 | Enum (fields : List SierraType)
 | Struct (fields : List SierraType)
@@ -36,21 +36,115 @@ inductive SierraType : Type
 | StorageAddress
 | System
 | ContractAddress
-| SelfRef
+| Ref (n : ℕ)
+| Mu (ty : SierraType)
   deriving Inhabited, Repr, ToExpr
 
-/-- Checks whether a code for a Sierra type contains the self reference token. -/
-partial def SierraType.containsSelfRef : SierraType → Bool
-| .Enum fields
-| .Struct fields => fields.any containsSelfRef
-| .NonZero ty
-| .Box ty
-| .Snapshot ty
-| .Array ty
-| .Uninitialized ty
-| .Nullable ty => ty.containsSelfRef
-| .SelfRef => .true
-| _ => .false
+partial def decreaseRefs : SierraType → SierraType
+| .Ref (.succ n) => .Ref n
+| .Box ty => .Box <| decreaseRefs ty
+| ty => ty
+
+partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifier)
+    (i : Identifier) : Except String (List Identifier × SierraType) := do
+  match ctx.indexOf? i with
+  | .some idx => .ok ([i], .Ref idx)
+  | .none => match raw.find? i with
+    | .some <| .name "felt252" [] .none => .ok ([], .Felt252)
+    | .some <| .name "u8" [] .none => .ok ([], .U8)
+    | .some <| .name "u16" [] .none => .ok ([], .U16)
+    | .some <| .name "u32" [] .none => .ok ([], .U32)
+    | .some <| .name "u64" [] .none => .ok ([], .U64)
+    | .some <| .name "u128" [] .none => .ok ([], .U128)
+    | .some <| .name "RangeCheck" [] .none => .ok ([], .RangeCheck)
+    | .some <| .name "Pedersen" [] .none => .ok ([], .Pedersen)
+    | .some <| .name "BuiltinCosts" [] .none => .ok ([], .BuiltinCosts)
+    | .some <| .name "GasBuiltin" [] .none => .ok ([], .GasBuiltin)
+    | .some <| .name "Bitwise" [] .none => .ok ([], .Bitwise)
+    | .some <| .name "StorageBaseAddress" [] .none => .ok ([], .StorageBaseAddress)
+    | .some <| .name "StorageAddress" [] .none => .ok ([], .StorageAddress)
+    | .some <| .name "System" [] .none => .ok ([], .System)
+    | .some <| .name "ContractAddress" [] .none => .ok ([], .ContractAddress)
+    | .some <| .name "Box" [p] .none =>
+      let .identifier ident := p
+        | throw s!"Expected Box parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Box ty)
+      else .ok (lvs, .Box <| decreaseRefs ty)
+    | .some <| .name "NonZero" [p] .none => 
+      let .identifier ident := p
+        | throw s!"Expected Box parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .NonZero ty)
+      else .ok (lvs, .NonZero <| decreaseRefs ty)
+    | .some <| .name "Snapshot" [p] .none => 
+      let .identifier ident := p
+        | throw s!"Expected Box parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Snapshot ty)
+      else .ok (lvs, .Snapshot <| decreaseRefs ty)
+    | .some <| .name "Array" [p] .none => 
+      let .identifier ident := p
+        | throw s!"Expected Box parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Array ty)
+      else .ok (lvs, .Array <| decreaseRefs ty)
+    | .some <| .name "Uninitialized" [p] .none => 
+      let .identifier ident := p
+        | throw s!"Expected Box parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Uninitialized ty)
+      else .ok (lvs, .Uninitialized <| decreaseRefs ty)
+    | .some <| .name "Nullable" [p] .none => 
+      let .identifier ident := p
+        | throw s!"Expected Box parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Nullable ty)
+      else .ok (lvs, .Nullable <| decreaseRefs ty)
+    | .some <| .name "Enum" (_ :: ps) .none =>
+      let idents ← flip mapM ps fun x => match x with
+      | .identifier ident => pure ident
+      | _ => throw "Expected Enum parameter to refer a to a type"
+      let x ← idents.mapM <| translate raw (i :: ctx)
+      let (lvs, tys) := x.unzip
+      if lvs.join.contains i then
+        .ok (lvs.join.removeAll [i], .Mu <| .Enum tys)
+      else
+        .ok (lvs.join, .Enum <| tys.map decreaseRefs)
+    | .some <| .name "Struct" (_ :: ps) .none =>
+      let idents ← flip mapM ps fun x => match x with
+      | .identifier ident => pure ident
+      | _ => throw "Expected Enum parameter to refer a to a type"
+      let x ← idents.mapM <| translate raw (i :: ctx)
+      let (lvs, tys) := x.unzip
+      if lvs.join.contains i then
+        .ok (lvs.join.removeAll [i], .Mu <| .Struct tys)
+      else
+        .ok (lvs.join, .Struct <| tys.map decreaseRefs)
+    | _ => throw s!"Type not translatable: {i}"
+
+/-
+#eval translate (HashMap.ofList [(id!"[1]", id!"Box<[2]>"),
+     (id!"[2]", id!"Enum<foo, [1], [2], [3]>"),
+     (id!"[3]", id!"felt252")])
+   [] (.ref 1)
+
+#eval translate (HashMap.ofList [(id!"[1]", id!"Box<[2]>"),
+     (id!"[2]", id!"Enum<foo, [2], [3]>"),
+     (id!"[3]", id!"felt252")])
+   [] (.ref 1)
+
+#eval translate (HashMap.ofList [(id!"[1]", id!"Enum<foo, [3], [2]>"),
+     (id!"[2]", id!"Enum<foo, [1]>"),
+     (id!"[3]", id!"felt252")])
+   [] (.ref 1)
+-/
+
+def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
+    Except String (HashMap Identifier SierraType) := do
+  let idents := typedefs.map (·.1)
+  let x ← idents.mapM <| translate (.ofList typedefs) idents
+  .ok <| HashMap.ofList <| idents.zip <| x.map (·.2)
 
 abbrev RefTable := HashMap Nat FVarId
 
@@ -67,7 +161,6 @@ def ADDRESS_MOD :=
 
 def CONTRACT_ADDRESS_MOD :=
   3618502788666131106986593281521497120414687020801267626233049500247285301248
-
 
 def U128_MOD :=
   340282366920938463463374607431768211456
@@ -114,6 +207,7 @@ def System.writeStorage (s : System) (contract : F) (addr : StorageAddress) (val
   { s with contracts := Function.update s.contracts contract <|
              { s.contracts contract with storage := Function.update (s.contracts contract).storage addr val } }
 
+#exit
 
 partial def SierraType.nonRefQuote : SierraType → Type
   | .Felt252 => F
@@ -122,7 +216,6 @@ partial def SierraType.nonRefQuote : SierraType → Type
   | .U32 => UInt32
   | .U64 => UInt64
   | .U128 => UInt128
-  | .Addr => Sierra.Addr
   | .RangeCheck => Nat
   | .Enum []      => Empty
   | .Enum [t]     => t.nonRefQuote
