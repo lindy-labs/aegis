@@ -36,13 +36,22 @@ inductive SierraType : Type
 | StorageAddress
 | System
 | ContractAddress
+/-- De-Bruĳn index for µ calculus -/
 | Ref (n : ℕ)
+/-- Anonymous μ binder -/
 | Mu (ty : SierraType)
   deriving Inhabited, Repr, ToExpr
 
 partial def decreaseRefs : SierraType → SierraType
 | .Ref (.succ n) => .Ref n
 | .Box ty => .Box <| decreaseRefs ty
+| .NonZero ty => .NonZero <| decreaseRefs ty
+| .Snapshot ty => .Snapshot <| decreaseRefs ty
+| .Array ty => .Array <| decreaseRefs ty
+| .Uninitialized ty => .Uninitialized <| decreaseRefs ty
+| .Nullable ty => .Nullable <| decreaseRefs ty
+| .Enum tys => .Enum (decreaseRefs <$> tys)
+| .Struct tys => .Struct (decreaseRefs <$> tys)
 | ty => ty
 
 partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifier)
@@ -71,33 +80,33 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Box ty)
       else .ok (lvs, .Box <| decreaseRefs ty)
-    | .some <| .name "NonZero" [p] .none => 
+    | .some <| .name "NonZero" [p] .none =>
       let .identifier ident := p
-        | throw s!"Expected Box parameter {p} to refer to a type"
+        | throw s!"Expected NonZero parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .NonZero ty)
       else .ok (lvs, .NonZero <| decreaseRefs ty)
-    | .some <| .name "Snapshot" [p] .none => 
+    | .some <| .name "Snapshot" [p] .none =>
       let .identifier ident := p
-        | throw s!"Expected Box parameter {p} to refer to a type"
+        | throw s!"Expected Snapshot parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Snapshot ty)
       else .ok (lvs, .Snapshot <| decreaseRefs ty)
-    | .some <| .name "Array" [p] .none => 
+    | .some <| .name "Array" [p] .none =>
       let .identifier ident := p
-        | throw s!"Expected Box parameter {p} to refer to a type"
+        | throw s!"Expected Array parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Array ty)
       else .ok (lvs, .Array <| decreaseRefs ty)
-    | .some <| .name "Uninitialized" [p] .none => 
+    | .some <| .name "Uninitialized" [p] .none =>
       let .identifier ident := p
-        | throw s!"Expected Box parameter {p} to refer to a type"
+        | throw s!"Expected Uninitialized parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Uninitialized ty)
       else .ok (lvs, .Uninitialized <| decreaseRefs ty)
-    | .some <| .name "Nullable" [p] .none => 
+    | .some <| .name "Nullable" [p] .none =>
       let .identifier ident := p
-        | throw s!"Expected Box parameter {p} to refer to a type"
+        | throw s!"Expected Nullable parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Nullable ty)
       else .ok (lvs, .Nullable <| decreaseRefs ty)
@@ -107,23 +116,18 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
       | _ => throw "Expected Enum parameter to refer a to a type"
       let x ← idents.mapM <| translate raw (i :: ctx)
       let (lvs, tys) := x.unzip
-      if lvs.join.contains i then
-        .ok (lvs.join.removeAll [i], .Mu <| .Enum tys)
-      else
-        .ok (lvs.join, .Enum <| tys.map decreaseRefs)
+      if lvs.join.contains i then .ok (lvs.join.removeAll [i], .Mu <| .Enum tys)
+      else .ok (lvs.join, .Enum <| tys.map decreaseRefs)
     | .some <| .name "Struct" (_ :: ps) .none =>
       let idents ← flip mapM ps fun x => match x with
       | .identifier ident => pure ident
-      | _ => throw "Expected Enum parameter to refer a to a type"
+      | _ => throw "Expected Struct parameter to refer a to a type"
       let x ← idents.mapM <| translate raw (i :: ctx)
       let (lvs, tys) := x.unzip
-      if lvs.join.contains i then
-        .ok (lvs.join.removeAll [i], .Mu <| .Struct tys)
-      else
-        .ok (lvs.join, .Struct <| tys.map decreaseRefs)
+      if lvs.join.contains i then .ok (lvs.join.removeAll [i], .Mu <| .Struct tys)
+      else .ok (lvs.join, .Struct <| tys.map decreaseRefs)
     | _ => throw s!"Type not translatable: {i}"
 
-/-
 #eval translate (HashMap.ofList [(id!"[1]", id!"Box<[2]>"),
      (id!"[2]", id!"Enum<foo, [1], [2], [3]>"),
      (id!"[3]", id!"felt252")])
@@ -138,12 +142,17 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
      (id!"[2]", id!"Enum<foo, [1]>"),
      (id!"[3]", id!"felt252")])
    [] (.ref 1)
--/
+
+#eval translate (HashMap.ofList [(id!"[1]", id!"Box<[2]>"),
+     (id!"[2]", id!"Enum<foo, [3], [1]>"),
+     (id!"[3]", id!"felt252"),
+     (id!"[4]", id!"Enum <optionfoo, [2], [3]>")])
+   [] (.ref 4)
 
 def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
     Except String (HashMap Identifier SierraType) := do
   let idents := typedefs.map (·.1)
-  let x ← idents.mapM <| translate (.ofList typedefs) idents
+  let x ← idents.mapM <| translate (.ofList typedefs) []
   .ok <| HashMap.ofList <| idents.zip <| x.map (·.2)
 
 abbrev RefTable := HashMap Nat FVarId
@@ -207,9 +216,44 @@ def System.writeStorage (s : System) (contract : F) (addr : StorageAddress) (val
   { s with contracts := Function.update s.contracts contract <|
              { s.contracts contract with storage := Function.update (s.contracts contract).storage addr val } }
 
-#exit
+/- Because of restriction of nested types, this inlines all the constructors for the corresponding
+Lean type formers. -/
+inductive SierraType.Impl : List SierraType → SierraType → Type where
+| enumHd             : Impl ctx t → Impl ctx (.Enum (t :: ts))
+| enumTl             : Impl ctx (.Enum ts) → Impl ctx (.Enum (t :: ts))
+| structNil          : Impl ctx (.Struct [])
+| structCons         : Impl ctx t → Impl ctx (.Struct ts) → Impl ctx (.Struct (t :: ts))
+| nonZero            : Impl ctx t → Impl ctx (.NonZero t)
+| box                : Impl ctx t → Impl ctx (.Box t)
+| snapshot           : Impl ctx t → Impl ctx (.Snapshot t)
+| arrayNil           : Impl ctx (.Array t)
+| arrayCons          : Impl ctx t → Impl ctx (.Array t) → Impl ctx (.Array t)
+| nullable           : Impl ctx (.Nullable t)
+| felt252            : F → Impl ctx .Felt252
+| u8                 : UInt8 → Impl ctx .U8
+| u16                : UInt16 → Impl ctx .U16
+| u32                : UInt32 → Impl ctx .U32
+| u64                : UInt64 → Impl ctx .U64
+| u128               : UInt128 → Impl ctx .U128
+| rangeCheck         : ℕ → Impl ctx .RangeCheck
+| u128MulGuarantee   : Impl ctx .U128MulGuarantee
+| pedersen           : ℕ → Impl ctx .Pedersen
+| builtinCosts       : ℕ → Impl ctx .BuiltinCosts
+| gasBuiltin         : ℕ → Impl ctx .GasBuiltin
+| bitwise            : ℕ → Impl ctx .Bitwise
+| uninitialized      : Impl ctx (.Uninitialized _)
+| nullableNone       : Impl ctx (.Nullable t)
+| nullableSome       : Impl ctx t → Impl ctx (.Nullable t)
+| storageBaseAddress : Sierra.StorageBaseAddress → Impl ctx .StorageBaseAddress
+| storageAddress     : Sierra.StorageAddress → Impl ctx .StorageAddress
+| system             : Sierra.System → Impl ctx .System
+| contractAddress    : Sierra.ContractAddress → Impl ctx .ContractAddress
+/-- This is the unrolling step of the recursive types. -/
+| ref                : ∀ (k : Fin ctx.length), Impl (ctx.drop k) (ctx.get k) → Impl ctx (.Ref k)
+/-- Interpret the μ binders by extending the context -/
+| mu                 : Impl (t :: ctx) t → Impl ctx (.Mu t)
 
-partial def SierraType.nonRefQuote : SierraType → Type
+def SierraType.toType : SierraType → Type
   | .Felt252 => F
   | .U8 => UInt8
   | .U16 => UInt16
@@ -218,65 +262,30 @@ partial def SierraType.nonRefQuote : SierraType → Type
   | .U128 => UInt128
   | .RangeCheck => Nat
   | .Enum []      => Empty
-  | .Enum [t]     => t.nonRefQuote
-  | .Enum (t::ts) => t.nonRefQuote ⊕ nonRefQuote (.Enum ts)
+  | .Enum [t]     => t.toType
+  | .Enum (t::ts) => t.toType ⊕ toType (.Enum ts)
   | .Struct []      => Unit
-  | .Struct [t]     => t.nonRefQuote
-  | .Struct (t::ts) => t.nonRefQuote × nonRefQuote (.Struct ts)
-  | .NonZero t => nonRefQuote t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
-  | .Box t => nonRefQuote t
-  | .Snapshot t => nonRefQuote t
-  | .Array t => List <| nonRefQuote t
+  | .Struct [t]     => t.toType
+  | .Struct (t::ts) => t.toType × toType (.Struct ts)
+  | .NonZero t => toType t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
+  | .Box t => toType t
+  | .Snapshot t => toType t
+  | .Array t => List <| toType t
   | .U128MulGuarantee => Unit -- We don't store the guarantee in the type
   | .Pedersen => Nat
   | .BuiltinCosts => Nat -- TODO check whether we should run cairo to obtain the actual builtin costs
   | .GasBuiltin => Nat
   | .Bitwise => Nat
   | .Uninitialized _ => Unit -- Since we have no info on uninialized variables
-  | .Nullable t => Option (nonRefQuote t)
+  | .Nullable t => Option (toType t)
   | .StorageBaseAddress => Sierra.StorageBaseAddress
   | .StorageAddress => Sierra.StorageAddress
   | .System => Sierra.System
   | .ContractAddress => Sierra.ContractAddress
-  | .SelfRef => Unit  -- we should never reach this
+  | .Mu t => SierraType.Impl [t] t
+  | .Ref _ => panic "encountered SierraType.Ref outside of a Mu binder!"  -- should never reach this
 
-/-- Because of restriction of nested types, this inlines all the constructors for the corresponding
-Lean type formers. -/
-inductive SierraType.Impl (self : SierraType) : SierraType → Type where
-| enumHd             : Impl self t → Impl self (.Enum (t :: ts))
-| enumTl             : Impl self (.Enum ts) → Impl self (.Enum (t :: ts))
-| structNil          : Impl self (.Struct [])
-| structCons         : Impl self t → Impl self (.Struct ts) → Impl self (.Struct (t :: ts))
-| nonZero            : Impl self t → Impl self (.NonZero t)
-| box                : Impl self t → Impl self (.Box t)
-| snapshot           : Impl self t → Impl self (.Snapshot t)
-| arrayNil           : Impl self (.Array t)
-| arrayCons          : Impl self t → Impl self (.Array t) → Impl self (.Array t)
-| nullable           : Impl self (.Nullable t)
-| selfRef            : Impl self self → Impl self .SelfRef
-| felt252            : F → Impl self .Felt252
-| u8                 : UInt8 → Impl self .U8
-| u16                : UInt16 → Impl self .U16
-| u32                : UInt32 → Impl self .U32
-| u64                : UInt64 → Impl self .U64
-| u128               : UInt128 → Impl self .U128
-| addr               : Sierra.Addr → Impl self .Addr
-| rangeCheck         : ℕ → Impl self .RangeCheck
-| u128MulGuarantee   : Impl self .U128MulGuarantee
-| pedersen           : ℕ → Impl self .Pedersen
-| builtinCosts       : ℕ → Impl self .BuiltinCosts
-| gasBuiltin         : ℕ → Impl self .GasBuiltin
-| bitwise            : ℕ → Impl self .Bitwise
-| uninitialized      : Impl self (.Uninitialized _)
-| nullableNone       : Impl self (.Nullable t)
-| nullableSome       : Impl self t → Impl self (.Nullable t)
-| storageBaseAddress : Sierra.StorageBaseAddress → Impl self .StorageBaseAddress
-| storageAddress     : Sierra.StorageAddress → Impl self .StorageAddress
-| system             : Sierra.System → Impl self .System
-| contractAddress    : Sierra.ContractAddress → Impl self .ContractAddress
-
-def SierraType.toQuote (t : SierraType) : Q(Type) :=
-if t.containsSelfRef then q(Impl $t $t) else q(nonRefQuote $t)
+def SierraType.toQuote (t : SierraType) : Q(Type) := q(SierraType.toType $t)
 
 notation "⟦" t "⟧" => SierraType.toQuote t
 
@@ -326,7 +335,7 @@ structure BranchData (inputTypes : List SierraType) where
   /-- The return types -/
   (outputTypes : List SierraType := [])
   /-- The condition associated with the branch -/
-  (condition : OfInputs Q(Prop) 
+  (condition : OfInputs Q(Prop)
     (List.map SierraType.toQuote <| inputTypes ++ outputTypes) := OfInputs.const <| q(True))
   /-- Ref table changes, only used for memory management commands -/
   (refsChange : List Nat → RefTable → RefTable := fun _ rt => rt)
