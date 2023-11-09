@@ -17,7 +17,7 @@ def buildFuncSignatures
   for (name, sig) in funcdefs do
     match FuncData.libfuncs currentFunc typedefs specs metadataRef sig with
     | some sig => acc := acc.insert name sig
-    | none => () --throw <| toString name ++ " : no such libfunc"
+    | none => acc := acc.insert id!"fail" default  -- REMOVE
   return acc
 
 structure State where
@@ -104,6 +104,7 @@ partial def processState
   | _ => do
     let .some st := f.statements.get? (← get).pc
       | throwError "Program counter out of bounds"
+    logInfo s!"func names: {funcSigs.toList.map (·.1)}"
     let .some fd := funcSigs.find? st.libfunc_id
       | throwError "Could not find libfunc used in code: {st.libfunc_id}"
     unless fd.branches.length = st.branches.length do

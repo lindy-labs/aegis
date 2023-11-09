@@ -128,27 +128,6 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
       else .ok (lvs.join, .Struct <| tys.map decreaseRefs)
     | _ => throw s!"Type not translatable: {i}"
 
-#eval translate (HashMap.ofList [(id!"[1]", id!"Box<[2]>"),
-     (id!"[2]", id!"Enum<foo, [1], [2], [3]>"),
-     (id!"[3]", id!"felt252")])
-   [] (.ref 1)
-
-#eval translate (HashMap.ofList [(id!"[1]", id!"Box<[2]>"),
-     (id!"[2]", id!"Enum<foo, [2], [3]>"),
-     (id!"[3]", id!"felt252")])
-   [] (.ref 1)
-
-#eval translate (HashMap.ofList [(id!"[1]", id!"Enum<foo, [3], [2]>"),
-     (id!"[2]", id!"Enum<foo, [1]>"),
-     (id!"[3]", id!"felt252")])
-   [] (.ref 1)
-
-#eval translate (HashMap.ofList [(id!"[1]", id!"Box<[2]>"),
-     (id!"[2]", id!"Enum<foo, [3], [1]>"),
-     (id!"[3]", id!"felt252"),
-     (id!"[4]", id!"Enum <optionfoo, [2], [3]>")])
-   [] (.ref 4)
-
 def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
     Except String (HashMap Identifier SierraType) := do
   let idents := typedefs.map (·.1)
