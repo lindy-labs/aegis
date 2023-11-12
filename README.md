@@ -1,6 +1,6 @@
 # Aegis 
 
-allows to verify Sierra programs in Lean 4.
+A tool for the verification of Cairo code.
 
 ## Usage
 
@@ -20,7 +20,7 @@ aegis_prove "foo::foo::double" := fun _ a ρ => by
 
 -- Check that we have verified all functions exported by the Sierra file, otherwise
 -- print an error message listing the missing proofs
-sierra_complete
+aegis_complete
 ```
 
 Further example usage can be found in `Aegis.Tests.Commands`.
