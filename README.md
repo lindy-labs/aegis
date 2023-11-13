@@ -1,6 +1,8 @@
 # Aegis 
 
-A tool for the verification of Cairo code.
+![Aegis logo](http://github.com/lindy-labs/aegis/blob/main/images/logo_white.png)
+
+Aegis is a tool for the verification of Cairo code.
 
 ## Usage
 
@@ -11,10 +13,12 @@ import Aegis.Commands
 aegis_load_file "Aegis/Tests/foo.sierra"
 
 -- Provide the specification of the function double
-aegis_spec "foo::foo::double" := fun _ a ρ => ρ = a * a
+aegis_spec "foo::foo::double" :=
+  fun _ a ρ => ρ = a * a
 
 -- Prove the correctness of the specification
-aegis_prove "foo::foo::double" := fun _ a ρ => by
+aegis_prove "foo::foo::double" :=
+  fun _ a ρ => by
   rintro rfl
   rfl
 
@@ -30,3 +34,8 @@ Further example usage can be found in `Aegis.Tests.Commands`.
 * A few Libfuncs are not implemented yet, a list can be found in `libfuncs_todo`
 * There is no mechanism yet for giving and using polymorphic specifications for polymorphic Cairo functions
 * A few libfunc specifications might be improved in the future to streamline proofs
+
+## Contact
+
+For any questions about Aegis, contact [javra](mailto:jakob@lindylabs.net).
+
