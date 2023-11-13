@@ -1,6 +1,4 @@
-# Aegis 
-
-![Aegis logo](http://github.com/lindy-labs/aegis/blob/main/images/logo_white.png)
+<img src="./images/logo_white.png" alt="" width="500" >
 
 Aegis is a tool for the verification of Cairo code.
 
