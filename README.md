@@ -1,4 +1,5 @@
-<img src="./images/logo_white.png" alt="" width="500" >
+![Aegis logo](./images/logo_dark.png#gh-light-mode-only)
+![Aegis logo](./images/logo_white.png#gh-dark-mode-only)
 
 Aegis is a tool for the verification of Cairo code.
 
