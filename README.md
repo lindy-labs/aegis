@@ -38,5 +38,5 @@ An incomplete verification of Cairo's colib can be found [here](https://github.c
 
 ## Contact
 
-For any questions about Aegis, contact [javra](mailto:jakob@lindylabs.net).
+For any questions about Aegis, contact [javra](mailto:javra@lindylabs.net).
 
