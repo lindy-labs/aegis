@@ -28,6 +28,8 @@ aegis_complete
 
 Further example usage can be found in `Aegis.Tests.Commands`.
 
+An incomplete verification of Cairo's colib can be found [here](https://github.com/lindy-labs/corelib_verification).
+
 ## To-Dos
 
 * A few Libfuncs are not implemented yet, a list can be found in `libfuncs_todo`
