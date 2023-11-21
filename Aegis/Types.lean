@@ -122,7 +122,7 @@ partial def SierraType.toQuote : SierraType → Q(Type)
   | .BuiltinCosts => q(Nat) -- TODO check whether we should run cairo to obtain the actual builtin costs
   | .GasBuiltin => q(Nat)
   | .Bitwise => q(Nat)
-  | .Uninitialized _ => q(Unit) -- Since we have no info on uninialized variables
+  | .Uninitialized t => toQuote t -- Since we have no info on uninialized variables
   | .Nullable t => q(Option $(toQuote t))
   | .StorageBaseAddress => q(Sierra.StorageBaseAddress)
   | .StorageAddress => q(Sierra.StorageAddress)
@@ -177,7 +177,7 @@ structure BranchData (inputTypes : List SierraType) where
   /-- The return types -/
   (outputTypes : List SierraType := [])
   /-- The condition associated with the branch -/
-  (condition : OfInputs Q(Prop) 
+  (condition : OfInputs Q(Prop)
     (List.map SierraType.toQuote <| inputTypes ++ outputTypes) := OfInputs.const <| q(True))
   /-- Ref table changes, only used for memory management commands -/
   (refsChange : List Nat → RefTable → RefTable := fun _ rt => rt)

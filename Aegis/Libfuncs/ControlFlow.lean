@@ -50,8 +50,13 @@ def finalize_locals : FuncData where
 
 def alloc_local (t : SierraType) : FuncData where
   inputTypes := []
-  branches := [{ outputTypes := [.Uninitialized t]
-                 condition := fun _ => q(True) }]
+  branches := [{ outputTypes := [.Uninitialized t] }]
+
+def store_local (t : SierraType) : FuncData where
+  inputTypes := [.Uninitialized t, t]
+  branches := [{ outputTypes := [t]
+                 condition := fun (a b ρ : Q($(⟦t⟧))) =>
+                   q($ρ = $a ∧ $ρ = $b) }]
 
 def revoke_ap_tracking : FuncData where
 
@@ -67,6 +72,7 @@ def controlFlowLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier 
 | .name "disable_ap_tracking" [] .none => disable_ap_tracking
 | .name "finalize_locals" [] .none => finalize_locals
 | .name "alloc_local" [.identifier ident] .none => return alloc_local (← typeRefs.find? ident)
+| .name "store_local" [.identifier ident] .none => return store_local (← typeRefs.find? ident)
 | .name "revoke_ap_tracking" [] .none => revoke_ap_tracking
 | .name "enable_ap_tracking" [] .none => enable_ap_tracking
 | _  => .none
