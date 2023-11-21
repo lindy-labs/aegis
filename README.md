@@ -40,6 +40,10 @@ When loading your own Cairo code, it is advisable to compile it to Sierra in the
 * There is no mechanism yet for giving and using polymorphic specifications for polymorphic Cairo functions
 * A few libfunc specifications might be improved in the future to streamline proofs
 
+## Contributions
+
+Feel free to contribute PRs if you find bugs or if you want to add e.g. additional tests or libfunc implementations.
+
 ## Contact
 
 For any questions about Aegis, contact [javra](mailto:javra@lindylabs.net).
