@@ -28,7 +28,11 @@ aegis_complete
 
 Further example usage can be found in `Aegis.Tests.Commands`.
 
-An incomplete verification of Cairo's colib can be found [here](https://github.com/lindy-labs/corelib_verification).
+An incomplete verification of Cairo's corelib can be found [here](https://github.com/lindy-labs/corelib_verification).
+
+When loading your own Cairo code, it is advisable to compile it to Sierra in the following way:
+* Use the `-r` option in order to keep reasonable names for identifiers instead of numbers.
+* Remove all `#[inline(always)]` decorators to make the verification easier.
 
 ## To-Dos
 
