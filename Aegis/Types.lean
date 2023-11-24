@@ -7,8 +7,6 @@ open Lean Qq
 
 namespace Sierra
 
-def Addr := Nat
-
 /-- An inductive type containing "codes" for the types used in Sierra. The constructor `SelfRef`
 is a placeholder for a *self reference* in a self referential (recursive) type. -/
 inductive SierraType : Type
@@ -18,7 +16,6 @@ inductive SierraType : Type
 | U32
 | U64
 | U128
-| Addr
 | RangeCheck
 | Enum (fields : List SierraType)
 | Struct (fields : List SierraType)
