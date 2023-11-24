@@ -143,6 +143,9 @@ test::bar@0([0]: core::bool, [1]: core::bool) -> (core::bool);"
 
 aegis_spec "test::foo" := fun _ a b ρ => (ρ : Bool) = xor a b
 
+set_option aegis.contract false
+set_option aegis.filterUnused false
+set_option aegis.normalize false
 aegis_prove "test::foo" := fun _ a b ρ => by
   unfold Bool.toSierraBool
   unfold «spec_test::foo»

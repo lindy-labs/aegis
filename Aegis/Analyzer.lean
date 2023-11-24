@@ -1,10 +1,13 @@
 import Aegis.Parser
 import Aegis.Libfuncs
 import Aegis.Types
+import Aegis.Options
 
 open Lean Expr Meta Qq
 
 namespace Sierra
+
+set_option trace.aesop.extraction true
 
 def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
     Except String (HashMap Identifier SierraType) := do
@@ -78,7 +81,7 @@ def buildFuncSignatures
     | some sig => acc := acc.insert name sig
     | none => () --throw <| toString name ++ " : no such libfunc"
   return acc
- 
+
 structure State where
   (pc : Nat)
   (refs : RefTable)
@@ -121,20 +124,23 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     let allRefs := HashSet.ofArray <| s.refs.toArray.map (·.2) ++ s.outputRefs
     let allRefs := allRefs.insert s.metadataRef
     -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
-    let cs := cs.filter (¬ ·.hasAnyFVar (¬ allRefs.contains ·))
+    let mut cs := cs.filter (¬ ·.hasAnyFVar (¬ allRefs.contains ·))
     -- Partition fvars into input variables and intermediate variables
     let refs := s.refs.toList.reverse
     let (inRefs, intRefs) := (refs.partition (·.1 ∈ finputs.map (·.1)))
+    let mut intRefs := intRefs
     -- Normalize conjunctions and disjunctions in the tree
-    let cs := cs.normalize
+    if ← Sierra.Options.aegis.normalize.isEnabled then cs := cs.normalize
     -- Disassemble equalities between tuples (disabled for now)
     -- let cs := cs.separateTupleEqs
     -- Contract equalities in the tree
-    let cs := cs.contractEqs (Prod.snd <$> intRefs).contains
+    if ← Sierra.Options.aegis.contract.isEnabled then
+      cs := cs.contractEqs (Prod.snd <$> intRefs).contains
     -- Compile the three into a single expression
     let e := cs.toExpr
     -- Filter out intermediate variables which do not actually appear in the expression
-    let intRefs := intRefs.filter (e.containsFVar ·.2)  
+    if ← Sierra.Options.aegis.filterUnused.isEnabled then
+      intRefs := intRefs.filter (e.containsFVar ·.2)
     -- Existentially close over intermediate references
     let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e
     -- Lambda-close over output references
@@ -202,7 +208,7 @@ def withFindByIdentifier (ident : Identifier)
   | [⟨_, pc, inputArgs, outputTypes⟩] => k pc inputArgs outputTypes
   | _ => throwError "Ambiguous identifier, please edit Sierra file to make them unique"
 
-def funcDataFromCondition (typeDefs : HashMap Identifier SierraType) 
+def funcDataFromCondition (typeDefs : HashMap Identifier SierraType)
     (inputArgs : List (ℕ × Identifier))
     (outputTypes : List Identifier)
     (cond : Expr)
@@ -249,7 +255,7 @@ partial def getFuncCondition (ident : Identifier) (pc : ℕ) (inputArgs : List (
     processAndOrTree inputArgs cs) s
   return es.1
 
-/-- Derive specification type independently of the acutal spec, in order to be able to 
+/-- Derive specification type independently of the acutal spec, in order to be able to
 type check the spec. -/
 def getSpecsType (inputArgs : List (ℕ × Identifier)) (outputTypes : List Identifier) :
     MetaM Q(Type) := do
