@@ -104,7 +104,7 @@ store_temp<felt252>([5]) -> ([6]);
 return([6]);
 
 test::foo@0([0]: felt252, [1]: felt252) -> (felt252);"
-#eval parseGrammar e2etest_felt_add 
+#eval parseGrammar e2etest_felt_add
 #eval analyzeFile e2etest_felt_add
 
 def test_enum_init :=
@@ -245,3 +245,17 @@ baz@2([2]: F) -> (F);"
 def test_end :=
 "libfunc function_call<user@foo::end> = function_call<user@foo::end::bar>;"
 #eval parseGrammar test_end
+
+def test_local :=
+"type F = felt252;
+
+libfunc a = alloc_local<F>;
+libfunc s = store_local<F>;
+
+a() -> ([1]);
+s([1], [0]) -> ([2]);
+return([2]);
+
+foo@0([0]: F) -> (F);"
+#eval parseGrammar test_local
+#eval analyzeFile test_local

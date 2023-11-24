@@ -18,6 +18,7 @@ inductive SierraType : Type
 | U32
 | U64
 | U128
+| Addr
 | RangeCheck
 | Enum (fields : List SierraType)
 | Struct (fields : List SierraType)
