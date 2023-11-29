@@ -36,7 +36,7 @@ def mkEqM (lhs rhs : Expr) : MetaM Expr := mkAppM ``Eq #[lhs, rhs]
 
 /-- A tree to contain expressions to be composed with `And` and `Or`.
 If we want to avoid trees, this has to be replaced by some graph structure in the future. -/
-inductive AndOrTree 
+inductive AndOrTree
 | nil  : AndOrTree
 | cons : Expr → List AndOrTree → AndOrTree
 deriving Inhabited, Repr
@@ -67,7 +67,7 @@ partial def AndOrTree.toExpr : AndOrTree → Expr
 | nil       => mkConst ``True
 | cons e [] => e
 | cons (.const ``True _) ts => Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
-| cons e ts => 
+| cons e ts =>
    if ts.all (·.isTrivial) then e
    else mkApp (mkApp (mkConst ``And) e) <| Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
 
@@ -152,7 +152,16 @@ def OfInputs.const {R : Type} (r : R) : {Ts : List Q(Type)} → OfInputs R Ts
 
 instance [Inhabited R] : Inhabited (OfInputs R Ts) := ⟨OfInputs.const default⟩
 
-def OfInputs.apply {R : Type} [Inhabited R] {Ts : List Q(Type)} (f : OfInputs R Ts) 
+/-- Lambda-close an `OfInputs` instance. -/
+def OfInputs.toExpr {Ts : List Q(Type)} (f : OfInputs Q(Prop) Ts) : MetaM Expr :=
+match Ts with
+| [] => pure f
+| (T :: Ts) =>
+  withLocalDeclD s!"x{Ts.length}" T fun fv => do
+    let r ← OfInputs.toExpr (f fv)
+    mkLambdaFVars #[fv] r
+
+def OfInputs.apply {R : Type} [Inhabited R] {Ts : List Q(Type)} (f : OfInputs R Ts)
     (ts : List Expr) : R :=
   match Ts, ts with
   | [],       []        => f
