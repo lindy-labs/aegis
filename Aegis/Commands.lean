@@ -18,12 +18,12 @@ structure PersistantFuncData where
   (inputTypes : List SierraType)
   (branches : List PersistantBranchData)
 
-def BranchData.persist (inputTypes : List SierraType) (bd : BranchData inputTypes) 
+def BranchData.persist (inputTypes : List SierraType) (bd : BranchData inputTypes)
     : MetaM PersistantBranchData := do
   let fds ← (inputTypes ++ bd.outputTypes).mapM fun _ => mkFreshFVarId
   pure { outputTypes := bd.outputTypes
          ioRefs := fds
-         condition := bd.condition.apply <| fds.map .fvar }
+         condition := ← bd.condition.toExpr }
 
 def FuncData.persist (fd : FVarId → FuncData) : MetaM PersistantFuncData := do
   let fv ← mkFreshFVarId
@@ -32,19 +32,17 @@ def FuncData.persist (fd : FVarId → FuncData) : MetaM PersistantFuncData := do
          inputTypes := (fd fv).inputTypes
          branches := bd }
 
-def PersistantBranchData.unpersist (inputTypes : List SierraType) (pbd : PersistantBranchData) :
+def PersistantBranchData.unpersist (inputTypes : List SierraType) (subst : FVarSubst)
+    (pbd : PersistantBranchData) :
     BranchData inputTypes :=
+  let c := FVarSubst.apply subst pbd.condition
   { outputTypes := pbd.outputTypes
-    condition := OfInputs.abstract fun args => Id.run do
-      let mut subst : FVarSubst := .empty
-      for (r, a) in List.zip pbd.ioRefs args do
-        subst := subst.insert r a
-      FVarSubst.apply subst pbd.condition }
+    condition := OfInputs.abstract fun args => Expr.beta c args.toArray }
 
 def PersistantFuncData.unpersist (pfd : PersistantFuncData) (fv : FVarId) : FuncData :=
-  let fd : FuncData := { inputTypes := pfd.inputTypes
-                         branches := pfd.branches.map (PersistantBranchData.unpersist pfd.inputTypes) }
-  fd.modifyConditions <| FVarSubst.apply <| FVarSubst.empty.insert pfd.metadataRef <| .fvar fv
+  let s := FVarSubst.empty.insert pfd.metadataRef <| .fvar fv
+  { inputTypes := pfd.inputTypes
+    branches := pfd.branches.map (PersistantBranchData.unpersist pfd.inputTypes s) }
 
 /-- Copied from Lean.Elab.MutualDef -/
 private def declValToTerm (declVal : Syntax) : MacroM Syntax := withRef declVal do
@@ -114,7 +112,7 @@ elab "aegis_load_file " s:str : command => do
   | .some "sierra" => sierraLoadString <| ← IO.FS.readFile filePath
   | .some "cairo" =>
     let filePath ← IO.FS.realPath filePath
-    let args : IO.Process.SpawnArgs := 
+    let args : IO.Process.SpawnArgs :=
       { cmd := "cairo-compile"
         args := #["--replace-ids", filePath.toString] }
     let child ← IO.Process.output args
@@ -135,7 +133,7 @@ elab "aegis_info" name:str : command => do  -- TODO change from `str` to `ident`
     dbg_trace "Output types: {outputs}"
     return ()
   | .error str => throwError toString str
-  
+
 
 elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `str` to `ident`
   let env ← getEnv
@@ -143,13 +141,13 @@ elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `st
   let typeDefs ← match buildTypeDefs sf.typedefs with
   | .ok x => pure x
   | .error err => throwError err
-  let val ← liftMacroM <| declValToTerm val 
+  let val ← liftMacroM <| declValToTerm val
   match ← liftCoreM <| parseIdentifier name.getString with
   | .ok i =>
     if (sierraSpecs.getState env).contains i then
       throwError "A specification has already been given"
     withRef val do
-      liftTermElabM do 
+      liftTermElabM do
         let ty ← getSpecTypeOfName sf i
         let val ← Term.elabTermEnsuringType val ty
         Term.synthesizeSyntheticMVarsNoPostponing
@@ -174,7 +172,7 @@ elab "aegis_prove" name:str val:declVal : command => do
   let sf := (loadedSierraFile.getState env).get!
   let val ← liftMacroM <| declValToTerm val
   match ← liftCoreM <| parseIdentifier name.getString with
-  | .ok i =>  
+  | .ok i =>
     withRef val do
       liftTermElabM do
         let specs := sierraSpecs.getState env

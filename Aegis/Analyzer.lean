@@ -1,10 +1,70 @@
 import Aegis.Parser
 import Aegis.Libfuncs
 import Aegis.Types
+import Aegis.Options
 
 open Lean Expr Meta Qq
 
 namespace Sierra
+
+def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
+    Except String (HashMap Identifier SierraType) := do
+  let mut acc := HashMap.empty
+  for (name, ty) in typedefs do
+    let v : SierraType ← go acc ty
+    acc := acc.insert name v
+  return acc
+where go (acc : _) (ty : Identifier) : Except String SierraType :=
+  match ty with
+  | .name "felt252" [] .none => pure .Felt252
+  | .name "u8" [] .none => pure .U8
+  | .name "u16" [] .none => pure .U16
+  | .name "u32" [] .none => pure .U32
+  | .name "u64" [] .none => pure .U64
+  | .name "u128" [] .none => pure .U128
+  | .name "RangeCheck" [] .none => pure .RangeCheck
+  | .name "Enum" (.usertype _ :: l) .none => do
+    let l ← flip mapM l fun x => match x with
+      | .identifier ident => pure ident
+      | _ => throw "Expected Enum parameter to refer a to a type"
+    pure <| .Enum (l.map acc.find!)
+  | .name "Struct" (.usertype _ :: l) .none => do
+    let l ← flip mapM l fun x => match x with
+      | .identifier ident => pure ident
+      | _ => throw "Expected Enum parameter to refer a to a type"
+    pure <| .Struct (l.map acc.find!)
+  | .name "NonZero" (Parameter.identifier ident :: []) .none => do
+    pure <| .NonZero <| acc.find! ident
+  | .name "Box" [l] .none =>
+    match l with
+    | .identifier ident => pure <| .Box <| acc.find! ident
+    | _ => throw "Expected Box parameter to refer to a type"
+  | .name "Snapshot" [l] .none =>
+    match l with
+    | .identifier ident => pure <| .Snapshot <| acc.find! ident
+    | _ => throw "Expected Snapshot parameter to refer to a type"
+  | .name "Array" [t] .none =>
+    match t with
+    | .identifier ident => pure <| .Array <| acc.find! ident
+    | _ => throw "Expected ARray parameter to refer to a type"
+  | .name "U128MulGuarantee" [] .none => pure .U128MulGuarantee
+  | .name "Pedersen" [] .none => pure .Pedersen
+  | .name "BuiltinCosts" [] .none => pure .BuiltinCosts
+  | .name "GasBuiltin" [] .none => pure .GasBuiltin
+  | .name "Bitwise" [] .none => pure .Bitwise
+  | .name "Uninitialized" [t] .none =>
+    match t with
+    | .identifier ident => pure <| .Array <| acc.find! ident
+    | _ => throw "Expected Uninitalized parameter to refer to a type"
+  | .name "Nullable" [t] .none =>
+    match t with
+    | .identifier ident => pure <| .Nullable <| acc.find! ident
+    | _ => throw "Expected Nullable parameter to refer to a type"
+  | .name "StorageBaseAddress" [] .none => pure .StorageBaseAddress
+  | .name "StorageAddress" [] .none => pure .StorageAddress
+  | .name "System" [] .none => pure .System
+  | .name "ContractAddress" [] .none => pure .ContractAddress
+  | _ => throw s!"Unhandled type {ty}"
 
 def buildFuncSignatures
   (currentFunc : Identifier)
@@ -17,7 +77,7 @@ def buildFuncSignatures
   for (name, sig) in funcdefs do
     match FuncData.libfuncs currentFunc typedefs specs metadataRef sig with
     | some sig => acc := acc.insert name sig
-    | none => acc := acc.insert id!"fail" default  -- REMOVE
+    | none => () --throw <| toString name ++ " : no such libfunc"
   return acc
 
 structure State where
@@ -62,20 +122,23 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     let allRefs := HashSet.ofArray <| s.refs.toArray.map (·.2) ++ s.outputRefs
     let allRefs := allRefs.insert s.metadataRef
     -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
-    let cs := cs.filter (¬ ·.hasAnyFVar (¬ allRefs.contains ·))
+    let mut cs := cs.filter (¬ ·.hasAnyFVar (¬ allRefs.contains ·))
     -- Partition fvars into input variables and intermediate variables
     let refs := s.refs.toList.reverse
     let (inRefs, intRefs) := (refs.partition (·.1 ∈ finputs.map (·.1)))
+    let mut intRefs := intRefs
     -- Normalize conjunctions and disjunctions in the tree
-    let cs := cs.normalize
+    if ← Sierra.Options.aegis.normalize.isEnabled then cs := cs.normalize
     -- Disassemble equalities between tuples (disabled for now)
     -- let cs := cs.separateTupleEqs
     -- Contract equalities in the tree
-    let cs := cs.contractEqs (Prod.snd <$> intRefs).contains
+    if ← Sierra.Options.aegis.contract.isEnabled then
+      cs := cs.contractEqs (Prod.snd <$> intRefs).contains
     -- Compile the three into a single expression
     let e := cs.toExpr
     -- Filter out intermediate variables which do not actually appear in the expression
-    let intRefs := intRefs.filter (e.containsFVar ·.2)
+    if ← Sierra.Options.aegis.filterUnused.isEnabled then
+      intRefs := intRefs.filter (e.containsFVar ·.2)
     -- Existentially close over intermediate references
     let e ← mkExistsFVars (intRefs.map (.fvar ·.2)) e
     -- Lambda-close over output references
@@ -104,7 +167,6 @@ partial def processState
   | _ => do
     let .some st := f.statements.get? (← get).pc
       | throwError "Program counter out of bounds"
-    logInfo s!"func names: {funcSigs.toList.map (·.1)}"
     let .some fd := funcSigs.find? st.libfunc_id
       | throwError "Could not find libfunc used in code: {st.libfunc_id}"
     unless fd.branches.length = st.branches.length do
