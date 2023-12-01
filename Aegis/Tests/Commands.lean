@@ -128,6 +128,43 @@ aegis_spec "test::u128_const" := fun _ _ => True
 
 aegis_prove "test::u128_const" := fun _ _ _ => True.intro
 
+aegis_load_string "type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type Box<felt252> = Box<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc into_box<felt252> = into_box<felt252>;
+
+into_box<felt252>([0]) -> ([1]); // 0
+return([1]); // 1
+
+test::into_box@0([0]: felt252) -> (Box<felt252>);"
+
+aegis_spec "test::into_box" := fun m a ρ =>
+  m.boxHeap .Felt252 ρ = .some a
+
+aegis_prove "test::into_box" := fun _ _ _ _ => by
+  aesop
+
+aegis_load_string "type Box<felt252> = Box<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc unbox<felt252> = unbox<felt252>;
+libfunc store_temp<felt252> = store_temp<felt252>;
+
+unbox<felt252>([0]) -> ([1]); // 0
+store_temp<felt252>([1]) -> ([1]); // 1
+return([1]); // 2
+
+test::unbox@0([0]: Box<felt252>) -> (felt252);"
+
+aegis_spec "test::unbox" := fun m a ρ =>
+  m.boxHeap .Felt252 a = .some ρ
+
+aegis_prove "test::unbox" := fun m a b => by
+  unfold «spec_test::unbox»
+  rintro ⟨_,h,rfl⟩
+  symm
+  assumption
+
 aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 
