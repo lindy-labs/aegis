@@ -7,65 +7,6 @@ open Lean Expr Meta Qq
 
 namespace Sierra
 
-def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
-    Except String (HashMap Identifier SierraType) := do
-  let mut acc := HashMap.empty
-  for (name, ty) in typedefs do
-    let v : SierraType ← go acc ty
-    acc := acc.insert name v
-  return acc
-where go (acc : _) (ty : Identifier) : Except String SierraType :=
-  match ty with
-  | .name "felt252" [] .none => pure .Felt252
-  | .name "u8" [] .none => pure .U8
-  | .name "u16" [] .none => pure .U16
-  | .name "u32" [] .none => pure .U32
-  | .name "u64" [] .none => pure .U64
-  | .name "u128" [] .none => pure .U128
-  | .name "RangeCheck" [] .none => pure .RangeCheck
-  | .name "Enum" (.usertype _ :: l) .none => do
-    let l ← flip mapM l fun x => match x with
-      | .identifier ident => pure ident
-      | _ => throw "Expected Enum parameter to refer a to a type"
-    pure <| .Enum (l.map acc.find!)
-  | .name "Struct" (.usertype _ :: l) .none => do
-    let l ← flip mapM l fun x => match x with
-      | .identifier ident => pure ident
-      | _ => throw "Expected Enum parameter to refer a to a type"
-    pure <| .Struct (l.map acc.find!)
-  | .name "NonZero" (Parameter.identifier ident :: []) .none => do
-    pure <| .NonZero <| acc.find! ident
-  | .name "Box" [l] .none =>
-    match l with
-    | .identifier ident => pure <| .Box <| acc.find! ident
-    | _ => throw "Expected Box parameter to refer to a type"
-  | .name "Snapshot" [l] .none =>
-    match l with
-    | .identifier ident => pure <| .Snapshot <| acc.find! ident
-    | _ => throw "Expected Snapshot parameter to refer to a type"
-  | .name "Array" [t] .none =>
-    match t with
-    | .identifier ident => pure <| .Array <| acc.find! ident
-    | _ => throw "Expected ARray parameter to refer to a type"
-  | .name "U128MulGuarantee" [] .none => pure .U128MulGuarantee
-  | .name "Pedersen" [] .none => pure .Pedersen
-  | .name "BuiltinCosts" [] .none => pure .BuiltinCosts
-  | .name "GasBuiltin" [] .none => pure .GasBuiltin
-  | .name "Bitwise" [] .none => pure .Bitwise
-  | .name "Uninitialized" [t] .none =>
-    match t with
-    | .identifier ident => pure <| .Array <| acc.find! ident
-    | _ => throw "Expected Uninitalized parameter to refer to a type"
-  | .name "Nullable" [t] .none =>
-    match t with
-    | .identifier ident => pure <| .Nullable <| acc.find! ident
-    | _ => throw "Expected Nullable parameter to refer to a type"
-  | .name "StorageBaseAddress" [] .none => pure .StorageBaseAddress
-  | .name "StorageAddress" [] .none => pure .StorageAddress
-  | .name "System" [] .none => pure .System
-  | .name "ContractAddress" [] .none => pure .ContractAddress
-  | _ => throw s!"Unhandled type {ty}"
-
 def buildFuncSignatures
   (currentFunc : Identifier)
   (typedefs : HashMap Identifier SierraType)
@@ -162,7 +103,7 @@ partial def processState
     let s ← get
     let es := (s.outputRefs.zip (st.args.map fun n => s.refs.find! n)).zip s.outputTypes
     let es := es.map fun ((ofv, rfv), t) =>
-      Expr.mkEq (SierraType.toQuote <| typeDefs.find! t) (.fvar rfv) (.fvar ofv)
+      Expr.mkEq (SierraType.toQuote [] <| typeDefs.find! t) (.fvar rfv) (.fvar ofv)
     return (st, .cons (Expr.mkAnds es) [])
   | _ => do
     let .some st := f.statements.get? (← get).pc
@@ -229,7 +170,7 @@ partial def getFuncCondition (ident : Identifier) (pc : ℕ) (inputArgs : List (
   for t in outputTypes do
     let name ← mkFreshUserName `ρ
     let fv ← mkFreshFVarId
-    lctx := lctx.mkLocalDecl fv name <| SierraType.toQuote <| typeDefs.find! t
+    lctx := lctx.mkLocalDecl fv name <| SierraType.toQuote [] <| typeDefs.find! t
     outputRefs := outputRefs.push fv
   -- Create fvar for the reference to the `Metadata` instance
   let metadataRef ← mkFreshFVarId
@@ -247,7 +188,7 @@ partial def getFuncCondition (ident : Identifier) (pc : ℕ) (inputArgs : List (
     let mut refs : RefTable := ∅
     -- Add input arguments to initial local context and refs table
     for (i, t) in inputArgs do
-      refs := refs.insert i <| ← getOrMkNewRef i <| SierraType.toQuote <| typeDefs.find! t
+      refs := refs.insert i <| ← getOrMkNewRef i <| SierraType.toQuote [] <| typeDefs.find! t
     set { (← get) with refs := refs }
     let (_, cs) ← processState typeDefs funcSigs sf inputArgs
     processAndOrTree inputArgs cs) s
@@ -277,10 +218,10 @@ def getLocalDeclInfos (ident : Identifier) (pc : ℕ) (inputArgs : List (ℕ × 
   ret := ret.push <| .mk (← mkFreshUserName `m) fun _ => pure q(Metadata)
   for (_, t) in inputArgs do
     let n ← mkFreshUserName `a  -- TODO make anonymous?
-    ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote <| typeDefs.find! t
+    ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote [] <| typeDefs.find! t
   for t in outputTypes do
     let n ← mkFreshUserName `ρ  -- TODO make anonymous?
-    ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote <| typeDefs.find! t
+    ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote [] <| typeDefs.find! t
   let n ← mkFreshUserName `h_auto
   let e ← getFuncCondition sf specs ident pc inputArgs outputTypes
   -- Add the auto spec, to which all previous args are applied

@@ -193,78 +193,39 @@ def System.writeStorage (s : System) (contract : F) (addr : StorageAddress) (val
   { s with contracts := Function.update s.contracts contract <|
              { s.contracts contract with storage := Function.update (s.contracts contract).storage addr val } }
 
-/- Because of restriction of nested types, this inlines all the constructors for the corresponding
-Lean type formers. -/
-inductive SierraType.Impl : List SierraType → SierraType → Type where
-| enumHd             : Impl ctx t → Impl ctx (.Enum (t :: ts))
-| enumTl             : Impl ctx (.Enum ts) → Impl ctx (.Enum (t :: ts))
-| structNil          : Impl ctx (.Struct [])
-| structCons         : Impl ctx t → Impl ctx (.Struct ts) → Impl ctx (.Struct (t :: ts))
-| nonZero            : Impl ctx t → Impl ctx (.NonZero t)
-| box                : Impl ctx t → Impl ctx (.Box t)
-| snapshot           : Impl ctx t → Impl ctx (.Snapshot t)
-| arrayNil           : Impl ctx (.Array t)
-| arrayCons          : Impl ctx t → Impl ctx (.Array t) → Impl ctx (.Array t)
-| nullable           : Impl ctx (.Nullable t)
-| felt252            : F → Impl ctx .Felt252
-| u8                 : UInt8 → Impl ctx .U8
-| u16                : UInt16 → Impl ctx .U16
-| u32                : UInt32 → Impl ctx .U32
-| u64                : UInt64 → Impl ctx .U64
-| u128               : UInt128 → Impl ctx .U128
-| rangeCheck         : ℕ → Impl ctx .RangeCheck
-| u128MulGuarantee   : Impl ctx .U128MulGuarantee
-| pedersen           : ℕ → Impl ctx .Pedersen
-| builtinCosts       : ℕ → Impl ctx .BuiltinCosts
-| gasBuiltin         : ℕ → Impl ctx .GasBuiltin
-| bitwise            : ℕ → Impl ctx .Bitwise
-| uninitialized      : Impl ctx (.Uninitialized _)
-| nullableNone       : Impl ctx (.Nullable t)
-| nullableSome       : Impl ctx t → Impl ctx (.Nullable t)
-| storageBaseAddress : Sierra.StorageBaseAddress → Impl ctx .StorageBaseAddress
-| storageAddress     : Sierra.StorageAddress → Impl ctx .StorageAddress
-| system             : Sierra.System → Impl ctx .System
-| contractAddress    : Sierra.ContractAddress → Impl ctx .ContractAddress
-/-- This is the unrolling step of the recursive types. -/
-| ref                : ∀ (k : Fin ctx.length), Impl (ctx.drop k) (ctx.get k) → Impl ctx (.Ref k)
-/-- Interpret the μ binders by extending the context -/
-| mu                 : Impl (t :: ctx) t → Impl ctx (.Mu t)
+partial def SierraType.toQuote (ctx : List SierraType := []) : SierraType → Q(Type)
+  | .Felt252 => q(F)
+  | .U8 => q(UInt8)
+  | .U16 => q(UInt16)
+  | .U32 => q(UInt32)
+  | .U64 => q(UInt64)
+  | .U128 => q(UInt128)
+  | .RangeCheck => q(Nat)  -- TODO
+  | .Enum []      => q(Unit)
+  | .Enum [t]     => toQuote ctx t
+  | .Enum (t::ts) => q($(toQuote ctx t) ⊕ $(toQuote ctx (.Enum ts)))
+  | .Struct []      => q(Unit)
+  | .Struct [t]     => toQuote ctx t
+  | .Struct (t::ts) => q($(toQuote ctx t) × $(toQuote ctx (.Struct ts)))
+  | .NonZero t => toQuote ctx t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
+  | .Box t => q(Nat)
+  | .Snapshot t => toQuote ctx t
+  | .Array t => q(List $(toQuote ctx t))
+  | .U128MulGuarantee => q(Unit) -- We don't store the guarantee in the type
+  | .Pedersen => q(Nat)
+  | .BuiltinCosts => q(Nat) -- TODO check whether we should run cairo to obtain the actual builtin costs
+  | .GasBuiltin => q(Nat)
+  | .Bitwise => q(Nat)
+  | .Uninitialized t => toQuote ctx t -- Since we have no info on uninialized variables
+  | .Nullable t => q(Option $(toQuote ctx t))
+  | .StorageBaseAddress => q(Sierra.StorageBaseAddress)
+  | .StorageAddress => q(Sierra.StorageAddress)
+  | .System => q(Sierra.System)
+  | .ContractAddress => q(Sierra.ContractAddress)
+  | .Ref n => toQuote (ctx.drop n) (ctx.get! n)  -- TODO check whether `drop n` is right
+  | .Mu t => toQuote (t :: ctx) t
 
-def SierraType.toType : SierraType → Type
-  | .Felt252 => F
-  | .U8 => UInt8
-  | .U16 => UInt16
-  | .U32 => UInt32
-  | .U64 => UInt64
-  | .U128 => UInt128
-  | .RangeCheck => Nat
-  | .Enum []      => Empty
-  | .Enum [t]     => t.toType
-  | .Enum (t::ts) => t.toType ⊕ toType (.Enum ts)
-  | .Struct []      => Unit
-  | .Struct [t]     => t.toType
-  | .Struct (t::ts) => t.toType × toType (.Struct ts)
-  | .NonZero t => toType t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
-  | .Box t => toType t
-  | .Snapshot t => toType t
-  | .Array t => List <| toType t
-  | .U128MulGuarantee => Unit -- We don't store the guarantee in the type
-  | .Pedersen => Nat
-  | .BuiltinCosts => Nat -- TODO check whether we should run cairo to obtain the actual builtin costs
-  | .GasBuiltin => Nat
-  | .Bitwise => Nat
-  | .Uninitialized _ => Unit -- Since we have no info on uninialized variables
-  | .Nullable t => Option (toType t)
-  | .StorageBaseAddress => Sierra.StorageBaseAddress
-  | .StorageAddress => Sierra.StorageAddress
-  | .System => Sierra.System
-  | .ContractAddress => Sierra.ContractAddress
-  | .Mu t => SierraType.Impl [t] t
-  | .Ref _ => panic "encountered SierraType.Ref outside of a Mu binder!"  -- should never reach this
-
-def SierraType.toQuote (t : SierraType) : Q(Type) := q(SierraType.toType $t)
-
-notation "⟦" t "⟧" => SierraType.toQuote t
+notation "⟦" t "⟧" => SierraType.toQuote [] t
 
 def SierraType.BlockInfo : SierraType :=
 .Struct [ .U64  -- block number
