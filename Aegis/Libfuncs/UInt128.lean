@@ -9,7 +9,7 @@ namespace Sierra.FuncData
 def u128_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U128, U128]
   branches := [{ outputTypes := [RangeCheck, U128]
-                 condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) => 
+                 condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
                    q(($a).val + ($b).val < U128_MOD ∧ $ρ = $a + $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U128]
@@ -19,7 +19,7 @@ def u128_overflowing_add : FuncData where
 def u128_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U128, U128]
   branches := [{ outputTypes := [RangeCheck, U128]
-                 condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) => 
+                 condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
                    q(($b).val ≤ ($a).val ∧ $ρ = $a - $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U128]
@@ -81,9 +81,9 @@ def bitwise : FuncData where
   inputTypes := [Bitwise, U128, U128]
   branches := [{ outputTypes := [Bitwise, U128, U128, U128]
                  condition := fun _ (lhs rhs : Q(UInt128)) _ (and xor or : Q(UInt128)) =>
-                   q($(and).val = Nat.land' $(lhs).val $(rhs).val
-                     ∧ $(xor).val = Nat.lxor' $(lhs).val $(rhs).val
-                     ∧ $(or).val = Nat.lor' $(lhs).val $(rhs).val) }]
+                   q($(and).val = Nat.land $(lhs).val $(rhs).val
+                     ∧ $(xor).val = Nat.xor $(lhs).val $(rhs).val
+                     ∧ $(or).val = Nat.lor $(lhs).val $(rhs).val) }]
 
 def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_overflowing_add" [] .none      => u128_overflowing_add

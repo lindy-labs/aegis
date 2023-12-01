@@ -193,6 +193,38 @@ def System.writeStorage (s : System) (contract : F) (addr : StorageAddress) (val
   { s with contracts := Function.update s.contracts contract <|
              { s.contracts contract with storage := Function.update (s.contracts contract).storage addr val } }
 
+def SierraType.toType (ctx : List Type := []) : SierraType → Type
+  | .Felt252 => F
+  | .U8 => UInt8
+  | .U16 => UInt16
+  | .U32 => UInt32
+  | .U64 => UInt64
+  | .U128 => UInt128
+  | .RangeCheck => Nat  -- TODO
+  | .Enum []      => Unit
+  | .Enum [t]     => toType ctx t
+  | .Enum (t::ts) => (toType ctx t) ⊕ (toType ctx (.Enum ts))
+  | .Struct []      => Unit
+  | .Struct [t]     => toType ctx t
+  | .Struct (t::ts) => (toType ctx t) × (toType ctx (.Struct ts))
+  | .NonZero t => toType ctx t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
+  | .Box _ => Nat
+  | .Snapshot t => toType ctx t
+  | .Array t => List (toType ctx t)
+  | .U128MulGuarantee => Unit -- We don't store the guarantee in the type
+  | .Pedersen => Nat
+  | .BuiltinCosts => Nat -- TODO check whether we should run cairo to obtain the actual builtin costs
+  | .GasBuiltin => Nat
+  | .Bitwise => Nat
+  | .Uninitialized t => toType ctx t -- Since we have no info on uninialized variables
+  | .Nullable t => Option (toType ctx t)
+  | .StorageBaseAddress => Sierra.StorageBaseAddress
+  | .StorageAddress => Sierra.StorageAddress
+  | .System => Sierra.System
+  | .ContractAddress => Sierra.ContractAddress
+  | .Ref n => ctx.get! n  -- TODO check whether `drop n` is right
+  | .Mu t => toType (toType ctx t :: ctx) t -- ???
+
 partial def SierraType.toQuote (ctx : List SierraType := []) : SierraType → Q(Type)
   | .Felt252 => q(F)
   | .U8 => q(UInt8)
@@ -208,7 +240,7 @@ partial def SierraType.toQuote (ctx : List SierraType := []) : SierraType → Q(
   | .Struct [t]     => toQuote ctx t
   | .Struct (t::ts) => q($(toQuote ctx t) × $(toQuote ctx (.Struct ts)))
   | .NonZero t => toQuote ctx t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
-  | .Box t => q(Nat)
+  | .Box _ => q(Nat)
   | .Snapshot t => toQuote ctx t
   | .Array t => q(List $(toQuote ctx t))
   | .U128MulGuarantee => q(Unit) -- We don't store the guarantee in the type
@@ -267,6 +299,7 @@ structure Metadata : Type where
   (blockNumber : UInt64)
   (blockTimestamp : UInt64)
   (sequencerAddress : ContractAddress)
+  (boxHeap : (t : SierraType) → Nat → Option t.toType)
 
 /-- A structure contining the branch-specific data for a libfunc -/
 structure BranchData (inputTypes : List SierraType) where

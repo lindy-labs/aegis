@@ -28,7 +28,7 @@ namespace Sierra.FuncData
 
 variable (currentFunc : Identifier) (typeRefs : HashMap Identifier SierraType)
   (specs : HashMap Identifier (Name × (FVarId → FuncData)))  (metadataRef : FVarId)
-  (i : Identifier) 
+  (i : Identifier)
 
 /-- The definition of `libfuncs` is split into pieces do to slow elaboration time. -/
 private def libfuncs_aux :=
@@ -38,13 +38,13 @@ private def libfuncs_aux :=
   <|> boolLibfuncs i
   <|> enumLibfuncs typeRefs i
   <|> structLibfuncs typeRefs i
-  <|> boxLibfuncs typeRefs i
+  <|> boxLibfuncs metadataRef typeRefs i
   <|> snapshotLibfuncs typeRefs i
   <|> nonZeroLibfuncs typeRefs i
 
 private def libfuncs_aux2 :=
-  libfuncs_aux typeRefs i
-  <|> arrayLibfuncs typeRefs i
+  libfuncs_aux typeRefs metadataRef i
+  <|> arrayLibfuncs metadataRef typeRefs i
   <|> functionCallLibfuncs specs metadataRef i
   <|> syscallLibfuncs metadataRef i
   <|> builtinCostsLibfuncs currentFunc metadataRef i

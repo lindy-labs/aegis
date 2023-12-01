@@ -6,10 +6,9 @@ package «aegis» {
 }
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4" @ "167880ba45c8aa187d774c5b59f6b9a80ff9b935"
+  "https://github.com/leanprover-community/mathlib4" @ "42649c4da2724d1aa86b8dab06079db71daf1a84"
 
 @[default_target]
 lean_lib Aegis {
   -- add library configuration options here
 }
-
