@@ -18,7 +18,7 @@ def buildFuncSignatures
   for (name, sig) in funcdefs do
     match FuncData.libfuncs currentFunc typedefs specs metadataRef sig with
     | some sig => acc := acc.insert name sig
-    | none => () --throw <| toString name ++ " : no such libfunc"
+    | none => dbg_trace s!"{toString name} : no such libfunc"
   return acc
 
 structure State where

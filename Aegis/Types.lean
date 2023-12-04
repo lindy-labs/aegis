@@ -40,16 +40,23 @@ inductive SierraType : Type
 | Mu (ty : SierraType)
   deriving Inhabited, Repr, ToExpr
 
-partial def decreaseRefs : SierraType → SierraType
+/-- Decrease all references above a certain threshold. -/
+partial def decreaseRefs (above : Nat := 0) : SierraType → SierraType
 | .Ref (.succ n) => .Ref n
-| .Box ty => .Box <| decreaseRefs ty
-| .NonZero ty => .NonZero <| decreaseRefs ty
-| .Snapshot ty => .Snapshot <| decreaseRefs ty
-| .Array ty => .Array <| decreaseRefs ty
-| .Uninitialized ty => .Uninitialized <| decreaseRefs ty
-| .Nullable ty => .Nullable <| decreaseRefs ty
-| .Enum tys => .Enum (decreaseRefs <$> tys)
-| .Struct tys => .Struct (decreaseRefs <$> tys)
+| .Box ty => .Box <| decreaseRefs above ty
+| .NonZero ty => .NonZero <| decreaseRefs above ty
+| .Snapshot ty => .Snapshot <| decreaseRefs above ty
+| .Array ty => .Array <| decreaseRefs above ty
+| .Uninitialized ty => .Uninitialized <| decreaseRefs above ty
+| .Nullable ty => .Nullable <| decreaseRefs above ty
+| .Enum tys => .Enum (decreaseRefs above <$> tys)
+| .Struct tys => .Struct (decreaseRefs above <$> tys)
+| .Mu ty => .Mu (decreaseRefs (above + 1) ty)
+| ty => ty
+
+/-- Remove the outer µ-binders, leaving loose references! -/
+def getMuBody : SierraType → SierraType
+| .Mu ty => getMuBody ty
 | ty => ty
 
 partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifier)
@@ -77,37 +84,37 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
         | throw s!"Expected Box parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Box ty)
-      else .ok (lvs, .Box <| decreaseRefs ty)
+      else .ok (lvs, .Box <| decreaseRefs 0 ty)
     | .some <| .name "NonZero" [p] .none =>
       let .identifier ident := p
         | throw s!"Expected NonZero parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .NonZero ty)
-      else .ok (lvs, .NonZero <| decreaseRefs ty)
+      else .ok (lvs, .NonZero <| decreaseRefs 0 ty)
     | .some <| .name "Snapshot" [p] .none =>
       let .identifier ident := p
         | throw s!"Expected Snapshot parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Snapshot ty)
-      else .ok (lvs, .Snapshot <| decreaseRefs ty)
+      else .ok (lvs, .Snapshot <| decreaseRefs 0 ty)
     | .some <| .name "Array" [p] .none =>
       let .identifier ident := p
         | throw s!"Expected Array parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Array ty)
-      else .ok (lvs, .Array <| decreaseRefs ty)
+      else .ok (lvs, .Array <| decreaseRefs 0 ty)
     | .some <| .name "Uninitialized" [p] .none =>
       let .identifier ident := p
         | throw s!"Expected Uninitialized parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Uninitialized ty)
-      else .ok (lvs, .Uninitialized <| decreaseRefs ty)
+      else .ok (lvs, .Uninitialized <| decreaseRefs 0 ty)
     | .some <| .name "Nullable" [p] .none =>
       let .identifier ident := p
         | throw s!"Expected Nullable parameter {p} to refer to a type"
       let (lvs, ty) ← translate raw (i :: ctx) ident
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Nullable ty)
-      else .ok (lvs, .Nullable <| decreaseRefs ty)
+      else .ok (lvs, .Nullable <| decreaseRefs 0 ty)
     | .some <| .name "Enum" (_ :: ps) .none =>
       let idents ← flip mapM ps fun x => match x with
       | .identifier ident => pure ident
@@ -115,7 +122,7 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
       let x ← idents.mapM <| translate raw (i :: ctx)
       let (lvs, tys) := x.unzip
       if lvs.join.contains i then .ok (lvs.join.removeAll [i], .Mu <| .Enum tys)
-      else .ok (lvs.join, .Enum <| tys.map decreaseRefs)
+      else .ok (lvs.join, .Enum <| tys.map <| decreaseRefs 0)
     | .some <| .name "Struct" (_ :: ps) .none =>
       let idents ← flip mapM ps fun x => match x with
       | .identifier ident => pure ident
@@ -123,7 +130,7 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
       let x ← idents.mapM <| translate raw (i :: ctx)
       let (lvs, tys) := x.unzip
       if lvs.join.contains i then .ok (lvs.join.removeAll [i], .Mu <| .Struct tys)
-      else .ok (lvs.join, .Struct <| tys.map decreaseRefs)
+      else .ok (lvs.join, .Struct <| tys.map <| decreaseRefs 0)
     | _ => throw s!"Type not translatable: {i}"
 
 def buildTypeDefs (typedefs : List (Identifier × Identifier)) :

@@ -26,11 +26,11 @@ def unbox (t : SierraType) : FuncData where
 
 def boxLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "into_box" [.identifier ident] _ =>
-  match typeRefs.find? ident with
+  match getMuBody <$> typeRefs.find? ident with
   | .some t => into_box metadataRef t
   | _ => .none
 | .name "unbox" [.identifier ident] _ =>
-  match typeRefs.find? ident with
+  match getMuBody <$> typeRefs.find? ident with
   | .some t => unbox metadataRef t
   | _ => .none
 | _ => .none
