@@ -36,10 +36,15 @@ test::pop_front@0([0]: Array<felt252>) -> (Array<felt252>, core::option::Option:
 
 aegis_info "test::pop_front"
 
-aegis_spec "test::pop_front" := fun _ a ρ₁ ρ₂ =>
-  ρ₁ = a.tail ∧ ρ₂ = if a.length = 0 then .inr () else .inl a.head!
+aegis_spec "test::pop_front" := fun m a ρ₁ ρ₂ =>
+  ρ₁ = a.tail
+  ∧ (a.length = 0 ∧ ρ₂ = .inr ()
+    ∨ ∃ ρ₂', ρ₂ = .inl ρ₂' ∧ m.boxHeap .Felt252 ρ₂' = .some a.head!)
 
-aegis_prove "test::pop_front" := fun _ a ρ₁ ρ₂ => by
-  rintro ⟨_,_,(⟨rfl,rfl,rfl⟩|⟨rfl,rfl,rfl⟩)⟩ <;> simp [«spec_test::pop_front»]
+aegis_prove "test::pop_front" := fun m a ρ₁ ρ₂ => by
+  unfold «spec_test::pop_front»
+  rintro ⟨_,_,(⟨⟨ρ₂',h,rfl⟩,rfl,rfl⟩|⟨rfl,rfl,rfl⟩)⟩
+  · aesop
+  · simp
 
 aegis_complete

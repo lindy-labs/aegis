@@ -1,21 +1,21 @@
 import Aegis.Parser
 import Aegis.ExprUtil
+import Aegis.Macros
 import Mathlib.Data.ZMod.Basic
 
 open Lean Qq
 
 namespace Sierra
 
-def Addr := Nat
-
-inductive SierraType
+/-- An inductive type containing "codes" for the types used in Sierra. The constructor `SelfRef`
+is a placeholder for a *self reference* in a self referential (recursive) type. -/
+inductive SierraType : Type
 | Felt252
 | U8
 | U16
 | U32
 | U64
 | U128
-| Addr
 | RangeCheck
 | Enum (fields : List SierraType)
 | Struct (fields : List SierraType)
@@ -34,7 +34,110 @@ inductive SierraType
 | StorageAddress
 | System
 | ContractAddress
-  deriving Inhabited, Repr
+/-- De-Bruĳn index for µ calculus -/
+| Ref (n : ℕ)
+/-- Anonymous μ binder -/
+| Mu (ty : SierraType)
+  deriving Inhabited, Repr, ToExpr
+
+/-- Decrease all references above a certain threshold. -/
+partial def decreaseRefs (above : Nat := 0) : SierraType → SierraType
+| .Ref (.succ n) => .Ref n
+| .Box ty => .Box <| decreaseRefs above ty
+| .NonZero ty => .NonZero <| decreaseRefs above ty
+| .Snapshot ty => .Snapshot <| decreaseRefs above ty
+| .Array ty => .Array <| decreaseRefs above ty
+| .Uninitialized ty => .Uninitialized <| decreaseRefs above ty
+| .Nullable ty => .Nullable <| decreaseRefs above ty
+| .Enum tys => .Enum (decreaseRefs above <$> tys)
+| .Struct tys => .Struct (decreaseRefs above <$> tys)
+| .Mu ty => .Mu (decreaseRefs (above + 1) ty)
+| ty => ty
+
+/-- Remove the outer µ-binders, leaving loose references! -/
+def getMuBody : SierraType → SierraType
+| .Mu ty => getMuBody ty
+| ty => ty
+
+partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifier)
+    (i : Identifier) : Except String (List Identifier × SierraType) := do
+  match ctx.indexOf? i with
+  | .some idx => .ok ([i], .Ref idx)
+  | .none => match raw.find? i with
+    | .some <| .name "felt252" [] .none => .ok ([], .Felt252)
+    | .some <| .name "u8" [] .none => .ok ([], .U8)
+    | .some <| .name "u16" [] .none => .ok ([], .U16)
+    | .some <| .name "u32" [] .none => .ok ([], .U32)
+    | .some <| .name "u64" [] .none => .ok ([], .U64)
+    | .some <| .name "u128" [] .none => .ok ([], .U128)
+    | .some <| .name "RangeCheck" [] .none => .ok ([], .RangeCheck)
+    | .some <| .name "Pedersen" [] .none => .ok ([], .Pedersen)
+    | .some <| .name "BuiltinCosts" [] .none => .ok ([], .BuiltinCosts)
+    | .some <| .name "GasBuiltin" [] .none => .ok ([], .GasBuiltin)
+    | .some <| .name "Bitwise" [] .none => .ok ([], .Bitwise)
+    | .some <| .name "StorageBaseAddress" [] .none => .ok ([], .StorageBaseAddress)
+    | .some <| .name "StorageAddress" [] .none => .ok ([], .StorageAddress)
+    | .some <| .name "System" [] .none => .ok ([], .System)
+    | .some <| .name "ContractAddress" [] .none => .ok ([], .ContractAddress)
+    | .some <| .name "Box" [p] .none =>
+      let .identifier ident := p
+        | throw s!"Expected Box parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Box ty)
+      else .ok (lvs, .Box <| decreaseRefs 0 ty)
+    | .some <| .name "NonZero" [p] .none =>
+      let .identifier ident := p
+        | throw s!"Expected NonZero parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .NonZero ty)
+      else .ok (lvs, .NonZero <| decreaseRefs 0 ty)
+    | .some <| .name "Snapshot" [p] .none =>
+      let .identifier ident := p
+        | throw s!"Expected Snapshot parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Snapshot ty)
+      else .ok (lvs, .Snapshot <| decreaseRefs 0 ty)
+    | .some <| .name "Array" [p] .none =>
+      let .identifier ident := p
+        | throw s!"Expected Array parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Array ty)
+      else .ok (lvs, .Array <| decreaseRefs 0 ty)
+    | .some <| .name "Uninitialized" [p] .none =>
+      let .identifier ident := p
+        | throw s!"Expected Uninitialized parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Uninitialized ty)
+      else .ok (lvs, .Uninitialized <| decreaseRefs 0 ty)
+    | .some <| .name "Nullable" [p] .none =>
+      let .identifier ident := p
+        | throw s!"Expected Nullable parameter {p} to refer to a type"
+      let (lvs, ty) ← translate raw (i :: ctx) ident
+      if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Nullable ty)
+      else .ok (lvs, .Nullable <| decreaseRefs 0 ty)
+    | .some <| .name "Enum" (_ :: ps) .none =>
+      let idents ← flip mapM ps fun x => match x with
+      | .identifier ident => pure ident
+      | _ => throw "Expected Enum parameter to refer a to a type"
+      let x ← idents.mapM <| translate raw (i :: ctx)
+      let (lvs, tys) := x.unzip
+      if lvs.join.contains i then .ok (lvs.join.removeAll [i], .Mu <| .Enum tys)
+      else .ok (lvs.join, .Enum <| tys.map <| decreaseRefs 0)
+    | .some <| .name "Struct" (_ :: ps) .none =>
+      let idents ← flip mapM ps fun x => match x with
+      | .identifier ident => pure ident
+      | _ => throw "Expected Struct parameter to refer a to a type"
+      let x ← idents.mapM <| translate raw (i :: ctx)
+      let (lvs, tys) := x.unzip
+      if lvs.join.contains i then .ok (lvs.join.removeAll [i], .Mu <| .Struct tys)
+      else .ok (lvs.join, .Struct <| tys.map <| decreaseRefs 0)
+    | _ => throw s!"Type not translatable: {i}"
+
+def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
+    Except String (HashMap Identifier SierraType) := do
+  let idents := typedefs.map (·.1)
+  let x ← idents.mapM <| translate (.ofList typedefs) []
+  .ok <| HashMap.ofList <| idents.zip <| x.map (·.2)
 
 abbrev RefTable := HashMap Nat FVarId
 
@@ -51,7 +154,6 @@ def ADDRESS_MOD :=
 
 def CONTRACT_ADDRESS_MOD :=
   3618502788666131106986593281521497120414687020801267626233049500247285301248
-
 
 def U128_MOD :=
   340282366920938463463374607431768211456
@@ -98,38 +200,71 @@ def System.writeStorage (s : System) (contract : F) (addr : StorageAddress) (val
   { s with contracts := Function.update s.contracts contract <|
              { s.contracts contract with storage := Function.update (s.contracts contract).storage addr val } }
 
-partial def SierraType.toQuote : SierraType → Q(Type)
+def SierraType.toType (ctx : List Type := []) : SierraType → Type
+  | .Felt252 => F
+  | .U8 => UInt8
+  | .U16 => UInt16
+  | .U32 => UInt32
+  | .U64 => UInt64
+  | .U128 => UInt128
+  | .RangeCheck => Nat  -- TODO
+  | .Enum []      => Unit
+  | .Enum [t]     => toType ctx t
+  | .Enum (t::ts) => (toType ctx t) ⊕ (toType ctx (.Enum ts))
+  | .Struct []      => Unit
+  | .Struct [t]     => toType ctx t
+  | .Struct (t::ts) => (toType ctx t) × (toType ctx (.Struct ts))
+  | .NonZero t => toType ctx t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
+  | .Box _ => Nat
+  | .Snapshot t => toType ctx t
+  | .Array t => List (toType ctx t)
+  | .U128MulGuarantee => Unit -- We don't store the guarantee in the type
+  | .Pedersen => Nat
+  | .BuiltinCosts => Nat -- TODO check whether we should run cairo to obtain the actual builtin costs
+  | .GasBuiltin => Nat
+  | .Bitwise => Nat
+  | .Uninitialized t => toType ctx t -- Since we have no info on uninialized variables
+  | .Nullable t => Option (toType ctx t)
+  | .StorageBaseAddress => Sierra.StorageBaseAddress
+  | .StorageAddress => Sierra.StorageAddress
+  | .System => Sierra.System
+  | .ContractAddress => Sierra.ContractAddress
+  | .Ref n => ctx.get! n  -- TODO check whether `drop n` is right
+  | .Mu t => toType (toType ctx t :: ctx) t -- ???
+
+partial def SierraType.toQuote (ctx : List SierraType := []) : SierraType → Q(Type)
   | .Felt252 => q(F)
   | .U8 => q(UInt8)
   | .U16 => q(UInt16)
   | .U32 => q(UInt32)
   | .U64 => q(UInt64)
   | .U128 => q(UInt128)
-  | .Addr => q(Sierra.Addr)
   | .RangeCheck => q(Nat)  -- TODO
   | .Enum []      => q(Unit)
-  | .Enum [t]     => t.toQuote
-  | .Enum (t::ts) => q($(t.toQuote) ⊕ $(toQuote (.Enum ts)))
+  | .Enum [t]     => toQuote ctx t
+  | .Enum (t::ts) => q($(toQuote ctx t) ⊕ $(toQuote ctx (.Enum ts)))
   | .Struct []      => q(Unit)
-  | .Struct [t]     => t.toQuote
-  | .Struct (t::ts) => q($(t.toQuote) × $(toQuote (.Struct ts)))
-  | .NonZero t => toQuote t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
-  | .Box t => toQuote t
-  | .Snapshot t => toQuote t
-  | .Array t => q(List $(toQuote t))
+  | .Struct [t]     => toQuote ctx t
+  | .Struct (t::ts) => q($(toQuote ctx t) × $(toQuote ctx (.Struct ts)))
+  | .NonZero t => toQuote ctx t -- TODO Maybe change to `{x : F // x ≠ 0}` somehow
+  | .Box _ => q(Nat)
+  | .Snapshot t => toQuote ctx t
+  | .Array t => q(List $(toQuote ctx t))
   | .U128MulGuarantee => q(Unit) -- We don't store the guarantee in the type
   | .Pedersen => q(Nat)
   | .BuiltinCosts => q(Nat) -- TODO check whether we should run cairo to obtain the actual builtin costs
   | .GasBuiltin => q(Nat)
   | .Bitwise => q(Nat)
-  | .Uninitialized t => toQuote t -- Since we have no info on uninialized variables
-  | .Nullable t => q(Option $(toQuote t))
+  | .Uninitialized t => toQuote ctx t -- Since we have no info on uninialized variables
+  | .Nullable t => q(Option $(toQuote ctx t))
   | .StorageBaseAddress => q(Sierra.StorageBaseAddress)
   | .StorageAddress => q(Sierra.StorageAddress)
   | .System => q(Sierra.System)
   | .ContractAddress => q(Sierra.ContractAddress)
+  | .Ref n => toQuote (ctx.drop n) (ctx.get! n)  -- TODO check whether `drop n` is right
+  | .Mu t => toQuote (t :: ctx) t
 
-notation "⟦" t "⟧" => SierraType.toQuote t
+notation "⟦" t "⟧" => SierraType.toQuote [] t
 
 def SierraType.BlockInfo : SierraType :=
 .Struct [ .U64  -- block number
@@ -171,6 +306,7 @@ structure Metadata : Type where
   (blockNumber : UInt64)
   (blockTimestamp : UInt64)
   (sequencerAddress : ContractAddress)
+  (boxHeap : (t : SierraType) → Nat → Option t.toType)
 
 /-- A structure contining the branch-specific data for a libfunc -/
 structure BranchData (inputTypes : List SierraType) where

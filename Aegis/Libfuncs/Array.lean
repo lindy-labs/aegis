@@ -4,6 +4,8 @@ open Qq Lean Sierra
 
 namespace Sierra.FuncData
 
+variable (metadataRef : FVarId)
+
 def array_new (t : SierraType) : FuncData where
   inputTypes := []
   branches := [{ outputTypes := [.Array t]
@@ -12,17 +14,26 @@ def array_new (t : SierraType) : FuncData where
 def array_append (t : SierraType) : FuncData where
   inputTypes := [.Array t, t]
   branches := [{ outputTypes := [.Array t]
-                 condition := fun (a : Q(List $t.toQuote)) (b : Q($t.toQuote)) 
+                 condition := fun (a : Q(List $t.toQuote)) (b : Q($t.toQuote))
                    (ρ : Q(List $t.toQuote)) => q($ρ = $a ++ [$b]) }]
+
+example (f : Bool → Q(Type)) (b : Bool) (a b : Q(List $(f b))) : Q(Prop) :=
+  q(∃ x, x :: $a = $b)
+
+def array_pop_front_aux (T : Q(Type)) (m' : Q(Option $T)) (a ρ₁ : Q(List $T)) : Q(Prop) :=
+  q(∃ ρ₂', $m' = .some ρ₂' ∧ ρ₂' :: $ρ₁ = $a)
 
 def array_pop_front (t : SierraType) : FuncData where
   inputTypes := [.Array t]
   branches := [{ outputTypes := [.Array t, .Box t]
-                 condition := fun (a ρ₁: Q(List $t.toQuote)) (ρ₂ : Q($t.toQuote)) =>
-                   q($ρ₂ :: $ρ₁ = $a) },
+                 condition :=
+                   fun a ρ₁ (ρ₂ : Q(Nat)) =>
+                   let m : Q(Metadata) := .fvar metadataRef
+                   let m' : Expr := q($(m).boxHeap $t $ρ₂)
+                   array_pop_front_aux ⟦t⟧ m' a ρ₁ },
                { outputTypes := [.Array t]
                  condition := fun (a : Q(List $t.toQuote)) (ρ : Q(List $t.toQuote)) =>
-                   q($a = [] ∧ $ρ = []) }] -- TODO not actually clear what `ρ` is
+                   q($a = [] ∧ $ρ = []) }] -- TODO maybe add possibility of box being empty
 
 def array_len (t : SierraType) : FuncData where
   inputTypes := [.Snapshot (.Array t)]
@@ -54,7 +65,7 @@ def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Op
 | .name "array_append" [.identifier ident] .none =>
   return array_append (← typeRefs.find? ident)
 | .name "array_pop_front" [.identifier ident] .none =>
-  return array_pop_front (← typeRefs.find? ident)
+  return array_pop_front metadataRef (← typeRefs.find? ident)
 | .name "array_len" [.identifier ident] .none =>
   return array_len (← typeRefs.find? ident)
 | .name "array_get" [.identifier ident] .none =>
