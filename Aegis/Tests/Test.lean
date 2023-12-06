@@ -3,6 +3,24 @@ import Aegis.Analyzer
 open Lean Meta Qq
 namespace Sierra
 
+
+def negParam := "type F = felt252;
+
+libfunc c1 = felt252_const<-1>;
+libfunc c2 = felt252_const<1>;
+libfunc add = felt252_add;
+
+c1() -> ([0]);
+c2() -> ([1]);
+add([0], [1]) -> ([2]);
+return ([2]);
+
+
+negparam@0() -> (F);"
+
+#eval parseGrammar negParam
+#eval analyzeFile negParam
+
 def code01 := "
 type core::option::Option::<core::integer::u128> = Enum<ut@core::option::Option::<core::integer::u128>, u128, Unit>;
 type Tuple<u128> = Struct<ut@Tuple, u128>;

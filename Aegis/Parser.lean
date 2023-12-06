@@ -47,7 +47,7 @@ mutual
 partial def identifierToString : Identifier → String
 | .name s ps tl =>
   let ps := match ps with
-  | [] => "" 
+  | [] => ""
   | ps@_ => "<" ++ String.intercalate ", " (parameterToString <$> ps) ++ ">"
   let hd := s ++ ps
   match tl with
@@ -84,7 +84,7 @@ syntax "end" : atom
 syntax atom ("[" ident "]")? atomic("::"? "<" parameter,* ">")?  ("::" identifier)? : identifier
 syntax "[" num "]" : identifier
 
-syntax atomic("-" num) : parameter
+syntax "-" num : parameter
 syntax num : parameter
 syntax "user@" identifier : parameter
 syntax "ut@" identifier : parameter
@@ -194,7 +194,7 @@ def elabDeclarationLine : TSyntax `Sierra.declarationLine →
 def elabTypedefLine : TSyntax `Sierra.typedefLine → Except String (Identifier × Identifier)
 | `(typedefLine|type $tlhs = $trhs $[[storable: $_, drop: $_, dup: $_, zero_sized: $_]]?; $[//$_]?) => do
   let tlhs ← elabIdentifier tlhs
-  let trhs ← elabIdentifier trhs 
+  let trhs ← elabIdentifier trhs
   .ok (tlhs, trhs)
 | _ => .error "Could not elab type definition"
 
@@ -210,7 +210,7 @@ def elabSierraFile : Syntax → Except String SierraFile
 
 -- TODO solve this in a better way
 def replaceNaughtyBrackets (s : String) : String :=
-  (s.replace ">" "> ").replace "<" " <"
+  ((s.replace ">" "> ").replace "<" " <").replace "<-" "< -"
 
 def parseGrammar (input : String) : CoreM (Except String SierraFile) := do
   let env ← getEnv
