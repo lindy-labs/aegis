@@ -18,7 +18,7 @@ def buildFuncSignatures
   for (name, sig) in funcdefs do
     match FuncData.libfuncs currentFunc typedefs specs metadataRef sig with
     | some sig => acc := acc.insert name sig
-    | none => dbg_trace s!"{toString name} : no such libfunc"
+    | none => dbg_trace s!"{toString name}: no libfunc {sig}"
   return acc
 
 structure State where
@@ -114,7 +114,6 @@ partial def processState
       throwError "Incorrect number of branches to {st.libfunc_id}"
     unless fd.inputTypes.length = st.args.length do
       throwError "Incorrect number of arguments to {st.libfunc_id}"
-    let mut st' := st
     let mut bes : List AndOrTree := []
     for (branchIdx, bi) in st.branches.enum do
       let bd := fd.branches.get! branchIdx
