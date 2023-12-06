@@ -95,16 +95,16 @@ partial def processState
   (funcSigs : HashMap Identifier FuncData)
   (f : SierraFile)
   (finputs : List (Nat × Identifier))
-  (gas : ℕ := 2500) : M (Statement × AndOrTree) := do
+  (gas : ℕ := 2500) : M AndOrTree := do
   let st := f.statements.get! (← get).pc
-  if gas = 0 then return (st, .nil)
+  if gas = 0 then return .nil
   match st.libfunc_id with
   | .name "return" [] .none =>
     let s ← get
     let es := (s.outputRefs.zip (st.args.map fun n => s.refs.find! n)).zip s.outputTypes
     let es := es.map fun ((ofv, rfv), t) =>
       Expr.mkEq (SierraType.toQuote [] <| typeDefs.find! t) (.fvar rfv) (.fvar ofv)
-    return (st, .cons (Expr.mkAnds es) [])
+    return .cons (Expr.mkAnds es) []
   | _ => do
     let .some st := f.statements.get? (← get).pc
       | throwError "Program counter out of bounds"
@@ -125,17 +125,14 @@ partial def processState
       let fvs := .fvar <$> (← getOrMkNewRefs inOutArgs.reverse (types.map SierraType.toQuote).reverse)
       -- The new condition to be added
       let c := headBeta <| bd.condition.apply fvs  -- Apply fvars to condition and beta reduce
-      let s ← get
-      let pc' := bi.target.getD <| s.pc + 1  -- Fallthrough is the default
-      let refs' := bd.refsChange inOutArgs s.refs
-      set { s with pc := pc', refs := refs' }
-      let (st'', es) ← processState typeDefs funcSigs f finputs (gas - 1)
-      st' := st''
+      let pc' := bi.target.getD <| (← get).pc + 1  -- Fallthrough is the default
+      set { ← get with pc := pc' }
+      let es ← processState typeDefs funcSigs f finputs (gas - 1)
       bes := bes ++ [.cons c [es]]
     match bes with
-    | []   => return (st', .nil)
-    | [es] => return (st', es)
-    | _    => return (st', .cons (mkConst ``True) bes)
+    | []   => return .nil
+    | [es] => return es
+    | _    => return .cons (mkConst ``True) bes
 
 variable (sf : SierraFile) {n: Type → Type _} [MonadControlT MetaM n] [Monad n] [MonadError n]
 
@@ -190,7 +187,7 @@ partial def getFuncCondition (ident : Identifier) (pc : ℕ) (inputArgs : List (
     for (i, t) in inputArgs do
       refs := refs.insert i <| ← getOrMkNewRef i <| SierraType.toQuote [] <| typeDefs.find! t
     set { (← get) with refs := refs }
-    let (_, cs) ← processState typeDefs funcSigs sf inputArgs
+    let cs ← processState typeDefs funcSigs sf inputArgs
     processAndOrTree inputArgs cs) s
   return es.1
 

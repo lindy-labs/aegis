@@ -315,8 +315,6 @@ structure BranchData (inputTypes : List SierraType) where
   /-- The condition associated with the branch -/
   (condition : OfInputs Q(Prop)
     (List.map SierraType.toQuote <| inputTypes ++ outputTypes) := OfInputs.const <| q(True))
-  /-- Ref table changes, only used for memory management commands -/
-  (refsChange : List Nat → RefTable → RefTable := fun _ rt => rt)
 
 instance : Inhabited (BranchData inputTypes) := ⟨{ }⟩
 
