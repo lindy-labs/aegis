@@ -216,7 +216,7 @@ def test_function_call_01 :=
 "type F = felt252;
 
 libfunc c5 = felt252_const<5>;
-libfunc call = function_call<foo>;
+libfunc call = function_call<user@foo>;
 
 c5() -> ([1]);
 return([1]);
