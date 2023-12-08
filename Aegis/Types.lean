@@ -79,6 +79,7 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
     | .some <| .name "StorageAddress" [] .none => .ok ([], .StorageAddress)
     | .some <| .name "System" [] .none => .ok ([], .System)
     | .some <| .name "ContractAddress" [] .none => .ok ([], .ContractAddress)
+    | .some <| .name "U128MulGuarantee" [] .none => .ok ([], .U128MulGuarantee)
     | .some <| .name "Box" [p] .none =>
       let .identifier ident := p
         | throw s!"Expected Box parameter {p} to refer to a type"
