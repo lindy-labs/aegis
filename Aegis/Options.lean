@@ -16,6 +16,11 @@ register_option aegis.filterUnused : Bool :=
   let descr := "Set whether to filter out intermediate variables which do not actually appear in the proof goal."
   { defValue := true, group := "aesop", descr := descr }
 
+register_option aegis.trace : Bool :=
+  let descr := "Set whether to output trace information."
+  { defValue := false, group := "aesop", descr := descr }
+
+
 end Sierra.Options
 
 namespace Lean.Option

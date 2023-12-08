@@ -13,12 +13,14 @@ def buildFuncSignatures
   (funcdefs : List (Identifier × Identifier))
   (specs : HashMap Identifier (Name × (FVarId → FuncData)))
   (metadataRef : FVarId) :
-  HashMap Identifier FuncData := Id.run do
+  MetaM (HashMap Identifier FuncData) := do
   let mut acc := ∅
   for (name, sig) in funcdefs do
     match FuncData.libfuncs currentFunc typedefs specs metadataRef sig with
     | some sig => acc := acc.insert name sig
-    | none => dbg_trace s!"{toString name}: no libfunc {sig}"
+    | none =>
+      if ← Option.isEnabled Options.aegis.trace then
+        dbg_trace s!"{toString name}: no libfunc {sig}"
   return acc
 
 structure State where
@@ -179,7 +181,7 @@ partial def getFuncCondition (ident : Identifier) (pc : ℕ) (inputArgs : List (
                      outputTypes := outputTypes
                      metadataRef := metadataRef }
   -- Build the function signatures for the declared libfuncs
-  let funcSigs := buildFuncSignatures ident typeDefs sf.libfuncs specs metadataRef
+  let funcSigs ← buildFuncSignatures ident typeDefs sf.libfuncs specs metadataRef
   let es ← StateT.run (do
     let mut refs : RefTable := ∅
     -- Add input arguments to initial local context and refs table
