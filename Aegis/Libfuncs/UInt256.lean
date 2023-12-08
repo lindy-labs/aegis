@@ -14,9 +14,9 @@ def u256_is_zero : FuncData where
 
 def u256_safe_divmod : FuncData where
   inputTypes := [.RangeCheck, .Struct [.U128, .U128], .Struct [.U128, .U128]]
-  branches := [{ outputTypes := [.RangeCheck, .Struct [.U128, .U128], .Struct [.U128, .U128]]
+  branches := [{ outputTypes := [.RangeCheck, .Struct [.U128, .U128], .Struct [.U128, .U128], .U128MulGuarantee]
                  condition := fun _ (a b : Q(UInt128 × UInt128))
-                   _ (div mod : Q(UInt128 × UInt128)) =>
+                   _ (div mod : Q(UInt128 × UInt128)) _ =>
                    -- TODO maybe replace by a direct characterization in the future
                    q(U128_MOD * $(div).2.val + $(div).1.val =
                        (U128_MOD * $(a).2.val + $(a).1.val) / (U128_MOD * $(b).2.val + $(b).1.val)
