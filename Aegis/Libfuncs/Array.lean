@@ -53,8 +53,11 @@ def array_get (t : SierraType) : FuncData where
 def array_snapshot_pop_front (t : SierraType) : FuncData where
   inputTypes := [.Snapshot (.Array t)]
   branches := [{ outputTypes := [.Snapshot (.Array t), .Box t]
-                 condition := fun (a ρ₁ : Q(List $(⟦t⟧))) (ρ₂ : Q($(⟦t⟧))) =>
-                   q($ρ₂ :: $ρ₁ = $a) },
+                 condition :=
+                   fun a ρ₁ (ρ₂ : Q(Nat)) =>
+                   let m : Q(Metadata) := .fvar metadataRef
+                   let m' : Expr := q($(m).boxHeap $t $ρ₂)
+                   array_pop_front_aux ⟦t⟧ m' a ρ₁ },
                { outputTypes := [.Snapshot (.Array t)]
                  condition := fun (a ρ : Q(List $(⟦t⟧))) =>
                    q($a = [] ∧ $ρ = []) }]
@@ -71,5 +74,5 @@ def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Op
 | .name "array_get" [.identifier ident] .none =>
   return array_get (← typeRefs.find? ident)
 | .name "array_snapshot_pop_front" [.identifier ident] .none =>
-  return array_snapshot_pop_front (← typeRefs.find? ident)
+  return array_snapshot_pop_front metadataRef (← typeRefs.find? ident)
 | _ => .none

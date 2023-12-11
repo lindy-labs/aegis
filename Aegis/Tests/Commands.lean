@@ -218,6 +218,48 @@ aegis_prove "test::u256_safe_divmod" :=
   rintro ⟨_,_,h₁,h₂,rfl⟩
   exact ⟨h₁,h₂⟩
 
+aegis_load_string "type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type Snapshot<Array<felt252>> = Snapshot<Array<felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
+type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type Box<felt252> = Box<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::option::Option::<core::box::Box::<@core::felt252>> = Enum<ut@core::option::Option::<core::box::Box::<@core::felt252>>, Box<felt252>, Unit> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc array_snapshot_pop_front<felt252> = array_snapshot_pop_front<felt252>;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::option::Option::<core::box::Box::<@core::felt252>>, 0> = enum_init<core::option::Option::<core::box::Box::<@core::felt252>>, 0>;
+libfunc store_temp<Snapshot<Array<felt252>>> = store_temp<Snapshot<Array<felt252>>>;
+libfunc store_temp<core::option::Option::<core::box::Box::<@core::felt252>>> = store_temp<core::option::Option::<core::box::Box::<@core::felt252>>>;
+libfunc jump = jump;
+libfunc struct_construct<Unit> = struct_construct<Unit>;
+libfunc enum_init<core::option::Option::<core::box::Box::<@core::felt252>>, 1> = enum_init<core::option::Option::<core::box::Box::<@core::felt252>>, 1>;
+
+array_snapshot_pop_front<felt252>([0]) { fallthrough([1], [2]) 6([3]) }; // 0
+branch_align() -> (); // 1
+enum_init<core::option::Option::<core::box::Box::<@core::felt252>>, 0>([2]) -> ([4]); // 2
+store_temp<Snapshot<Array<felt252>>>([1]) -> ([5]); // 3
+store_temp<core::option::Option::<core::box::Box::<@core::felt252>>>([4]) -> ([6]); // 4
+jump() { 11() }; // 5
+branch_align() -> (); // 6
+struct_construct<Unit>() -> ([7]); // 7
+enum_init<core::option::Option::<core::box::Box::<@core::felt252>>, 1>([7]) -> ([8]); // 8
+store_temp<Snapshot<Array<felt252>>>([3]) -> ([5]); // 9
+store_temp<core::option::Option::<core::box::Box::<@core::felt252>>>([8]) -> ([6]); // 10
+return([5], [6]); // 11
+
+test::array_snapshot_pop_front@0([0]: Snapshot<Array<felt252>>) -> (Snapshot<Array<felt252>>, core::option::Option::<core::box::Box::<@core::felt252>>);
+"
+
+aegis_spec "test::array_snapshot_pop_front" :=
+  fun m a ρ₁ ρ₂ =>
+  (a ≠ [] ∧ ρ₁ = a.tail ∧ ∃ n a', m.boxHeap .Felt252 n = .some a' ∧ ρ₂ = .inl n)
+  ∨ (a = [] ∧ ρ₁ = [] ∧ ρ₂ = .inr ())
+
+aegis_prove"test::array_snapshot_pop_front" :=
+  fun m a ρ₁ ρ₂ => by
+  unfold «spec_test::array_snapshot_pop_front»
+  aesop
+
 aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 
