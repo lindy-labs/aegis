@@ -319,6 +319,28 @@ aegis_prove "test::get_execution_info" :=
   · exact ⟨rfl, .inl ⟨_,⟨rfl,hρ'⟩⟩⟩
   · exact ⟨rfl, .inr rfl⟩
 
+aegis_load_string "type Box<felt252> = Box<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+type Nullable<felt252> = Nullable<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc nullable_from_box<felt252> = nullable_from_box<felt252>;
+libfunc store_temp<Nullable<felt252>> = store_temp<Nullable<felt252>>;
+
+nullable_from_box<felt252>([0]) -> ([1]); // 0
+store_temp<Nullable<felt252>>([1]) -> ([1]); // 1
+return([1]); // 2
+
+test::nullable_from_box@0([0]: Box<felt252>) -> (Nullable<felt252>);"
+
+aegis_spec "test::nullable_from_box" :=
+  fun m a ρ =>
+  ρ = m.boxHeap .Felt252 a
+
+aegis_prove "test::nullable_from_box" :=
+  fun m a ρ => by
+  rintro rfl
+  rfl
+
 aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 

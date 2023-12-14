@@ -60,6 +60,6 @@ def libfuncs :
   <|> uint32Libfuncs i
   <|> uint64Libfuncs i
   <|> uint256Libfuncs i
-  <|> nullableLibfuncs typeRefs i
+  <|> nullableLibfuncs metadataRef typeRefs i
   <|> storageLibfuncs i
   <|> contractAddressLibfuncs i
