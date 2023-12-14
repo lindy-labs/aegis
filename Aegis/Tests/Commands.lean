@@ -260,6 +260,65 @@ aegis_prove"test::array_snapshot_pop_front" :=
   unfold «spec_test::array_snapshot_pop_front»
   aesop
 
+aegis_load_string "type GasBuiltin = GasBuiltin [storable: true, drop: false, dup: false, zero_sized: false];
+type Box<core::starknet::info::ExecutionInfo> = Box<core::starknet::info::ExecutionInfo> [storable: true, drop: true, dup: true, zero_sized: false];
+type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>> = Enum<ut@core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>, Box<core::starknet::info::ExecutionInfo>, Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type Box<core::starknet::info::BlockInfo> = Box<core::starknet::info::BlockInfo> [storable: true, drop: true, dup: true, zero_sized: false];
+type Box<core::starknet::info::TxInfo> = Box<core::starknet::info::TxInfo> [storable: true, drop: true, dup: true, zero_sized: false];
+type ContractAddress = ContractAddress [storable: true, drop: true, dup: true, zero_sized: false];
+type core::starknet::info::ExecutionInfo = Struct<ut@core::starknet::info::ExecutionInfo, Box<core::starknet::info::BlockInfo>, Box<core::starknet::info::TxInfo>, ContractAddress, ContractAddress, felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
+type Snapshot<Array<felt252>> = Snapshot<Array<felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::array::Span::<core::felt252> = Struct<ut@core::array::Span::<core::felt252>, Snapshot<Array<felt252>>> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::starknet::info::TxInfo = Struct<ut@core::starknet::info::TxInfo, felt252, ContractAddress, u128, core::array::Span::<core::felt252>, felt252, felt252, felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+type u64 = u64 [storable: true, drop: true, dup: true, zero_sized: false];
+type core::starknet::info::BlockInfo = Struct<ut@core::starknet::info::BlockInfo, u64, u64, ContractAddress> [storable: true, drop: true, dup: true, zero_sized: false];
+type System = System [storable: true, drop: false, dup: false, zero_sized: false];
+
+libfunc get_execution_info_syscall = get_execution_info_syscall;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>, 0> = enum_init<core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>, 0>;
+libfunc store_temp<GasBuiltin> = store_temp<GasBuiltin>;
+libfunc store_temp<System> = store_temp<System>;
+libfunc store_temp<core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>> = store_temp<core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>>;
+libfunc jump = jump;
+libfunc enum_init<core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>, 1> = enum_init<core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>, 1>;
+
+get_execution_info_syscall([0], [1]) { fallthrough([2], [3], [4]) 7([5], [6], [7]) }; // 0
+branch_align() -> (); // 1
+enum_init<core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>, 0>([4]) -> ([8]); // 2
+store_temp<GasBuiltin>([2]) -> ([9]); // 3
+store_temp<System>([3]) -> ([10]); // 4
+store_temp<core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>>([8]) -> ([11]); // 5
+jump() { 12() }; // 6
+branch_align() -> (); // 7
+enum_init<core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>, 1>([7]) -> ([12]); // 8
+store_temp<GasBuiltin>([5]) -> ([9]); // 9
+store_temp<System>([6]) -> ([10]); // 10
+store_temp<core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>>([12]) -> ([11]); // 11
+return([9], [10], [11]); // 12
+
+test::get_execution_info@0([0]: GasBuiltin, [1]: System) -> (GasBuiltin, System, core::result::Result::<core::box::Box::<core::starknet::info::ExecutionInfo>, core::array::Array::<core::felt252>>);
+"
+
+aegis_spec "test::get_execution_info" :=
+  fun m _ s _ s' ρ =>
+  s = s' ∧
+  ((∃ n, ρ = .inl n ∧
+    m.boxHeap .ExecutionInfo n = .some ⟨⟨m.blockNumber, m.blockTimestamp, m.sequencerAddress⟩,
+    ⟨m.txVersion, m.txContract, m.txMaxFee, m.txSignature, m.txHash, m.txChainIdentifier, m.txNonce⟩,
+    m.callerAddress, m.contractAddress, m.entryPointSelector⟩)
+    ∨ ρ.isRight)
+
+aegis_prove "test::get_execution_info" :=
+  fun m _ s _ s' ρ => by
+  unfold «spec_test::get_execution_info»
+  rintro ⟨_,_,(⟨⟨ρ',hρ',rfl⟩,rfl,rfl⟩|⟨rfl,rfl⟩)⟩
+  · exact ⟨rfl, .inl ⟨_,⟨rfl,hρ'⟩⟩⟩
+  · exact ⟨rfl, .inr rfl⟩
+
 aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 

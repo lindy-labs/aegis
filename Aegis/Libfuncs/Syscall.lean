@@ -10,7 +10,7 @@ variable (metadataRef : FVarId)
 def emit_event_syscall : FuncData where
   inputTypes := [.GasBuiltin, .System, .Snapshot (.Array .Felt252), .Snapshot (.Array .Felt252)]
   branches := [{ outputTypes := [.GasBuiltin, .System]
-                 condition := fun _ (s : Q(System)) (k : Q(List F)) (d : Q(List F)) 
+                 condition := fun _ (s : Q(System)) (k : Q(List F)) (d : Q(List F))
                    _ (s' : Q(System)) =>
                      let m : Q(Metadata) := .fvar metadataRef
                      q($s' = $(s).emitEvent { contract := $(m).contractAddress
@@ -25,13 +25,14 @@ def get_execution_info_syscall : FuncData where
   inputTypes := [.GasBuiltin, .System]
   branches := [{ outputTypes := [.GasBuiltin, .System, .Box <| .ExecutionInfo]
                  condition := fun _ (sys : Q(System)) _ (sys' : Q(System))
-                     (ρ: Q((UInt64 × UInt64 × ContractAddress) × (F × ContractAddress × UInt128 ×
-                      List F × F × F × F) × ContractAddress × ContractAddress × F)) =>
+                     (ρ: Q(Nat)) =>
                      let m : Q(Metadata) := .fvar metadataRef
+                     let m' := q($(m).boxHeap .ExecutionInfo $ρ)
                      q($sys' = $sys ∧
-                       $ρ = ⟨⟨$(m).blockNumber, $(m).blockTimestamp, $(m).sequencerAddress⟩,
+                       ∃ ρ', $m' = .some ρ' ∧
+                       ρ' = ⟨⟨$(m).blockNumber, $(m).blockTimestamp, $(m).sequencerAddress⟩,
                          ⟨$(m).txVersion, $(m).txContract, $(m).txMaxFee, $(m).txSignature,
-                           $(m).txHash, $(m).txChainIdentifier, $(m).txNonce⟩, 
+                           $(m).txHash, $(m).txChainIdentifier, $(m).txNonce⟩,
                          $(m).callerAddress, $(m).contractAddress, $(m).entryPointSelector⟩) },
                { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
                  condition := fun _ (sys : Q(System)) _ (sys' : Q(System)) _ =>
@@ -51,7 +52,7 @@ def storage_read_syscall : FuncData where
 def storage_write_syscall : FuncData where
   inputTypes := [.GasBuiltin, .System, .U32, .StorageAddress, .Felt252]
   branches := [{ outputTypes := [.GasBuiltin, .System]
-                 condition := fun _ (s : Q(System)) _ (a : Q(StorageAddress)) (v : Q(F)) 
+                 condition := fun _ (s : Q(System)) _ (a : Q(StorageAddress)) (v : Q(F))
                    _ (s' : Q(System)) =>
                      let m : Q(Metadata) := .fvar metadataRef
                      q($s' = ($s).writeStorage ($m).contractAddress $a $v) },
