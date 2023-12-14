@@ -25,12 +25,16 @@ def match_nullable (t : SierraType) : FuncData where
   branches := [{ outputTypes := []
                  condition := fun (a : Q(Option $(⟦t⟧))) => q($a = .none) },
                { outputTypes := [.Box t]
-                 condition := fun (a : Q(Option $(⟦t⟧))) (ρ : Q($(⟦t⟧))) => q($a = .some $ρ) }]
+                 condition := fun (a : Q(Option $(⟦t⟧))) (ρ : Q(Nat)) =>
+                   let m : Q(Metadata) := .fvar metadataRef
+                   let t' : Q(Type) := q(Option $(⟦t⟧))
+                   let m' : Expr := q($(m).boxHeap $t $ρ)
+                   Expr.mkEq t' a m' }]
 
 def nullableLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "null" [.identifier ident] .none => return null (← typeRefs.find? ident)
 | .name "nullable_from_box" [.identifier ident] .none =>
   return nullable_from_box metadataRef (← typeRefs.find? ident)
 | .name "match_nullable" [.identifier ident] .none =>
-  return match_nullable (← typeRefs.find? ident)
+  return match_nullable metadataRef (← typeRefs.find? ident)
 | _ => .none

@@ -341,6 +341,39 @@ aegis_prove "test::nullable_from_box" :=
   rintro rfl
   rfl
 
+aegis_load_string "type Nullable<felt252> = Nullable<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+type Box<felt252> = Box<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc match_nullable<felt252> = match_nullable<felt252>;
+libfunc branch_align = branch_align;
+libfunc store_temp<Box<felt252>> = store_temp<Box<felt252>>;
+libfunc jump = jump;
+libfunc drop<Box<felt252>> = drop<Box<felt252>>;
+
+match_nullable<felt252>([0]) { fallthrough() 4([2]) }; // 0
+branch_align() -> (); // 1
+store_temp<Box<felt252>>([1]) -> ([3]); // 2
+jump() { 7() }; // 3
+branch_align() -> (); // 4
+drop<Box<felt252>>([1]) -> (); // 5
+store_temp<Box<felt252>>([2]) -> ([3]); // 6
+return([3]); // 7
+
+test::match_nullable@0([0]: Nullable<felt252>, [1]: Box<felt252>) -> (Box<felt252>);"
+
+aegis_spec "test::match_nullable" :=
+  fun m a b ρ =>
+  (a = .none ∧ ρ = b)
+  ∨ (a = m.boxHeap .Felt252 ρ)
+
+aegis_prove "test::match_nullable" :=
+  fun m a b ρ => by
+  unfold «spec_test::match_nullable»
+  rintro ⟨_,(⟨rfl,rfl⟩|⟨rfl,rfl⟩)⟩
+  · aesop
+  · aesop
+
 aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 
