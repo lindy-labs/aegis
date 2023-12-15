@@ -276,7 +276,7 @@ def SierraType.TxInfo : SierraType :=
 .Struct [ .Felt252  -- transaction version
         , .ContractAddress  -- the account contract from which this tx originates
         , .U128  -- max fee
-        , .Snapshot <| .Array .Felt252 -- signature of the tx
+        , .Struct [.Snapshot <| .Array .Felt252] -- signature of the tx
         , .Felt252  -- transaction hash
         , .Felt252  -- identifier of the chain
         , .Felt252  -- nonce
