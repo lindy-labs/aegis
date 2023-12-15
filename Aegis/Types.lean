@@ -283,8 +283,8 @@ def SierraType.TxInfo : SierraType :=
         ]
 
 def SierraType.ExecutionInfo : SierraType :=
-.Struct [ .BlockInfo
-        , .TxInfo
+.Struct [ .Box .BlockInfo
+        , .Box .TxInfo
         , .ContractAddress  -- caller address
         , .ContractAddress  -- contract address
         , .Felt252  -- entry point selector

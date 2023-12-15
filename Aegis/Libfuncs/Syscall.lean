@@ -27,13 +27,15 @@ def get_execution_info_syscall : FuncData where
                  condition := fun _ (sys : Q(System)) _ (sys' : Q(System))
                      (ρ: Q(Nat)) =>
                      let m : Q(Metadata) := .fvar metadataRef
-                     let m' := q($(m).boxHeap .ExecutionInfo $ρ)
                      q($sys' = $sys ∧
-                       ∃ ρ', $m' = .some ρ' ∧
-                       ρ' = ⟨⟨$(m).blockNumber, $(m).blockTimestamp, $(m).sequencerAddress⟩,
-                         ⟨$(m).txVersion, $(m).txContract, $(m).txMaxFee, $(m).txSignature,
-                           $(m).txHash, $(m).txChainIdentifier, $(m).txNonce⟩,
-                         $(m).callerAddress, $(m).contractAddress, $(m).entryPointSelector⟩) },
+                       ∃ ρ' rbi bi rti ti, $(m).boxHeap .ExecutionInfo $ρ = .some ρ'
+                         ∧ $(m).boxHeap .BlockInfo rbi = .some bi
+                         ∧ $(m).boxHeap .TxInfo rti = .some ti
+                         ∧ bi = ⟨$(m).blockNumber, $(m).blockTimestamp, $(m).sequencerAddress⟩
+                         ∧ ti = ⟨$(m).txVersion, $(m).txContract, $(m).txMaxFee, $(m).txSignature,
+                             $(m).txHash, $(m).txChainIdentifier, $(m).txNonce⟩
+                         ∧ ρ' = ⟨rbi, rti,
+                           $(m).callerAddress, $(m).contractAddress, $(m).entryPointSelector⟩) },
                { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
                  condition := fun _ (sys : Q(System)) _ (sys' : Q(System)) _ =>
                    q($sys' = $sys) }]

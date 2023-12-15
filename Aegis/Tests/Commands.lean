@@ -306,17 +306,19 @@ test::get_execution_info@0([0]: GasBuiltin, [1]: System) -> (GasBuiltin, System,
 aegis_spec "test::get_execution_info" :=
   fun m _ s _ s' ρ =>
   s = s' ∧
-  ((∃ n, ρ = .inl n ∧
-    m.boxHeap .ExecutionInfo n = .some ⟨⟨m.blockNumber, m.blockTimestamp, m.sequencerAddress⟩,
-    ⟨m.txVersion, m.txContract, m.txMaxFee, m.txSignature, m.txHash, m.txChainIdentifier, m.txNonce⟩,
-    m.callerAddress, m.contractAddress, m.entryPointSelector⟩)
+  ((∃ rei rbi rti, ρ = .inl rei ∧
+      m.boxHeap .ExecutionInfo rei = .some ⟨rbi, rti,
+      m.callerAddress, m.contractAddress, m.entryPointSelector⟩
+      ∧ m.boxHeap .BlockInfo rbi = .some ⟨m.blockNumber, m.blockTimestamp, m.sequencerAddress⟩
+      ∧ m.boxHeap .TxInfo rti = .some ⟨m.txVersion, m.txContract, m.txMaxFee, m.txSignature,
+        m.txHash, m.txChainIdentifier, m.txNonce⟩)
     ∨ ρ.isRight)
 
 aegis_prove "test::get_execution_info" :=
   fun m _ s _ s' ρ => by
   unfold «spec_test::get_execution_info»
-  rintro ⟨_,_,(⟨⟨ρ',hρ',rfl⟩,rfl,rfl⟩|⟨rfl,rfl⟩)⟩
-  · exact ⟨rfl, .inl ⟨_,⟨rfl,hρ'⟩⟩⟩
+  rintro ⟨_,_,(⟨⟨_,_,_,_,_,h₁,h₂,h₃,rfl,rfl,rfl⟩,rfl,rfl⟩|⟨rfl,rfl⟩)⟩
+  · exact ⟨rfl, .inl ⟨_,_,_,rfl,h₁,h₂,h₃⟩⟩
   · exact ⟨rfl, .inr rfl⟩
 
 aegis_load_string "type Box<felt252> = Box<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
