@@ -6,6 +6,15 @@ namespace Sierra
 
 /- Utilities -/
 
+/-- Convert a file path to one that's relative to the location of the module containing the
+command that's elaborated. -/
+def toCallerRelativeFilePath (p : System.FilePath) : CommandElabM System.FilePath := do
+  let x := modToFilePath "." ((← getEnv).header.mainModule) "lean"
+  let .some x := x.parent
+    | throwError "Current lean file does not have a parent directory!"
+  let y ← realPathNormalized <| x / p
+  return y.toString
+
 /-- A version of `BranchData` which we are able to persist in `.olean` files -/
 structure PersistantBranchData where
   (outputTypes : List SierraType)
@@ -108,6 +117,7 @@ elab "aegis_set_path " s:str : command => do
 
 elab "aegis_load_file " s:str : command => do
   let filePath : System.FilePath := ⟨s.getString⟩
+  let filePath ← toCallerRelativeFilePath filePath
   match filePath.extension with
   | .some "sierra" => sierraLoadString <| ← IO.FS.readFile filePath
   | .some "cairo" =>

@@ -9,7 +9,7 @@ Aegis is a tool for the verification of Cairo code.
 import Aegis.Commands
 
 -- Load a Sierra file
-aegis_load_file "Aegis/Tests/foo.sierra"
+aegis_load_file "../foo.sierra"
 
 -- Provide the specification of the function double
 aegis_spec "foo::foo::double" :=

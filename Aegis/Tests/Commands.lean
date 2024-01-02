@@ -2,7 +2,7 @@ import Aegis.Commands
 
 open Sierra
 
-aegis_load_file "Aegis/Tests/ternary_add.sierra"
+aegis_load_file "ternary_add.sierra"
 
 aegis_info "ternary_add"
 
@@ -67,7 +67,7 @@ aegis_prove "rec" := fun _ a ρ => by rintro (⟨rfl, rfl⟩|⟨_, rfl⟩) <;> r
 
 aegis_complete
 
-aegis_load_file "Aegis/Tests/double.sierra"
+aegis_load_file "double.sierra"
 
 aegis_spec "double::double::double" := fun _ a ρ => ρ = a * a
 

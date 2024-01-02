@@ -3,7 +3,7 @@ import Aegis.Macros
 
 open Sierra Lean
 
-aegis_load_file "Aegis/Tests/issue2249.sierra"
+aegis_load_file "issue2249.sierra"
 
 aegis_spec "issue2249::issue2249::simple_test" :=
   fun _ ρ => ρ = .inl (12, .inr ())
