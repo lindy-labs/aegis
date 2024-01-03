@@ -21,6 +21,7 @@ import Aegis.Libfuncs.Storage
 import Aegis.Libfuncs.Syscall
 import Aegis.Libfuncs.ContractAddress
 import Aegis.Libfuncs.UInt256
+import Aegis.Libfuncs.Casts
 
 open Lean Qq
 
@@ -63,3 +64,4 @@ def libfuncs :
   <|> nullableLibfuncs metadataRef typeRefs i
   <|> storageLibfuncs i
   <|> contractAddressLibfuncs i
+  <|> castsLibfuncs i

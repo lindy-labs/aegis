@@ -376,6 +376,27 @@ aegis_prove "test::match_nullable" :=
   · aesop
   · aesop
 
+aegis_load_string "type u16 = u16 [storable: true, drop: true, dup: true, zero_sized: false];
+type u64 = u64 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc upcast<u16, u64> = upcast<u16, u64>;
+libfunc store_temp<u64> = store_temp<u64>;
+
+upcast<u16, u64>([0]) -> ([1]); // 0
+store_temp<u64>([1]) -> ([1]); // 1
+return([1]); // 2
+
+test::upcast@0([0]: u16) -> (u64);"
+
+aegis_spec "test::upcast" :=
+  fun _ a ρ =>
+  ρ = a.cast
+
+aegis_prove "test::upcast" :=
+  fun _ a ρ => by
+  rintro rfl
+  rfl
+
 aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 
