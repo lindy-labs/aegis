@@ -397,6 +397,26 @@ aegis_prove "test::upcast" :=
   rintro rfl
   rfl
 
+aegis_load_string "type u64 = u64 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc upcast<u64, u64> = upcast<u64, u64>;
+libfunc store_temp<u64> = store_temp<u64>;
+
+upcast<u64, u64>([0]) -> ([1]); // 0
+store_temp<u64>([1]) -> ([1]); // 1
+return([1]); // 2
+
+test::upcast_refl@0([0]: u64) -> (u64);"
+
+aegis_spec "test::upcast_refl" :=
+  fun _ a ρ =>
+  ρ = a
+
+aegis_prove "test::upcast_refl" :=
+  fun _ a ρ => by
+  rintro rfl
+  rfl
+
 aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 
