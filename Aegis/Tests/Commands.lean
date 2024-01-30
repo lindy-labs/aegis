@@ -417,6 +417,44 @@ aegis_prove "test::upcast_refl" :=
   rintro rfl
   rfl
 
+aegis_load_string "type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
+type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
+type u16 = u16 [storable: true, drop: true, dup: true, zero_sized: false];
+type core::option::Option::<core::integer::u16> = Enum<ut@core::option::Option::<core::integer::u16>, u16, Unit> [storable: true, drop: true, dup: true, zero_sized: false];
+type u64 = u64 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc downcast<u64, u16> = downcast<u64, u16>;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::option::Option::<core::integer::u16>, 0> = enum_init<core::option::Option::<core::integer::u16>, 0>;
+libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
+libfunc store_temp<core::option::Option::<core::integer::u16>> = store_temp<core::option::Option::<core::integer::u16>>;
+libfunc struct_construct<Unit> = struct_construct<Unit>;
+libfunc enum_init<core::option::Option::<core::integer::u16>, 1> = enum_init<core::option::Option::<core::integer::u16>, 1>;
+
+downcast<u64, u16>([0], [1]) { fallthrough([2], [3]) 6([4]) }; // 0
+branch_align() -> (); // 1
+enum_init<core::option::Option::<core::integer::u16>, 0>([3]) -> ([5]); // 2
+store_temp<RangeCheck>([2]) -> ([2]); // 3
+store_temp<core::option::Option::<core::integer::u16>>([5]) -> ([5]); // 4
+return([2], [5]); // 5
+branch_align() -> (); // 6
+struct_construct<Unit>() -> ([6]); // 7
+enum_init<core::option::Option::<core::integer::u16>, 1>([6]) -> ([7]); // 8
+store_temp<RangeCheck>([4]) -> ([4]); // 9
+store_temp<core::option::Option::<core::integer::u16>>([7]) -> ([7]); // 10
+return([4], [7]); // 11
+
+test::downcast@0([0]: RangeCheck, [1]: u64) -> (RangeCheck, core::option::Option::<core::integer::u16>);"
+
+aegis_spec "test::downcast" :=
+  fun _ _ a _ ρ =>
+  ρ = if a.val < U16_MOD then .inl a.cast else .inr ()
+
+aegis_prove "test::downcast" :=
+  fun _ _ a _ ρ => by
+  unfold «spec_test::downcast»
+  aesop (add forward safe Nat.lt_le_asymm)
+
 aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
 
