@@ -8,7 +8,7 @@ namespace Sierra.FuncData
 def u8_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U8, U8]
   branches := [{ outputTypes := [RangeCheck, U8]
-                 condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) => 
+                 condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) =>
                    q(($a).val + ($b).val < U8_MOD ∧ $ρ = $a + $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U8]
@@ -18,7 +18,7 @@ def u8_overflowing_add : FuncData where
 def u8_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U8, U8]
   branches := [{ outputTypes := [RangeCheck, U8]
-                 condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) => 
+                 condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) =>
                    q(($b).val ≤ ($a).val ∧ $ρ = $a - $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U8]
@@ -68,10 +68,16 @@ def u8_eq : FuncData where
 def u8_try_from_felt252 : FuncData where
   inputTypes := [.RangeCheck, .Felt252]
   branches := [{ outputTypes := [.RangeCheck, .U8]
-                 condition := fun _ (a : Q(F)) _ (ρ : Q(UInt8)) => 
+                 condition := fun _ (a : Q(F)) _ (ρ : Q(UInt8)) =>
                    q($(a).val < U8_MOD ∧ $ρ = $(a).cast) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(F)) _ => q(U8_MOD ≤ $(a).val) }]
+
+def u8_wide_mul : FuncData where
+  inputTypes := [.U8, .U8]
+  branches := [{ outputTypes := [.U16]
+                 condition := fun (a b : Q(UInt8)) (ρ : Q(UInt16)) =>
+                   q($ρ = $(a).cast * $(b).cast) }]
 
 def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_overflowing_add" [] .none      => u8_overflowing_add
@@ -83,4 +89,5 @@ def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_const" [.const n] .none        => u8_const q($n)
 | .name "u8_eq" [] .none                   => u8_eq
 | .name "u8_try_from_felt252" [] .none     => u8_try_from_felt252
+| .name "u8_wide_mul" [] .none             => u8_wide_mul
 | _                                        => .none

@@ -8,7 +8,7 @@ namespace Sierra.FuncData
 def u64_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U64, U64]
   branches := [{ outputTypes := [RangeCheck, U64]
-                 condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) => 
+                 condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
                    q(($a).val + ($b).val < U64_MOD ∧ $ρ = $a + $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U64]
@@ -18,7 +18,7 @@ def u64_overflowing_add : FuncData where
 def u64_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U64, U64]
   branches := [{ outputTypes := [RangeCheck, U64]
-                 condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) => 
+                 condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
                    q(($b).val ≤ ($a).val ∧ $ρ = $a - $b) },
                -- TODO check branch order
                { outputTypes := [RangeCheck, U64]
@@ -68,10 +68,16 @@ def u64_eq : FuncData where
 def u64_try_from_felt252 : FuncData where
   inputTypes := [.RangeCheck, .Felt252]
   branches := [{ outputTypes := [.RangeCheck, .U64]
-                 condition := fun _ (a : Q(F)) _ (ρ : Q(UInt64)) => 
+                 condition := fun _ (a : Q(F)) _ (ρ : Q(UInt64)) =>
                    q($(a).val < U64_MOD ∧ $ρ = $(a).cast) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(F)) _ => q(U64_MOD ≤ $(a).val) }]
+
+def u64_wide_mul : FuncData where
+  inputTypes := [.U64, .U64]
+  branches := [{ outputTypes := [.U128]
+                 condition := fun (a b : Q(UInt64)) (ρ : Q(UInt128)) =>
+                   q($ρ = $(a).cast * $(b).cast) }]
 
 def uint64Libfuncs : Identifier → Option FuncData
 | .name "u64_overflowing_add" [] .none      => u64_overflowing_add
@@ -83,4 +89,5 @@ def uint64Libfuncs : Identifier → Option FuncData
 | .name "u64_const" [.const n] .none        => u64_const q($n)
 | .name "u64_eq" [] .none                   => u64_eq
 | .name "u64_try_from_felt252" [] .none     => u64_try_from_felt252
+| .name "u64_wide_mul" [] .none             => u64_wide_mul
 | _                                         => .none
