@@ -223,3 +223,44 @@ def parseIdentifier (input : String) : CoreM (Except String Identifier) := do
   let env ← getEnv
   let input := replaceNaughtyBrackets input
   pure do elabIdentifier (← runParserCategory env `identifier input)
+
+def parseJsonTypedef (j : Lean.Json) : CoreM (Identifier × Identifier) := do
+  let .ok lhs := j.getObjVal? "id"
+    | throwError "typedef must include id"
+  let .ok (.str lhs) := lhs.getObjVal? "debug_name"
+    | throwError "dbug_name must be a string!"
+  let .ok lhs ← parseIdentifier lhs
+    | throwError "cannot parse lhs identifier of type def"
+  pure (lhs, lhs)  -- TODO
+
+def parseJsonDeclaration (j : Lean.Json) :
+    CoreM (Identifier × Nat × List (Nat × Identifier) × List Identifier) := do
+  let .ok id := j.getObjVal? "id"
+    | throwError "declaration must include id"
+  let .ok (.str id) := id.getObjVal? "debug_name"
+    | throwError "dbug_name must be a string!"
+  let .ok id ← parseIdentifier id
+    | throwError "cannot parse lhs identifier of type def"
+  let .ok (.num ⟨.ofNat n, 0⟩) := j.getObjVal? "entry_point"
+    | throwError "declaration must include entry_point"
+  pure (id, n, [], [])  -- TODO
+
+def parseJson (j : Lean.Json) : CoreM SierraFile := do
+  -- Descend into "sierra_program" if we are in the output of snforge
+  let j := match j.getObjVal? "sierra_program" with
+    | .ok j' => j'
+    | .error _ => j
+  let .ok (.arr typedefs) := j.getObjVal? "type_declarations"
+    | throwError "Typedefs must be an array!"
+  let typedefs ← typedefs.mapM parseJsonTypedef
+  let .ok (.arr libfuncs) := j.getObjVal? "libfunc_declarations"
+    | throwError "Libfuncs must be an array!"
+  let .ok (.arr statements) := j.getObjVal? "statements"
+    | throwError "Statements must be an array!"
+  let .ok (.arr declarations) := j.getObjVal? "funcs"
+    | throwError "Declaractions must be an array!"
+  let declarations ← declarations.mapM parseJsonDeclaration
+  pure { typedefs := typedefs.toList
+         libfuncs := []
+         statements := []
+         declarations := declarations.toList }
