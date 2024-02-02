@@ -224,14 +224,91 @@ def parseIdentifier (input : String) : CoreM (Except String Identifier) := do
   let input := replaceNaughtyBrackets input
   pure do elabIdentifier (← runParserCategory env `identifier input)
 
-def parseJsonTypedef (j : Lean.Json) : CoreM (Identifier × Identifier) := do
+/- JSON Parsers -/
+
+def parseJsonArg (j : Lean.Json) : CoreM Parameter := do
+  if let .ok (.arr v) := j.getObjVal? "Value" then
+    if let .some (.num ⟨i, 0⟩) := v.toList.head? then
+      return .const i
+  if let .ok t := j.getObjVal? "Type" then
+    if let .ok (.str t) := t.getObjVal? "debug_name" then
+      let .ok t ← parseIdentifier t
+        | throwError "unable to parse identifier in generic arguments"
+      return .identifier t
+  throwError "unable to parse generig arguments"
+
+def parseJsonLongId (j : Lean.Json) : CoreM Identifier := do
+  let .ok (.str gid) := j.getObjVal? "generic_id"
+    | throwError "def rhs must contain generic_id"
+  let .ok (.arr args) := j.getObjVal? "generic_args"
+    | throwError "def rhs must contain array of generic args"
+  let args ← args.mapM parseJsonArg
+  pure <| .name gid args.toList .none
+
+def parseJsonDef (j : Lean.Json) : CoreM (Identifier × Identifier) := do
   let .ok lhs := j.getObjVal? "id"
     | throwError "typedef must include id"
   let .ok (.str lhs) := lhs.getObjVal? "debug_name"
     | throwError "dbug_name must be a string!"
   let .ok lhs ← parseIdentifier lhs
     | throwError "cannot parse lhs identifier of type def"
-  pure (lhs, lhs)  -- TODO
+  let .ok rhs := j.getObjVal? "long_id"
+    | throwError "typedef must include long_id"
+  let rhs ← parseJsonLongId rhs
+  pure (lhs, rhs)
+
+def parseJsonReturn (j : Lean.Json) : CoreM Statement := do
+  let .ok (.arr ids) := j.getObjVal? "Return"
+    | throwError "return must include an arrow of ids"
+  let .ok ids := ids.mapM (·.getObjVal? "id")
+    | throwError "return ids must include field id"
+  let .ok ids := ids.mapM Json.getNum?
+    | throwError "id of all ids must be a number"
+  let ids ← ids.mapM fun s =>
+    match s with
+    | ⟨.ofNat n,0⟩ => pure n
+    | _ => throwError "id of all ids must be positive integer"
+  pure { libfunc_id := (.name "return" [] .none), args := ids.toList, branches := [] }
+
+def parseJsonBranch (j : Lean.Json) : CoreM BranchInfo := do
+  let .ok target := j.getObjVal? "target"
+    | throwError "branch must contain target"
+  let target ← match target, target.getObjVal? "Statement" with
+    | .str "Fallthrough", _       => pure .none
+    | _, .ok (.num ⟨.ofNat n, 0⟩) => pure <| .some n
+    | _, _ =>  throwError "branch must be either Fallthrough or Statement"
+  let .ok (.arr results) := j.getObjVal? "results"
+    | throwError "branch must contain results"
+  let results ← results.mapM fun r => do
+    let .ok (.num ⟨.ofNat r, 0⟩) := r.getObjVal? "id"
+      | throwError "result must contain id"
+    pure r
+  pure { target := target, results := results.toList }
+
+def parseJsonInvocation (j : Lean.Json) : CoreM Statement := do
+  let .ok inv := j.getObjVal? "Invocation"
+    | throwError "invocation must include field Invocation"
+  let .ok libfunc_id := inv.getObjVal? "libfunc_id"
+    | throwError "invocation must include libfunc_id"
+  let .ok (.str libfunc_id) := libfunc_id.getObjVal? "debug_name"
+    | throwError "libfunc_id must include debug_name"
+  let .ok libfunc_id ← parseIdentifier libfunc_id
+    | throwError "failed to parse libfunc_id identifier"
+  let .ok (.arr args) := inv.getObjVal? "args"
+    | throwError "invocation must contain array of args"
+  let .ok args := args.mapM ((·.getObjVal? "id"))
+    | throwError "args must contain id"
+  let args ← args.mapM fun j =>
+    match j with
+    | .num ⟨.ofNat n, 0⟩ => pure n
+    | _ => throwError "ids must be postivie integers"
+  let .ok (.arr branches) := inv.getObjVal? "branches"
+    | throwError "invocation must include array of branches"
+  let branches ← branches.mapM parseJsonBranch
+  pure { libfunc_id := libfunc_id, args := args.toList, branches := branches.toList }
+
+def parseJsonStatement (j : Lean.Json) : CoreM Statement :=
+  (parseJsonReturn j) <|> (parseJsonInvocation j)
 
 def parseJsonDeclaration (j : Lean.Json) :
     CoreM (Identifier × Nat × List (Nat × Identifier) × List Identifier) := do
@@ -243,7 +320,39 @@ def parseJsonDeclaration (j : Lean.Json) :
     | throwError "cannot parse lhs identifier of type def"
   let .ok (.num ⟨.ofNat n, 0⟩) := j.getObjVal? "entry_point"
     | throwError "declaration must include entry_point"
-  pure (id, n, [], [])  -- TODO
+  let .ok signature := j.getObjVal? "signature"
+    | throwError "declaration must include signature"
+  let .ok (.arr param_types) := signature.getObjVal? "param_types"
+    | throwError "signature must contain array of param_types"
+  let .ok param_types := param_types.mapM ((·.getObjVal? "debug_name"))
+    | throwError "param_types must contain debug_name"
+  let .ok param_types := param_types.mapM Json.getStr?
+    | throwError "debug_name of all param_types must be a string"
+  let param_types ← param_types.mapM parseIdentifier
+  let .ok param_types := param_types.mapM (·)
+    | throwError "cannot parse param_type as identifier"
+  let .ok (.arr ret_types) := signature.getObjVal? "ret_types"
+    | throwError "signature must contain array of ret_types"
+  let .ok ret_types := ret_types.mapM ((·.getObjVal? "debug_name"))
+    | throwError "ret_types must contain debug_name"
+  let .ok ret_types := ret_types.mapM Json.getStr?
+    | throwError "debug_name of all ret_types must be a string"
+  let ret_types ← ret_types.mapM parseIdentifier
+  let .ok ret_types := ret_types.mapM (·)
+    | throwError "cannot parse ret_types as identifier"
+  let .ok (.arr params) := j.getObjVal? "params"
+    | throwError "signature must contain array of params"
+  let .ok params := params.mapM ((·.getObjVal? "id"))
+    | throwError "params must contain id"
+  let .ok params := params.mapM ((·.getObjVal? "id"))
+    | throwError "params' id must contain id"
+  let .ok params := params.mapM Json.getNum?
+    | throwError "id of all params must be a number"
+  let params ← params.mapM fun s =>
+    match s with
+    | ⟨.ofNat n,0⟩ => pure n
+    | _ => throwError "id of all params must be positive integer"
+  pure (id, n, (params.zip param_types).toList, ret_types.toList)
 
 def parseJson (j : Lean.Json) : CoreM SierraFile := do
   -- Descend into "sierra_program" if we are in the output of snforge
@@ -252,15 +361,17 @@ def parseJson (j : Lean.Json) : CoreM SierraFile := do
     | .error _ => j
   let .ok (.arr typedefs) := j.getObjVal? "type_declarations"
     | throwError "Typedefs must be an array!"
-  let typedefs ← typedefs.mapM parseJsonTypedef
+  let typedefs ← typedefs.mapM parseJsonDef
   let .ok (.arr libfuncs) := j.getObjVal? "libfunc_declarations"
     | throwError "Libfuncs must be an array!"
+  let libfuncs ← libfuncs.mapM parseJsonDef
   let .ok (.arr statements) := j.getObjVal? "statements"
     | throwError "Statements must be an array!"
+  let statements ← statements.mapM parseJsonStatement
   let .ok (.arr declarations) := j.getObjVal? "funcs"
     | throwError "Declaractions must be an array!"
   let declarations ← declarations.mapM parseJsonDeclaration
   pure { typedefs := typedefs.toList
-         libfuncs := []
-         statements := []
+         libfuncs := libfuncs.toList
+         statements := statements.toList
          declarations := declarations.toList }

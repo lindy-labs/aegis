@@ -1548,4 +1548,17 @@ def foo :=
   | .ok j => Sierra.parseJson j
   | .error e => throwError e
 
+open Sierra Lean Meta
+
+def analyzeFile' (s : String) (idx : ℕ := 0) : Lean.MetaM Format := do
+  let .ok j := Lean.Json.parse fib_jumps_input
+    | throwError "foo"
+  let sf ← Sierra.parseJson j
+  let ⟨ident, pc, inputArgs, outputTypes⟩ := sf.declarations.get! idx
+  let e ← getFuncCondition sf ∅ ident pc inputArgs outputTypes
+  let esType ← inferType e
+  return (← ppExpr e) ++ "\n Inferred Type:" ++ (← ppExpr esType)
+
+#eval analyzeFile' fib_jumps_input
+
 #eval foo
