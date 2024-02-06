@@ -81,9 +81,9 @@ def bitwise : FuncData where
   inputTypes := [Bitwise, U128, U128]
   branches := [{ outputTypes := [Bitwise, U128, U128, U128]
                  condition := fun _ (lhs rhs : Q(UInt128)) _ (and xor or : Q(UInt128)) =>
-                   q($(and).val = Nat.land $(lhs).val $(rhs).val
-                     ∧ $(xor).val = Nat.xor $(lhs).val $(rhs).val
-                     ∧ $(or).val = Nat.lor $(lhs).val $(rhs).val) }]
+                   q($and = (Nat.land $(lhs).val $(rhs).val).cast
+                     ∧ $xor = (Nat.xor $(lhs).val $(rhs).val).cast
+                     ∧ $or = (Nat.lor $(lhs).val $(rhs).val).cast) }]
 
 def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_overflowing_add" [] .none      => u128_overflowing_add
