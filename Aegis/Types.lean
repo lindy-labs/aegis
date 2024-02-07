@@ -307,7 +307,11 @@ structure Metadata : Type where
   (blockNumber : UInt64)
   (blockTimestamp : UInt64)
   (sequencerAddress : ContractAddress)
-  (boxHeap : (t : SierraType) → Nat → Option t.toType)
+  /-- Contains the contents of the `n`th box for the sierra type `t` -/
+  (boxHeap : (t : SierraType) → (n : Nat) → Option t.toType)
+  /-- Returns the result for `call_contract_syscall` for a given contract, selector, call data,
+    caller, and system state -/
+  (callResult : (c : ContractAddress) → (f : F) → (d : List F) → (caller : ContractAddress) → System → List F)
 
 /-- A structure contining the branch-specific data for a libfunc -/
 structure BranchData (inputTypes : List SierraType) where

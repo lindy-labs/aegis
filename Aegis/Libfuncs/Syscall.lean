@@ -62,9 +62,21 @@ def storage_write_syscall : FuncData where
                  condition := fun _ (sys : Q(System)) _ _ _ _ (sys' : Q(System)) _ =>
                    q($sys' = $sys) }]
 
+def call_contract_syscall : FuncData where
+  inputTypes := [.GasBuiltin, .System, .ContractAddress, .Felt252, .Array .Felt252]
+  branches := [{ outputTypes := [.GasBuiltin, .System, .Array .Felt252]
+                 condition := fun _ (s : Q(System)) (c : Q(ContractAddress))
+                   (f : Q(F)) (d : Q(List F)) _ _ (r : Q(List F)) =>
+                     let m : Q(Metadata) := .fvar metadataRef
+                     q($r = ($m).callResult $c $f $d $(m).contractAddress $s) },
+               { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
+                 condition := fun _ _ _ _ _
+                   _ _ _ => q(True) }]  -- TODO can we assume that `s' = s`?
+
 def syscallLibfuncs : Identifier → Option FuncData
 | .name "emit_event_syscall" [] .none => emit_event_syscall metadataRef
 | .name "get_execution_info_syscall" [] .none => get_execution_info_syscall metadataRef
 | .name "storage_read_syscall" [] .none => storage_read_syscall metadataRef
 | .name "storage_write_syscall" [] .none => storage_write_syscall metadataRef
+| .name "call_contract_syscall" [] .none => call_contract_syscall metadataRef
 | _                         => .none
