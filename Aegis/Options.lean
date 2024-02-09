@@ -6,19 +6,23 @@ namespace Sierra.Options
 
 register_option aegis.normalize : Bool :=
   let descr := "Set whether to normalize conjunctions and disjunctions in the proof goal."
-  { defValue := true, group := "aesop", descr := descr }
+  { defValue := true, group := "aegis", descr := descr }
 
 register_option aegis.contract : Bool :=
   let descr := "Set whether the proof goal of `aegis_prove` should contract equalities."
-  { defValue := true, group := "aesop", descr := descr }
+  { defValue := true, group := "aegis", descr := descr }
 
 register_option aegis.filterUnused : Bool :=
   let descr := "Set whether to filter out intermediate variables which do not actually appear in the proof goal."
-  { defValue := true, group := "aesop", descr := descr }
+  { defValue := true, group := "aegis", descr := descr }
+
+register_option aegis.separateTuples : Bool :=
+  let descr := "Set whether replace equalities between tuples by equalities between the components."
+  { defValue := false, group := "aegis", descr := descr }
 
 register_option aegis.trace : Bool :=
   let descr := "Set whether to output trace information."
-  { defValue := false, group := "aesop", descr := descr }
+  { defValue := false, group := "aegis", descr := descr }
 
 
 end Sierra.Options

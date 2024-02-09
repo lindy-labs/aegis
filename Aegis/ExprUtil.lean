@@ -113,8 +113,16 @@ partial def AndOrTree.separateTupleEqs (t : AndOrTree) : AndOrTree :=
     | .some (_, lhs, rhs) =>
       match lhs.tuple?, rhs.tuple? with
       | .some ⟨α, β, x₁, y₁⟩, .some ⟨_, _, x₂, y₂⟩ =>
-        let fstEq := Sierra.Expr.mkEq α x₁ y₁
-        let sndEq := Sierra.Expr.mkEq β x₂ y₂
+        let fstEq := Sierra.Expr.mkEq α x₁ x₂
+        let sndEq := Sierra.Expr.mkEq β y₁ y₂
+        .cons fstEq [AndOrTree.separateTupleEqs (AndOrTree.cons sndEq ts)]
+      | .some ⟨α, β, x, y⟩, _ =>
+        let fstEq := Sierra.Expr.mkEq α x (Expr.proj `Prod 0 rhs)
+        let sndEq := Sierra.Expr.mkEq β y (Expr.proj `Prod 1 rhs)
+        .cons fstEq [AndOrTree.separateTupleEqs (AndOrTree.cons sndEq ts)]
+      | _, .some ⟨α, β, x, y⟩ =>
+        let fstEq := Sierra.Expr.mkEq α (Expr.proj `Prod 0 lhs) x
+        let sndEq := Sierra.Expr.mkEq β (Expr.proj `Prod 1 lhs) y
         .cons fstEq [AndOrTree.separateTupleEqs (AndOrTree.cons sndEq ts)]
       | _, _ => .cons e (AndOrTree.separateTupleEqs <$> ts)
     | .none => .cons e (AndOrTree.separateTupleEqs <$> ts)

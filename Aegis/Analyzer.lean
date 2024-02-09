@@ -72,8 +72,8 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     let mut intRefs := intRefs
     -- Normalize conjunctions and disjunctions in the tree
     if ← Sierra.Options.aegis.normalize.isEnabled then cs := cs.normalize
-    -- Disassemble equalities between tuples (disabled for now)
-    -- let cs := cs.separateTupleEqs
+    -- Disassemble equalities between tuples (disabled by default)
+    if ← Sierra.Options.aegis.separateTuples.isEnabled then cs := cs.separateTupleEqs
     -- Contract equalities in the tree
     if ← Sierra.Options.aegis.contract.isEnabled then
       cs := cs.contractEqs (Prod.snd <$> intRefs).contains

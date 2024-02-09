@@ -213,9 +213,10 @@ aegis_spec "test::u256_safe_divmod" :=
   ∧ U128_MOD * ZMod.val ρ.2.2 + ZMod.val ρ.2.1 =
     (U128_MOD * ZMod.val a.2 + ZMod.val a.1) % (U128_MOD * ZMod.val b.2 + ZMod.val b.1)
 
+set_option aegis.separateTuples true in
 aegis_prove "test::u256_safe_divmod" :=
   fun _ _ a b _ ρ => by
-  rintro ⟨_,_,h₁,h₂,rfl⟩
+  rintro ⟨_,_,_,h₁,h₂,rfl,rfl,rfl⟩
   exact ⟨h₁,h₂⟩
 
 aegis_load_string "type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
