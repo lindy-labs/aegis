@@ -490,8 +490,9 @@ return([8], [9], [12]); // 12
 test::call_contract_syscall@0([0]: GasBuiltin, [1]: System, [2]: ContractAddress, [3]: felt252, [4]: core::array::Span::<core::felt252>) -> (GasBuiltin, System, core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>);"
 
 aegis_spec "test::call_contract_syscall" :=
-  fun m _ s c f d _ _ ρ =>
-  ρ = .inl (m.callResult c f d m.contractAddress s) ∨ ρ.isRight
+  fun m _ s c f d _ s' ρ =>
+  ρ = .inl (m.callResult c f d m.contractAddress s).1
+  ∧ s' = (m.callResult c f d m.contractAddress s).2 ∨ ρ.isRight
 
 aegis_prove "test::call_contract_syscall" :=
   fun m _ s c f d _ _ ρ => by

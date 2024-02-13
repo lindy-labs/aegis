@@ -66,9 +66,10 @@ def call_contract_syscall : FuncData where
   inputTypes := [.GasBuiltin, .System, .ContractAddress, .Felt252, .Array .Felt252]
   branches := [{ outputTypes := [.GasBuiltin, .System, .Array .Felt252]
                  condition := fun _ (s : Q(System)) (c : Q(ContractAddress))
-                   (f : Q(F)) (d : Q(List F)) _ _ (r : Q(List F)) =>
+                   (f : Q(F)) (d : Q(List F)) _ (s' : Q(System)) (r : Q(List F)) =>
                      let m : Q(Metadata) := .fvar metadataRef
-                     q($r = ($m).callResult $c $f $d $(m).contractAddress $s) },
+                     q($r = (($m).callResult $c $f $d $(m).contractAddress $s).fst
+                       ∧ $s' = (($m).callResult $c $f $d $(m).contractAddress $s).snd) },
                { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
                  condition := fun _ _ _ _ _
                    _ _ _ => q(True) }]  -- TODO can we assume that `s' = s`?
