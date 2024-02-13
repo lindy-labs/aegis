@@ -19,18 +19,47 @@ e.app4? ``Prod.mk
 namespace Sierra
 
 def Expr.mkAnds : List Expr → Expr
-| []        => mkConst ``True
-| [e]       => e
-| (e :: es) => mkApp (mkApp (mkConst ``And) e) (mkAnds es)
+| []                       => mkConst ``True
+| (.const `True []) :: es  => mkAnds es
+| (.const `False []) :: _  => mkConst ``False
+| e :: es                  =>
+  match mkAnds es with
+  | .const `True []  => e
+  | .const `False [] => mkConst ``False
+  | e'               => mkApp (mkApp (mkConst ``And) e) e'
 
 /-- Build the disjunction of a list of expressions -/
 def Expr.mkOrs : List Expr → Expr
-| []        => mkConst ``False
-| [e]       => e
-| (e :: es) => mkApp (mkApp (mkConst ``Or) e) <| mkOrs es
+| []                       => mkConst ``False
+| (.const ``True _) :: _   => mkConst ``True
+| (.const ``False _) :: es => mkOrs es
+| (e :: es)                =>
+  match mkOrs es with
+  | .const `True []  => mkConst ``True
+  | .const `False [] => e
+  | e'               => mkApp (mkApp (mkConst ``Or) e) e'
 
 def Expr.mkEq (type : Expr) (lhs rhs : Expr) : Expr :=
 mkAppN (mkConst `Eq [levelOne]) #[type, lhs, rhs]
+
+partial def Expr.separateTupleEqs (e : Expr) : List Expr :=
+match e.eq? with
+| .some (_, lhs, rhs) =>
+  match lhs.tuple?, rhs.tuple? with
+  | .some ⟨α, β, x₁, y₁⟩, .some ⟨_, _, x₂, y₂⟩ =>
+    let fstEq := Sierra.Expr.mkEq α x₁ x₂
+    let sndEq := Sierra.Expr.mkEq β y₁ y₂
+    separateTupleEqs fstEq ++ separateTupleEqs sndEq
+  | .some ⟨α, β, x, y⟩, _ =>
+    let fstEq := Sierra.Expr.mkEq α x (Expr.proj `Prod 0 rhs)
+    let sndEq := Sierra.Expr.mkEq β y (Expr.proj `Prod 1 rhs)
+    [fstEq, sndEq]
+  | _, .some ⟨α, β, x, y⟩ =>
+    let fstEq := Sierra.Expr.mkEq α (Expr.proj `Prod 0 lhs) x
+    let sndEq := Sierra.Expr.mkEq β (Expr.proj `Prod 1 lhs) y
+    [fstEq, sndEq]
+  | _, _ => [e]
+| .none => [e]
 
 def mkEqM (lhs rhs : Expr) : MetaM Expr := mkAppM ``Eq #[lhs, rhs]
 
@@ -66,10 +95,7 @@ partial def AndOrTree.isTrivial : AndOrTree → Bool
 partial def AndOrTree.toExpr : AndOrTree → Expr
 | nil       => mkConst ``True
 | cons e [] => e
-| cons (.const ``True _) ts => Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
-| cons e ts =>
-   if ts.all (·.isTrivial) then e
-   else mkApp (mkApp (mkConst ``And) e) <| Expr.mkOrs <| (AndOrTree.toExpr <$> ts)
+| cons e ts => Expr.mkAnds [e, Expr.mkOrs <| (AndOrTree.toExpr <$> ts)]
 
 /-- Filter an `AndOrTree` by a boolean predicate on expressions -/
 partial def AndOrTree.filter (p : Expr → Bool) : AndOrTree → AndOrTree
@@ -96,6 +122,11 @@ def AndOrTree.append (t : AndOrTree) (e : Expr) : AndOrTree :=
 /-- Apply a substitution to an `AndOrTree` -/
 def AndOrTree.applySubst (t : AndOrTree) (s : FVarSubst) := t.map s.apply
 
+def AndOrTree.palmTree (ands : List Expr) (ors : List AndOrTree) : AndOrTree :=
+match ands with
+| []  => .cons (.const `True []) ors
+| (e :: ands) => .cons e [palmTree ands ors]
+
 /-- Splits conjunctions apperaing in nodes -/
 partial def AndOrTree.normalize (t : AndOrTree) : AndOrTree :=
   match t with
@@ -105,27 +136,12 @@ partial def AndOrTree.normalize (t : AndOrTree) : AndOrTree :=
     | .some (l, r) => normalize <| .cons l [.cons r ts]
     | .none => .cons e (normalize <$> ts)
 
+/-- Separates equalities between tuples into the conjunction of equalities between their
+components -/
 partial def AndOrTree.separateTupleEqs (t : AndOrTree) : AndOrTree :=
   match t with
   | nil => nil
-  | cons e ts =>
-    match e.eq? with
-    | .some (_, lhs, rhs) =>
-      match lhs.tuple?, rhs.tuple? with
-      | .some ⟨α, β, x₁, y₁⟩, .some ⟨_, _, x₂, y₂⟩ =>
-        let fstEq := Sierra.Expr.mkEq α x₁ x₂
-        let sndEq := Sierra.Expr.mkEq β y₁ y₂
-        .cons fstEq [AndOrTree.separateTupleEqs (AndOrTree.cons sndEq ts)]
-      | .some ⟨α, β, x, y⟩, _ =>
-        let fstEq := Sierra.Expr.mkEq α x (Expr.proj `Prod 0 rhs)
-        let sndEq := Sierra.Expr.mkEq β y (Expr.proj `Prod 1 rhs)
-        .cons fstEq [AndOrTree.separateTupleEqs (AndOrTree.cons sndEq ts)]
-      | _, .some ⟨α, β, x, y⟩ =>
-        let fstEq := Sierra.Expr.mkEq α (Expr.proj `Prod 0 lhs) x
-        let sndEq := Sierra.Expr.mkEq β (Expr.proj `Prod 1 lhs) y
-        .cons fstEq [AndOrTree.separateTupleEqs (AndOrTree.cons sndEq ts)]
-      | _, _ => .cons e (AndOrTree.separateTupleEqs <$> ts)
-    | .none => .cons e (AndOrTree.separateTupleEqs <$> ts)
+  | cons e ts => palmTree (Expr.separateTupleEqs e) (ts.map separateTupleEqs)
 
 /-- Contract equalities in an `AndOrTree` which fulfill a given criterion -/
 partial def AndOrTree.contractEqs (t : AndOrTree) (crit : FVarId → Bool)
