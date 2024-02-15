@@ -521,3 +521,5 @@ aegis_prove "test::foo" := fun _ a b ρ => by
   unfold Bool.toSierraBool
   unfold «spec_test::foo»
   aesop
+
+aegis_register_contract_call "bar" 42 23

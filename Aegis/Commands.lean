@@ -101,6 +101,15 @@ initialize sierraSoundness : SimplePersistentEnvExtension (Identifier × Name)
     addImportedFn := fun ⟨pss⟩ => (HashMap.ofList (pss.map Array.toList).join)
   }
 
+initialize sierraContractCalls : SimplePersistentEnvExtension (Identifier × ContractCallData)
+    (HashMap (Nat × Nat) (Identifier × List ContractCallImplicit)) ←
+  registerSimplePersistentEnvExtension {
+    addEntryFn := fun specs (i, ⟨addr, sel, impl⟩) => specs.insert (addr.val, sel.val) (i, impl)
+    addImportedFn :=
+      let f ds := (ds.map fun (i, ⟨addr, sel, impl⟩) => ((addr.val, sel.val), (i, impl))).toList
+      fun ⟨pss⟩ => (HashMap.ofList (pss.map f).join)
+  }
+
 /- Provide elaboration functions for the commands -/
 
 def sierraLoadString (s : String) : CommandElabM Unit := do
@@ -200,5 +209,13 @@ elab "aegis_complete" : command => do
   for (i, _) in sf.declarations do
     unless (sierraSoundness.getState env).contains i do missingDecls := missingDecls.push i
   unless missingDecls.size = 0 do throwError
-    "Soundness proof not provided for the following declarations: {missingDecls}"
+    "Soundness proof not provided for the following {missingDecls.size} declarations: {missingDecls}"
   modifyEnv (loadedSierraFile.addEntry · default)  -- remove saved Sierra file after the command
+
+elab "aegis_register_contract_call" id:str addr:num sel:num : command => do
+  let .ok id ← liftCoreM <| parseIdentifier id.getString
+    | throwError "could not parse {id.getString} as Sierra identifier"
+  let addr := addr.getNat
+  let sel := sel.getNat
+  let data := { contractAddress := addr, selector := sel, implicits := [] }
+  modifyEnv (sierraContractCalls.addEntry · (id, data))
