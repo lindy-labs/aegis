@@ -338,3 +338,19 @@ def FuncData.modifyConditions (fd : FuncData) (f : Expr → Expr) : FuncData whe
     { bd with condition := OfInputs.map f bd.condition }
 
 instance : Inhabited FuncData := ⟨{ }⟩
+
+/-- A structure to contain the information on the implicit that's added to the wrapper call
+for a registered contract call -/
+structure ContractCallImplicit where
+  (type : SierraType)
+  (pre : Expr)
+  (post : Expr)
+
+/-- A structure containing the data necessary to pin a contract call to a specific Sierra id -/
+structure ContractCallData where
+  (ident : Identifier)
+  (contractAddress : Q(ContractAddress))
+  (selector : Q(F))
+  (implicits : List ContractCallImplicit)
+
+instance : Inhabited ContractCallData := ⟨default, default, default, []⟩

@@ -6,6 +6,7 @@ aegis_load_file "ternary_add.sierra"
 
 aegis_info "ternary_add"
 
+
 aegis_spec "ternary_add" := fun _ a b c ρ => ρ = a + b + c
 
 aegis_prove "ternary_add" := fun _ a b c ρ => by rintro rfl; rfl
@@ -498,6 +499,56 @@ aegis_prove "test::call_contract_syscall" :=
   fun m _ s c f d _ _ ρ => by
   unfold «spec_test::call_contract_syscall»
   aesop
+
+aegis_load_string "type GasBuiltin = GasBuiltin;
+type Array<felt252> = Array<felt252>;
+type Snapshot<Array<felt252>> = Snapshot<Array<felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::array::Span::<core::felt252> = Struct<ut@core::array::Span::<core::felt252>, Snapshot<Array<felt252>>> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>> = Enum<ut@core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, core::array::Span::<core::felt252>, Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type ContractAddress = ContractAddress [storable: true, drop: true, dup: true, zero_sized: false];
+type System = System [storable: true, drop: false, dup: false, zero_sized: false];
+type core::panics::Panic = Struct<panic>;
+type Tuple<core::panics::Panic, Array<felt252>> = Struct<bla, core::panics::Panic, Array<felt252>>;
+type core::panics::PanicResult::<(core::array::Span<core::felt252>)> = Enum<bla, core::array::Span<core::felt252>, Tuple<core::panics::Panic, Array<felt252>>>;
+type RangeCheck = RangeCheck;
+
+libfunc call_contract_syscall = call_contract_syscall;
+libfunc const42 = felt252_const<42>;
+libfunc initprinl = enum_init<core::panics::PanicResult::<(core::array::Span<core::felt252>)>, 0>;
+libfunc contract_address_try_from_felt252 = contract_address_try_from_felt252;
+libfunc struct_construct<core::array::Span::<core::felt252>> = struct_construct<core::array::Span::<core::felt252>>;
+libfunc array_new = array_new<felt252>;
+
+const42() -> ([4]); // 0
+enum_init([4]) -> ([5]); // 1
+return([0], [1], [5]); // 2
+const42() -> ([3]); // 3
+contract_address_try_from_felt252([1], [3]) { fallthrough([4], [5]) 10([14]) }; // 4
+array_new() -> ([6]); // 5
+struct_construct<core::array::Span::<core::felt252>>([6]) -> ([7]); // 6
+call_contract_syscall([0], [2], [5], [3], [7]) { fallthrough([8], [9], [10]) 9([11], [12], [13]) }; // 7
+return([0], [9], [10]); // 8
+return([0], [12], [6]); // 9
+return([0], [2], [6]); // 10
+
+test::trivial_contract@0([0]: GasBuiltin, [1]: System, [3]: core::array::Span<core::felt252>) -> (GasBuiltin, System, core::panics::PanicResult<(core::array::Span<core::felt252>)>);
+test::caller@3([0]: GasBuiltin, [1]: RangeCheck, [2]: System) -> (GasBuiltin, System, Array<felt252>);
+"
+
+aegis_spec "test::trivial_contract" :=
+  fun m _ s _ _ s' ρ =>
+  ρ = .inl [42]
+
+aegis_spec "test::caller" :=
+  fun _ _ _ _ _ _ _ => True
+
+aegis_use_contract_call "test::trivial_contract" 42 42 [GasBuiltin]
+
+aegis_prove "test::caller" :=
+  fun m _ _ s _ s' ρ h_call h_auto => by
+  simp at *
+  exact True.intro
 
 aegis_load_string "type Unit = Struct<ut@Tuple>;
 type core::bool = Enum<ut@core::bool, Unit, Unit>;
