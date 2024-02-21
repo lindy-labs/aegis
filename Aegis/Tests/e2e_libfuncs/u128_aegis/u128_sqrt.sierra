@@ -1,0 +1,14 @@
+type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
+type u64 = u64 [storable: true, drop: true, dup: true, zero_sized: false];
+type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc u128_sqrt = u128_sqrt;
+libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
+libfunc store_temp<u64> = store_temp<u64>;
+
+u128_sqrt([0], [1]) -> ([2], [3]); // 0
+store_temp<RangeCheck>([2]) -> ([2]); // 1
+store_temp<u64>([3]) -> ([3]); // 2
+return([2], [3]); // 3
+
+test::foo@0([0]: RangeCheck, [1]: u128) -> (RangeCheck, u64);

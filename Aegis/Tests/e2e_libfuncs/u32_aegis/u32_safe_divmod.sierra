@@ -1,0 +1,17 @@
+type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
+type u32 = u32 [storable: true, drop: true, dup: true, zero_sized: false];
+type Tuple<u32, u32> = Struct<ut@Tuple, u32, u32> [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<u32> = NonZero<u32> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc u32_safe_divmod = u32_safe_divmod;
+libfunc struct_construct<Tuple<u32, u32>> = struct_construct<Tuple<u32, u32>>;
+libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
+libfunc store_temp<Tuple<u32, u32>> = store_temp<Tuple<u32, u32>>;
+
+u32_safe_divmod([0], [1], [2]) -> ([3], [4], [5]); // 0
+struct_construct<Tuple<u32, u32>>([4], [5]) -> ([6]); // 1
+store_temp<RangeCheck>([3]) -> ([3]); // 2
+store_temp<Tuple<u32, u32>>([6]) -> ([6]); // 3
+return([3], [6]); // 4
+
+test::foo@0([0]: RangeCheck, [1]: u32, [2]: NonZero<u32>) -> (RangeCheck, Tuple<u32, u32>);

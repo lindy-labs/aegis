@@ -1,0 +1,24 @@
+type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
+type core::integer::u256 = Struct<ut@core::integer::u256, u128, u128> [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<core::integer::u256> = NonZero<core::integer::u256> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc u256_is_zero = u256_is_zero;
+libfunc branch_align = branch_align;
+libfunc u128_const<0> = u128_const<0>;
+libfunc struct_construct<core::integer::u256> = struct_construct<core::integer::u256>;
+libfunc store_temp<core::integer::u256> = store_temp<core::integer::u256>;
+libfunc unwrap_non_zero<core::integer::u256> = unwrap_non_zero<core::integer::u256>;
+
+u256_is_zero([0]) { fallthrough() 7([1]) }; // 0
+branch_align() -> (); // 1
+u128_const<0>() -> ([2]); // 2
+u128_const<0>() -> ([3]); // 3
+struct_construct<core::integer::u256>([2], [3]) -> ([4]); // 4
+store_temp<core::integer::u256>([4]) -> ([4]); // 5
+return([4]); // 6
+branch_align() -> (); // 7
+unwrap_non_zero<core::integer::u256>([1]) -> ([5]); // 8
+store_temp<core::integer::u256>([5]) -> ([5]); // 9
+return([5]); // 10
+
+test::foo@0([0]: core::integer::u256) -> (core::integer::u256);

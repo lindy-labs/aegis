@@ -1,0 +1,11 @@
+type i64 = i64 [storable: true, drop: true, dup: true, zero_sized: false];
+type i128 = i128 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc i64_wide_mul = i64_wide_mul;
+libfunc store_temp<i128> = store_temp<i128>;
+
+i64_wide_mul([0], [1]) -> ([2]); // 0
+store_temp<i128>([2]) -> ([2]); // 1
+return([2]); // 2
+
+test::foo@0([0]: i64, [1]: i64) -> (i128);

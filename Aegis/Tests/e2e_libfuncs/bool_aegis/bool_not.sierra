@@ -1,0 +1,11 @@
+type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
+type core::bool = Enum<ut@core::bool, Unit, Unit> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc bool_not_impl = bool_not_impl;
+libfunc store_temp<core::bool> = store_temp<core::bool>;
+
+bool_not_impl([0]) -> ([1]); // 0
+store_temp<core::bool>([1]) -> ([1]); // 1
+return([1]); // 2
+
+test::foo@0([0]: core::bool) -> (core::bool);

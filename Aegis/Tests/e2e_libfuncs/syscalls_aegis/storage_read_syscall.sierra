@@ -1,0 +1,31 @@
+type GasBuiltin = GasBuiltin [storable: true, drop: false, dup: false, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type core::result::Result::<core::felt252, core::array::Array::<core::felt252>> = Enum<ut@core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, felt252, Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
+type StorageAddress = StorageAddress [storable: true, drop: true, dup: true, zero_sized: false];
+type u32 = u32 [storable: true, drop: true, dup: true, zero_sized: false];
+type System = System [storable: true, drop: false, dup: false, zero_sized: false];
+
+libfunc storage_read_syscall = storage_read_syscall;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 0> = enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 0>;
+libfunc store_temp<GasBuiltin> = store_temp<GasBuiltin>;
+libfunc store_temp<System> = store_temp<System>;
+libfunc store_temp<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>> = store_temp<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>>;
+libfunc enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 1> = enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 1>;
+
+storage_read_syscall([0], [1], [2], [3]) { fallthrough([4], [5], [6]) 7([7], [8], [9]) }; // 0
+branch_align() -> (); // 1
+enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 0>([6]) -> ([10]); // 2
+store_temp<GasBuiltin>([4]) -> ([4]); // 3
+store_temp<System>([5]) -> ([5]); // 4
+store_temp<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>>([10]) -> ([10]); // 5
+return([4], [5], [10]); // 6
+branch_align() -> (); // 7
+enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 1>([9]) -> ([11]); // 8
+store_temp<GasBuiltin>([7]) -> ([7]); // 9
+store_temp<System>([8]) -> ([8]); // 10
+store_temp<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>>([11]) -> ([11]); // 11
+return([7], [8], [11]); // 12
+
+test::foo@0([0]: GasBuiltin, [1]: System, [2]: u32, [3]: StorageAddress) -> (GasBuiltin, System, core::result::Result::<core::felt252, core::array::Array::<core::felt252>>);

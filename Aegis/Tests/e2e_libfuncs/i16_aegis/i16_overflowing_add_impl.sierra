@@ -1,0 +1,30 @@
+type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
+type i16 = i16 [storable: true, drop: true, dup: true, zero_sized: false];
+type core::integer::SignedIntegerResult::<core::integer::i16> = Enum<ut@core::integer::SignedIntegerResult::<core::integer::i16>, i16, i16, i16> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc i16_overflowing_add_impl = i16_overflowing_add_impl;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::integer::SignedIntegerResult::<core::integer::i16>, 0> = enum_init<core::integer::SignedIntegerResult::<core::integer::i16>, 0>;
+libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
+libfunc store_temp<core::integer::SignedIntegerResult::<core::integer::i16>> = store_temp<core::integer::SignedIntegerResult::<core::integer::i16>>;
+libfunc enum_init<core::integer::SignedIntegerResult::<core::integer::i16>, 1> = enum_init<core::integer::SignedIntegerResult::<core::integer::i16>, 1>;
+libfunc enum_init<core::integer::SignedIntegerResult::<core::integer::i16>, 2> = enum_init<core::integer::SignedIntegerResult::<core::integer::i16>, 2>;
+
+i16_overflowing_add_impl([0], [1], [2]) { fallthrough([3], [4]) 6([5], [6]) 11([7], [8]) }; // 0
+branch_align() -> (); // 1
+enum_init<core::integer::SignedIntegerResult::<core::integer::i16>, 0>([4]) -> ([9]); // 2
+store_temp<RangeCheck>([3]) -> ([3]); // 3
+store_temp<core::integer::SignedIntegerResult::<core::integer::i16>>([9]) -> ([9]); // 4
+return([3], [9]); // 5
+branch_align() -> (); // 6
+enum_init<core::integer::SignedIntegerResult::<core::integer::i16>, 1>([6]) -> ([10]); // 7
+store_temp<RangeCheck>([5]) -> ([5]); // 8
+store_temp<core::integer::SignedIntegerResult::<core::integer::i16>>([10]) -> ([10]); // 9
+return([5], [10]); // 10
+branch_align() -> (); // 11
+enum_init<core::integer::SignedIntegerResult::<core::integer::i16>, 2>([8]) -> ([11]); // 12
+store_temp<RangeCheck>([7]) -> ([7]); // 13
+store_temp<core::integer::SignedIntegerResult::<core::integer::i16>>([11]) -> ([11]); // 14
+return([7], [11]); // 15
+
+test::foo@0([0]: RangeCheck, [1]: i16, [2]: i16) -> (RangeCheck, core::integer::SignedIntegerResult::<core::integer::i16>);

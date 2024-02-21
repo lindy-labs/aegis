@@ -1,0 +1,15 @@
+type EcPoint = EcPoint [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<EcPoint> = NonZero<EcPoint> [storable: true, drop: true, dup: true, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type Tuple<felt252, felt252> = Struct<ut@Tuple, felt252, felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc ec_point_unwrap = ec_point_unwrap;
+libfunc struct_construct<Tuple<felt252, felt252>> = struct_construct<Tuple<felt252, felt252>>;
+libfunc store_temp<Tuple<felt252, felt252>> = store_temp<Tuple<felt252, felt252>>;
+
+ec_point_unwrap([0]) -> ([1], [2]); // 0
+struct_construct<Tuple<felt252, felt252>>([1], [2]) -> ([3]); // 1
+store_temp<Tuple<felt252, felt252>>([3]) -> ([3]); // 2
+return([3]); // 3
+
+test::foo@0([0]: NonZero<EcPoint>) -> (Tuple<felt252, felt252>);

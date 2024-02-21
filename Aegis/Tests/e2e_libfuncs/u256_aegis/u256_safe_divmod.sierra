@@ -1,0 +1,21 @@
+type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
+type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
+type core::integer::u256 = Struct<ut@core::integer::u256, u128, u128> [storable: true, drop: true, dup: true, zero_sized: false];
+type Tuple<core::integer::u256, core::integer::u256> = Struct<ut@Tuple, core::integer::u256, core::integer::u256> [storable: true, drop: true, dup: true, zero_sized: false];
+type U128MulGuarantee = U128MulGuarantee [storable: true, drop: false, dup: false, zero_sized: false];
+type NonZero<core::integer::u256> = NonZero<core::integer::u256> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc u256_safe_divmod = u256_safe_divmod;
+libfunc u128_mul_guarantee_verify = u128_mul_guarantee_verify;
+libfunc struct_construct<Tuple<core::integer::u256, core::integer::u256>> = struct_construct<Tuple<core::integer::u256, core::integer::u256>>;
+libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
+libfunc store_temp<Tuple<core::integer::u256, core::integer::u256>> = store_temp<Tuple<core::integer::u256, core::integer::u256>>;
+
+u256_safe_divmod([0], [1], [2]) -> ([3], [4], [5], [6]); // 0
+u128_mul_guarantee_verify([3], [6]) -> ([7]); // 1
+struct_construct<Tuple<core::integer::u256, core::integer::u256>>([4], [5]) -> ([8]); // 2
+store_temp<RangeCheck>([7]) -> ([7]); // 3
+store_temp<Tuple<core::integer::u256, core::integer::u256>>([8]) -> ([8]); // 4
+return([7], [8]); // 5
+
+test::foo@0([0]: RangeCheck, [1]: core::integer::u256, [2]: NonZero<core::integer::u256>) -> (RangeCheck, Tuple<core::integer::u256, core::integer::u256>);

@@ -1,0 +1,16 @@
+type Bitwise = Bitwise [storable: true, drop: false, dup: false, zero_sized: false];
+type u32 = u32 [storable: true, drop: true, dup: true, zero_sized: false];
+type Tuple<u32, u32, u32> = Struct<ut@Tuple, u32, u32, u32> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc u32_bitwise = u32_bitwise;
+libfunc struct_construct<Tuple<u32, u32, u32>> = struct_construct<Tuple<u32, u32, u32>>;
+libfunc store_temp<Bitwise> = store_temp<Bitwise>;
+libfunc store_temp<Tuple<u32, u32, u32>> = store_temp<Tuple<u32, u32, u32>>;
+
+u32_bitwise([0], [1], [2]) -> ([3], [4], [5], [6]); // 0
+struct_construct<Tuple<u32, u32, u32>>([4], [5], [6]) -> ([7]); // 1
+store_temp<Bitwise>([3]) -> ([3]); // 2
+store_temp<Tuple<u32, u32, u32>>([7]) -> ([7]); // 3
+return([3], [7]); // 4
+
+test::foo@0([0]: Bitwise, [1]: u32, [2]: u32) -> (Bitwise, Tuple<u32, u32, u32>);

@@ -1,0 +1,16 @@
+type Poseidon = Poseidon [storable: true, drop: false, dup: false, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type Tuple<felt252, felt252, felt252> = Struct<ut@Tuple, felt252, felt252, felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc hades_permutation = hades_permutation;
+libfunc struct_construct<Tuple<felt252, felt252, felt252>> = struct_construct<Tuple<felt252, felt252, felt252>>;
+libfunc store_temp<Poseidon> = store_temp<Poseidon>;
+libfunc store_temp<Tuple<felt252, felt252, felt252>> = store_temp<Tuple<felt252, felt252, felt252>>;
+
+hades_permutation([0], [1], [2], [3]) -> ([4], [5], [6], [7]); // 0
+struct_construct<Tuple<felt252, felt252, felt252>>([5], [6], [7]) -> ([8]); // 1
+store_temp<Poseidon>([4]) -> ([4]); // 2
+store_temp<Tuple<felt252, felt252, felt252>>([8]) -> ([8]); // 3
+return([4], [8]); // 4
+
+test::foo@0([0]: Poseidon, [1]: felt252, [2]: felt252, [3]: felt252) -> (Poseidon, Tuple<felt252, felt252, felt252>);

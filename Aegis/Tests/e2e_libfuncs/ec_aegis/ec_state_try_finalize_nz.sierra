@@ -1,0 +1,25 @@
+type EcState = EcState [storable: true, drop: true, dup: true, zero_sized: false];
+type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
+type EcPoint = EcPoint [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<EcPoint> = NonZero<EcPoint> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>> = Enum<ut@core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>, NonZero<EcPoint>, Unit> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc ec_state_try_finalize_nz = ec_state_try_finalize_nz;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>, 0> = enum_init<core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>, 0>;
+libfunc store_temp<core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>> = store_temp<core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>>;
+libfunc struct_construct<Unit> = struct_construct<Unit>;
+libfunc enum_init<core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>, 1> = enum_init<core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>, 1>;
+
+ec_state_try_finalize_nz([0]) { fallthrough([1]) 5() }; // 0
+branch_align() -> (); // 1
+enum_init<core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>, 0>([1]) -> ([2]); // 2
+store_temp<core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>>([2]) -> ([2]); // 3
+return([2]); // 4
+branch_align() -> (); // 5
+struct_construct<Unit>() -> ([3]); // 6
+enum_init<core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>, 1>([3]) -> ([4]); // 7
+store_temp<core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>>([4]) -> ([4]); // 8
+return([4]); // 9
+
+test::foo@0([0]: EcState) -> (core::option::Option::<core::zeroable::NonZero::<core::ec::EcPoint>>);
