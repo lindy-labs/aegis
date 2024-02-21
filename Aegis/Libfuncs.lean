@@ -49,7 +49,7 @@ private def libfuncs_aux2 :=
   <|> functionCallLibfuncs specs metadataRef i
   <|> syscallLibfuncs metadataRef i
   <|> builtinCostsLibfuncs currentFunc metadataRef i
-  <|> gasBuiltinLibfuncs i
+  <|> gasBuiltinLibfuncs currentFunc metadataRef i
   <|> uint8Libfuncs i
   <|> hashLibfuncs metadataRef i
 

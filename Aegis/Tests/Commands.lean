@@ -457,6 +457,52 @@ aegis_prove "test::downcast" :=
   unfold «spec_test::downcast»
   aesop (add forward safe Nat.lt_le_asymm)
 
+
+aegis_load_string "type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
+type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
+type core::option::Option::<()> = Enum<ut@core::option::Option::<()>, Unit, Unit> [storable: true, drop: true, dup: true, zero_sized: false];
+type GasBuiltin = GasBuiltin [storable: true, drop: false, dup: false, zero_sized: false];
+
+libfunc disable_ap_tracking = disable_ap_tracking;
+libfunc withdraw_gas = withdraw_gas;
+libfunc branch_align = branch_align;
+libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
+libfunc store_temp<GasBuiltin> = store_temp<GasBuiltin>;
+libfunc function_call<user@test::withdraw_gas> = function_call<user@test::withdraw_gas>;
+libfunc struct_construct<Unit> = struct_construct<Unit>;
+libfunc enum_init<core::option::Option::<()>, 1> = enum_init<core::option::Option::<()>, 1>;
+libfunc store_temp<core::option::Option::<()>> = store_temp<core::option::Option::<()>>;
+
+disable_ap_tracking() -> (); // 0
+withdraw_gas([0], [1]) { fallthrough([2], [3]) 7([4], [5]) }; // 1
+branch_align() -> (); // 2
+store_temp<RangeCheck>([2]) -> ([2]); // 3
+store_temp<GasBuiltin>([3]) -> ([3]); // 4
+function_call<user@test::withdraw_gas>([2], [3]) -> ([6], [7], [8]); // 5
+return([6], [7], [8]); // 6
+branch_align() -> (); // 7
+struct_construct<Unit>() -> ([9]); // 8
+enum_init<core::option::Option::<()>, 1>([9]) -> ([10]); // 9
+store_temp<RangeCheck>([4]) -> ([4]); // 10
+store_temp<GasBuiltin>([5]) -> ([5]); // 11
+store_temp<core::option::Option::<()>>([10]) -> ([10]); // 12
+return([4], [5], [10]); // 13
+
+test::withdraw_gas@0([0]: RangeCheck, [1]: GasBuiltin) -> (RangeCheck, GasBuiltin, core::option::Option::<()>);"
+
+aegis_spec "test::withdraw_gas" :=
+  fun m _ _ _ _ ρ =>
+  m.costs id!"test::withdraw_gas" = 0 ∧ ρ.isLeft ∨ 0 < m.costs id!"test::withdraw_gas" ∧ ρ.isRight
+
+aegis_prove "test::withdraw_gas" :=
+  fun m _ g _ g' ρ => by
+  unfold «spec_test::withdraw_gas»
+  rintro ⟨x,(⟨-,h₂,rfl⟩|⟨h,rfl⟩)⟩
+  · rcases h₂ with (⟨h₂,h₃⟩|⟨h₂,h₃⟩)
+    · left; aesop
+    · right; aesop
+  · right; simp only [Sum.isRight_inr, and_true]; linarith
+
 aegis_load_string "type GasBuiltin = GasBuiltin [storable: true, drop: false, dup: false, zero_sized: false];
 type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
 type Snapshot<Array<felt252>> = Snapshot<Array<felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
@@ -537,7 +583,7 @@ test::caller@3([0]: GasBuiltin, [1]: RangeCheck, [2]: System) -> (GasBuiltin, Sy
 "
 
 aegis_spec "test::trivial_contract" :=
-  fun m _ s _ _ s' ρ =>
+  fun _ _ _ _ _ _ ρ =>
   ρ = .inl [42]
 
 aegis_spec "test::caller" :=
