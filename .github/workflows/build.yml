@@ -1,6 +1,8 @@
-name: Build
-run-name: Building sierra-lean
-on: [push]
+name: Build & test
+run-name: Testing Aegis
+on:
+  - push
+  - pull_request
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,3 +19,5 @@ jobs:
         run: nix-shell -p elan --run "lake exe cache get"
       - name: Build the framework
         run: nix-shell -p elan --run "lake build"
+      - name: Verify the expected output of our tests
+        run: nix-shell -p elan --run "diff -u Aegis/Tests/Test.expected.out <(lake env lean Aegis/Tests/Test.lean)"
