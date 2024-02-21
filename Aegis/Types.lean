@@ -354,3 +354,31 @@ structure ContractCallData where
   (implicits : List ContractCallImplicit)
 
 instance : Inhabited ContractCallData := ⟨default, default, default, []⟩
+
+/- Make `Identifier` and `Parameter` quotable. -/
+mutual
+
+partial def Parameter.quote : Parameter → Q(Parameter)
+| .identifier i => q(.identifier $(Identifier.quote i))
+| .const n => q(.const $n)
+| .usertype i => q(.usertype $(Identifier.quote i))
+| .userfunc i => q(.userfunc $(Identifier.quote i))
+| .libfunc i => q(.libfunc $(Identifier.quote i))
+| .tuple ps => ParameterList.quote ps
+
+partial def ParameterList.quote : List Parameter → Q(List Parameter)
+| [] => q([])
+| p::ps => q($(Parameter.quote p) :: $(ParameterList.quote ps))
+
+partial def Identifier.quote : Identifier → Q(Identifier)
+| .ref n => q(.ref $n)
+| .name n ps tl => q(.name $n $(ParameterList.quote ps) $(OptionIdentifier.quote tl))
+
+partial def OptionIdentifier.quote : Option Identifier → Q(Option Identifier)
+| .none => q(.none)
+| .some i => q(.some $(Identifier.quote i))
+
+end
+
+instance : ToExpr Identifier := ⟨Identifier.quote, q(Identifier)⟩
+instance : ToExpr Parameter := ⟨Parameter.quote, q(Parameter)⟩
