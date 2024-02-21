@@ -343,11 +343,14 @@ instance : Inhabited FuncData := ⟨{ }⟩
 for a registered contract call -/
 structure ContractCallImplicit where
   (type : SierraType)
-  (pre : Q($type.toQuote))
-  (post : Q($type.toQuote))
+  (pre : Expr)
+  (post : Expr)
 
 /-- A structure containing the data necessary to pin a contract call to a specific Sierra id -/
 structure ContractCallData where
-  (contractAddress : ContractAddress)
-  (selector : F)
+  (ident : Identifier)
+  (contractAddress : Q(ContractAddress))
+  (selector : Q(F))
   (implicits : List ContractCallImplicit)
+
+instance : Inhabited ContractCallData := ⟨default, default, default, []⟩

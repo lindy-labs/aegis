@@ -1,4 +1,5 @@
 import Aegis.Analyzer
+import Lean.ToExpr
 
 open Lean Meta Elab Command Qq
 
@@ -101,13 +102,11 @@ initialize sierraSoundness : SimplePersistentEnvExtension (Identifier × Name)
     addImportedFn := fun ⟨pss⟩ => (HashMap.ofList (pss.map Array.toList).join)
   }
 
-initialize sierraContractCalls : SimplePersistentEnvExtension (Identifier × ContractCallData)
-    (HashMap (Nat × Nat) (Identifier × List ContractCallImplicit)) ←
+initialize sierraContractCalls : SimplePersistentEnvExtension ContractCallData
+    (List ContractCallData) ←
   registerSimplePersistentEnvExtension {
-    addEntryFn := fun specs (i, ⟨addr, sel, impl⟩) => specs.insert (addr.val, sel.val) (i, impl)
-    addImportedFn :=
-      let f ds := (ds.map fun (i, ⟨addr, sel, impl⟩) => ((addr.val, sel.val), (i, impl))).toList
-      fun ⟨pss⟩ => (HashMap.ofList (pss.map f).join)
+    addEntryFn := fun specs cd => cd::specs
+    addImportedFn := fun _ => []
   }
 
 /- Provide elaboration functions for the commands -/
@@ -183,8 +182,9 @@ elab "aegis_prove" name:str val:declVal : command => do
       liftTermElabM do
         let specs := sierraSpecs.getState env
         let specs := HashMap.ofList <| specs.toList.map fun (i, n, pfd) => (i, n, pfd.unpersist)
-        let type ← withLocalDeclsD (← getLocalDeclInfosOfName specs sf i) fun fvs => do
-          let ioArgs := fvs[:fvs.size - 1]
+        let contractCalls := sierraContractCalls.getState env
+        let type ← withLocalDeclsD (← getLocalDeclInfosOfName specs contractCalls sf i) fun fvs => do
+          let ioArgs := fvs[:fvs.size - 1 - contractCalls.length]
           let .some (specName, _) := (sierraSpecs.getState env).find? i
             | throwError "Could not find manual specification for {i}"
           mkForallFVars fvs <| ← mkAppM specName ioArgs
@@ -199,7 +199,10 @@ elab "aegis_prove" name:str val:declVal : command => do
                                 value := val
                                 hints := default
                                 safety := default }
+        -- Add to list of soundness proofs
         modifyEnv (sierraSoundness.addEntry · (i, name))
+        -- Remove used contract call hypotheses
+        modifyEnv (sierraContractCalls.setState · [])
   | .error str => throwError toString str
 
 elab "aegis_complete" : command => do
@@ -212,10 +215,29 @@ elab "aegis_complete" : command => do
     "Soundness proof not provided for the following {missingDecls.size} declarations: {missingDecls}"
   modifyEnv (loadedSierraFile.addEntry · default)  -- remove saved Sierra file after the command
 
-elab "aegis_register_contract_call" id:str addr:num sel:num : command => do
+
+def parseCallImplicit : TSyntax `ident → CommandElabM SierraType
+| `(Pedersen)      => pure .Pedersen
+| `(BuiltinCosts)  => pure .BuiltinCosts
+| `(GasBuiltin)    => pure .GasBuiltin
+| `(Bitwise)       => pure .Bitwise
+| _ => throwError "could not parse contract call implicit"
+
+def aegis_register_contract_call_aux1 (n : Nat) : Q(ContractAddress) := q($n)
+
+def aegis_register_contract_call_aux2 (n : Nat) : Q(F) := q($n)
+
+elab "aegis_use_contract_call" id:str addr:num sel:num "[" impls:ident,* "]" : command => do
   let .ok id ← liftCoreM <| parseIdentifier id.getString
     | throwError "could not parse {id.getString} as Sierra identifier"
-  let addr := addr.getNat
-  let sel := sel.getNat
-  let data := { contractAddress := addr, selector := sel, implicits := [] }
-  modifyEnv (sierraContractCalls.addEntry · (id, data))
+  let addr : Q(ContractAddress) := aegis_register_contract_call_aux1 addr.getNat
+  let sel : Q(F) := aegis_register_contract_call_aux2 sel.getNat
+  let impls ← impls.getElems.mapM parseCallImplicit
+  let impls := impls.toList.map fun t => { type := t,
+                                            pre := q(0 : Nat),
+                                            post := q(0 : Nat) }  -- TODO exchange `0` for actual values
+  let data : ContractCallData := { ident := id,
+                                   contractAddress := addr,
+                                   selector := sel,
+                                   implicits := impls }
+  modifyEnv (sierraContractCalls.addEntry · data)
