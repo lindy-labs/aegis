@@ -3,3 +3,5 @@ lake-manifest.json
 /lean_packages/*
 !/lean_packages/manifest.json
 /lake-packages/*
+.lake
+*.olean
