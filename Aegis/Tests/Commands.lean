@@ -6,7 +6,6 @@ aegis_load_file "ternary_add.sierra"
 
 aegis_info "ternary_add"
 
-
 aegis_spec "ternary_add" := fun _ a b c ρ => ρ = a + b + c
 
 aegis_prove "ternary_add" := fun _ a b c ρ => by rintro rfl; rfl
@@ -586,8 +585,11 @@ aegis_spec "test::trivial_contract" :=
   fun _ _ _ _ _ _ ρ =>
   ρ = .inl [42]
 
+aegis_info "test::caller"
+
 aegis_spec "test::caller" :=
-  fun _ _ _ _ _ _ _ => True
+  fun _ _ _ _ _ _ _ =>
+  True
 
 aegis_use_contract_call "test::trivial_contract" 42 42 [GasBuiltin]
 

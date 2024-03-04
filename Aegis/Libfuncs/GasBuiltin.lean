@@ -14,8 +14,6 @@ def withdraw_gas_all : FuncData where
                  condition := fun _ (g c : Q(Nat)) _ (_ : Q(Nat)) =>
                    q($g < $c) }]  -- TODO maybe we have `$g' = $g`, but that's just guesswork
 
-#check Metadata.costs
-
 def withdraw_gas : FuncData where
   inputTypes := [.RangeCheck, .GasBuiltin]
   branches := [{ outputTypes := [.RangeCheck, .GasBuiltin]

@@ -271,8 +271,6 @@ def getLocalDeclInfos (ident : Identifier) (pc : ℕ) (inputArgs : List (ℕ × 
     pure <| mkAppN e <| h_args.extract 0 (h_args.size - contractCalls.length)
   return ret
 
-#check Expr
-
 def getLocalDeclInfosOfName (sf : SierraFile) (ident : Identifier) :
     MetaM (Array (Name × (Array Expr → Elab.Term.TermElabM Expr))) :=
   withFindByIdentifier sf ident <| getLocalDeclInfos sf specs contractCalls ident

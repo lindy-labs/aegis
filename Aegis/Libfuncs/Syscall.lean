@@ -46,7 +46,8 @@ def storage_read_syscall : FuncData where
                  condition := fun _ (s : Q(System)) _ (a : Q(StorageAddress))
                    _ (s' : Q(System)) (v : Q(F)) =>
                      let m : Q(Metadata) := .fvar metadataRef
-                     q(($(s).contracts $(m).contractAddress).storage $a = $v ∧ $s' = $s) },
+                     let ca : Q(F) := q($(m).contractAddress.cast)
+                     q(($(s).contracts $ca).storage $a = $v ∧ $s' = $s) },
                { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
                  condition := fun _ (sys : Q(System)) _ _
                    _ (sys' : Q(System)) _ => q($sys' = $sys) }]
@@ -57,7 +58,8 @@ def storage_write_syscall : FuncData where
                  condition := fun _ (s : Q(System)) _ (a : Q(StorageAddress)) (v : Q(F))
                    _ (s' : Q(System)) =>
                      let m : Q(Metadata) := .fvar metadataRef
-                     q($s' = ($s).writeStorage ($m).contractAddress $a $v) },
+                     let ca : Q(F) := q($(m).contractAddress.cast)
+                     q($s' = ($s).writeStorage $ca $a $v) },
                { outputTypes := [.GasBuiltin, .System, .Array .Felt252]
                  condition := fun _ (sys : Q(System)) _ _ _ _ (sys' : Q(System)) _ =>
                    q($sys' = $sys) }]

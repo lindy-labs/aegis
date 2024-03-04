@@ -1,5 +1,6 @@
 import Aegis.Analyzer
 import Lean.ToExpr
+import Lean.Elab.Binders
 
 open Lean Meta Elab Command Qq
 
@@ -57,11 +58,11 @@ def PersistantFuncData.unpersist (pfd : PersistantFuncData) (fv : FVarId) : Func
 /-- Copied from Lean.Elab.MutualDef -/
 private def declValToTerm (declVal : Syntax) : MacroM Syntax := withRef declVal do
   if declVal.isOfKind ``Parser.Command.declValSimple then
-    Term.expandWhereDeclsOpt declVal[2] declVal[1]
+    Term.expandWhereDeclsOpt declVal[3] declVal[1]
   else if declVal.isOfKind ``Parser.Command.declValEqns then
     Term.expandMatchAltsWhereDecls declVal[0]
-  -- else if declVal.isOfKind ``Parser.Command.whereStructInst then
-  --   expandWhereStructInst declVal
+  --else if declVal.isOfKind ``Parser.Command.whereStructInst then
+  --  Term.expandWhereStructInst declVal
   else if declVal.isMissing then
     Macro.throwErrorAt declVal "declaration body is missing"
   else
@@ -138,7 +139,6 @@ elab "aegis_info" name:str : command => do  -- TODO change from `str` to `ident`
     dbg_trace "Output types: {outputs}"
     return ()
   | .error str => throwError toString str
-
 
 elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `str` to `ident`
   let env ← getEnv
