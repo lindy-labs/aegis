@@ -23,7 +23,14 @@ def u256_safe_divmod : FuncData where
                      ∧ U128_MOD * $(mod).2.val + $(mod).1.val =
                        (U128_MOD * $(a).2.val + $(a).1.val) % (U128_MOD * $(b).2.val + $(b).1.val)) }]
 
+def u256_sqrt : FuncData where
+  inputTypes := [.RangeCheck, .Struct [.U128, .U128]]
+  branches := [{ outputTypes := [.RangeCheck, .U128]
+                 condition := fun _ (a : Q(UInt128 × UInt128)) _ (ρ : Q(UInt128)) =>
+                   q($(ρ).val * $(ρ).val = U128_MOD * $(a).2.val + $(a).1.val) }]
+
 def uint256Libfuncs : Identifier → Option FuncData
 | .name "u256_is_zero" [] .none => u256_is_zero
 | .name "u256_safe_divmod" [] .none => u256_safe_divmod
+| .name "u256_sqrt" [] .none => u256_sqrt
 | _ => .none

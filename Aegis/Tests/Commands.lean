@@ -502,6 +502,30 @@ aegis_prove "test::withdraw_gas" :=
     · right; aesop
   · right; simp only [Sum.isRight_inr, and_true]; linarith
 
+aegis_load_string "type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
+type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
+type core::integer::u256 = Struct<ut@core::integer::u256, u128, u128> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc u256_sqrt = u256_sqrt;
+libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
+libfunc store_temp<u128> = store_temp<u128>;
+
+u256_sqrt([0], [1]) -> ([2], [3]); // 0
+store_temp<RangeCheck>([2]) -> ([2]); // 1
+store_temp<u128>([3]) -> ([3]); // 2
+return([2], [3]); // 3
+
+test::u256_sqrt@0([0]: RangeCheck, [1]: core::integer::u256) -> (RangeCheck, u128);"
+
+aegis_spec "test::u256_sqrt" :=
+  fun _ _ a _ ρ =>
+  ρ.val * ρ.val = U128_MOD * a.2.val + a.1.val
+
+aegis_prove "test::u256_sqrt" :=
+  fun _ _ a _ ρ => by
+  unfold «spec_test::u256_sqrt»
+  aesop
+
 aegis_load_string "type GasBuiltin = GasBuiltin [storable: true, drop: false, dup: false, zero_sized: false];
 type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
 type Snapshot<Array<felt252>> = Snapshot<Array<felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
