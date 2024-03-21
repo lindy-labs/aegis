@@ -1,0 +1,9 @@
+type Box<test::Empty> = Box<test::Empty> [storable: true, drop: true, dup: true, zero_sized: false];
+type test::Empty = Struct<ut@test::Empty> [storable: true, drop: true, dup: true, zero_sized: true];
+
+libfunc unbox<test::Empty> = unbox<test::Empty>;
+
+unbox<test::Empty>([0]) -> ([1]); // 0
+return([1]); // 1
+
+test::foo@0([0]: Box<test::Empty>) -> (test::Empty);

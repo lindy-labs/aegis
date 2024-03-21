@@ -1,0 +1,43 @@
+type Array<u64> = Array<u64> [storable: true, drop: true, dup: false, zero_sized: false];
+type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
+type core::integer::u256 = Struct<ut@core::integer::u256, u128, u128> [storable: true, drop: true, dup: true, zero_sized: false];
+type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>> = Enum<ut@core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>, core::integer::u256, Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
+type u64 = u64 [storable: true, drop: true, dup: true, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type System = System [storable: true, drop: false, dup: false, zero_sized: false];
+type GasBuiltin = GasBuiltin [storable: true, drop: false, dup: false, zero_sized: false];
+type Snapshot<Array<u64>> = Snapshot<Array<u64>> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::array::Span::<core::integer::u64> = Struct<ut@core::array::Span::<core::integer::u64>, Snapshot<Array<u64>>> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc snapshot_take<Array<u64>> = snapshot_take<Array<u64>>;
+libfunc drop<Array<u64>> = drop<Array<u64>>;
+libfunc struct_construct<core::array::Span::<core::integer::u64>> = struct_construct<core::array::Span::<core::integer::u64>>;
+libfunc store_temp<core::array::Span::<core::integer::u64>> = store_temp<core::array::Span::<core::integer::u64>>;
+libfunc keccak_syscall = keccak_syscall;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>, 0> = enum_init<core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>, 0>;
+libfunc store_temp<GasBuiltin> = store_temp<GasBuiltin>;
+libfunc store_temp<System> = store_temp<System>;
+libfunc store_temp<core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>> = store_temp<core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>>;
+libfunc enum_init<core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>, 1> = enum_init<core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>, 1>;
+
+snapshot_take<Array<u64>>([2]) -> ([3], [4]); // 0
+drop<Array<u64>>([3]) -> (); // 1
+struct_construct<core::array::Span::<core::integer::u64>>([4]) -> ([5]); // 2
+store_temp<core::array::Span::<core::integer::u64>>([5]) -> ([5]); // 3
+keccak_syscall([0], [1], [5]) { fallthrough([6], [7], [8]) 11([9], [10], [11]) }; // 4
+branch_align() -> (); // 5
+enum_init<core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>, 0>([8]) -> ([12]); // 6
+store_temp<GasBuiltin>([6]) -> ([6]); // 7
+store_temp<System>([7]) -> ([7]); // 8
+store_temp<core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>>([12]) -> ([12]); // 9
+return([6], [7], [12]); // 10
+branch_align() -> (); // 11
+enum_init<core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>, 1>([11]) -> ([13]); // 12
+store_temp<GasBuiltin>([9]) -> ([9]); // 13
+store_temp<System>([10]) -> ([10]); // 14
+store_temp<core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>>([13]) -> ([13]); // 15
+return([9], [10], [13]); // 16
+
+test::foo@0([0]: GasBuiltin, [1]: System, [2]: Array<u64>) -> (GasBuiltin, System, core::result::Result::<core::integer::u256, core::array::Array::<core::felt252>>);

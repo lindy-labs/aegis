@@ -1,0 +1,11 @@
+type test::Empty = Struct<ut@test::Empty> [storable: true, drop: true, dup: true, zero_sized: true];
+type Box<test::Empty> = Box<test::Empty> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc struct_construct<test::Empty> = struct_construct<test::Empty>;
+libfunc into_box<test::Empty> = into_box<test::Empty>;
+
+struct_construct<test::Empty>() -> ([0]); // 0
+into_box<test::Empty>([0]) -> ([1]); // 1
+return([1]); // 2
+
+test::foo@0() -> (Box<test::Empty>);

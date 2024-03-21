@@ -1,0 +1,28 @@
+type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
+type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
+type Tuple<u128, u128> = Struct<ut@Tuple, u128, u128> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::integer::U128sFromFelt252Result = Enum<ut@core::integer::U128sFromFelt252Result, u128, Tuple<u128, u128>> [storable: true, drop: true, dup: true, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc u128s_from_felt252 = u128s_from_felt252;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::integer::U128sFromFelt252Result, 0> = enum_init<core::integer::U128sFromFelt252Result, 0>;
+libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
+libfunc store_temp<core::integer::U128sFromFelt252Result> = store_temp<core::integer::U128sFromFelt252Result>;
+libfunc struct_construct<Tuple<u128, u128>> = struct_construct<Tuple<u128, u128>>;
+libfunc enum_init<core::integer::U128sFromFelt252Result, 1> = enum_init<core::integer::U128sFromFelt252Result, 1>;
+
+u128s_from_felt252([0], [1]) { fallthrough([2], [3]) 6([4], [5], [6]) }; // 0
+branch_align() -> (); // 1
+enum_init<core::integer::U128sFromFelt252Result, 0>([3]) -> ([7]); // 2
+store_temp<RangeCheck>([2]) -> ([2]); // 3
+store_temp<core::integer::U128sFromFelt252Result>([7]) -> ([7]); // 4
+return([2], [7]); // 5
+branch_align() -> (); // 6
+struct_construct<Tuple<u128, u128>>([5], [6]) -> ([8]); // 7
+enum_init<core::integer::U128sFromFelt252Result, 1>([8]) -> ([9]); // 8
+store_temp<RangeCheck>([4]) -> ([4]); // 9
+store_temp<core::integer::U128sFromFelt252Result>([9]) -> ([9]); // 10
+return([4], [9]); // 11
+
+test::foo@0([0]: RangeCheck, [1]: felt252) -> (RangeCheck, core::integer::U128sFromFelt252Result);

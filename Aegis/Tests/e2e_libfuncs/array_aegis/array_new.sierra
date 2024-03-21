@@ -1,0 +1,11 @@
+type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc array_new<felt252> = array_new<felt252>;
+libfunc store_temp<Array<felt252>> = store_temp<Array<felt252>>;
+
+array_new<felt252>() -> ([0]); // 0
+store_temp<Array<felt252>>([0]) -> ([0]); // 1
+return([0]); // 2
+
+test::foo@0() -> (Array<felt252>);

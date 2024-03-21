@@ -1,0 +1,11 @@
+type i8 = i8 [storable: true, drop: true, dup: true, zero_sized: false];
+type i16 = i16 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc i8_wide_mul = i8_wide_mul;
+libfunc store_temp<i16> = store_temp<i16>;
+
+i8_wide_mul([0], [1]) -> ([2]); // 0
+store_temp<i16>([2]) -> ([2]); // 1
+return([2]); // 2
+
+test::foo@0([0]: i8, [1]: i8) -> (i16);

@@ -1,0 +1,12 @@
+type Box<felt252> = Box<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+type Nullable<felt252> = Nullable<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc nullable_from_box<felt252> = nullable_from_box<felt252>;
+libfunc store_temp<Nullable<felt252>> = store_temp<Nullable<felt252>>;
+
+nullable_from_box<felt252>([0]) -> ([1]); // 0
+store_temp<Nullable<felt252>>([1]) -> ([1]); // 1
+return([1]); // 2
+
+test::foo@0([0]: Box<felt252>) -> (Nullable<felt252>);

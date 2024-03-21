@@ -1,0 +1,13 @@
+type Bitwise = Bitwise [storable: true, drop: false, dup: false, zero_sized: false];
+type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc u128_byte_reverse = u128_byte_reverse;
+libfunc store_temp<Bitwise> = store_temp<Bitwise>;
+libfunc store_temp<u128> = store_temp<u128>;
+
+u128_byte_reverse([0], [1]) -> ([2], [3]); // 0
+store_temp<Bitwise>([2]) -> ([2]); // 1
+store_temp<u128>([3]) -> ([3]); // 2
+return([2], [3]); // 3
+
+test::foo@0([0]: Bitwise, [1]: u128) -> (Bitwise, u128);

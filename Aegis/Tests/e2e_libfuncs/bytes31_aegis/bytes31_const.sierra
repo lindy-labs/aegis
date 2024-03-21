@@ -1,0 +1,10 @@
+type bytes31 = bytes31 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc bytes31_const<256> = bytes31_const<256>;
+libfunc store_temp<bytes31> = store_temp<bytes31>;
+
+bytes31_const<256>() -> ([0]); // 0
+store_temp<bytes31>([0]) -> ([0]); // 1
+return([0]); // 2
+
+test::foo@0() -> (bytes31);

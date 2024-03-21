@@ -1,0 +1,30 @@
+type GasBuiltin = GasBuiltin [storable: true, drop: false, dup: false, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type core::result::Result::<core::felt252, core::array::Array::<core::felt252>> = Enum<ut@core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, felt252, Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
+type u64 = u64 [storable: true, drop: true, dup: true, zero_sized: false];
+type System = System [storable: true, drop: false, dup: false, zero_sized: false];
+
+libfunc get_block_hash_syscall = get_block_hash_syscall;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 0> = enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 0>;
+libfunc store_temp<GasBuiltin> = store_temp<GasBuiltin>;
+libfunc store_temp<System> = store_temp<System>;
+libfunc store_temp<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>> = store_temp<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>>;
+libfunc enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 1> = enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 1>;
+
+get_block_hash_syscall([0], [1], [2]) { fallthrough([3], [4], [5]) 7([6], [7], [8]) }; // 0
+branch_align() -> (); // 1
+enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 0>([5]) -> ([9]); // 2
+store_temp<GasBuiltin>([3]) -> ([3]); // 3
+store_temp<System>([4]) -> ([4]); // 4
+store_temp<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>>([9]) -> ([9]); // 5
+return([3], [4], [9]); // 6
+branch_align() -> (); // 7
+enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 1>([8]) -> ([10]); // 8
+store_temp<GasBuiltin>([6]) -> ([6]); // 9
+store_temp<System>([7]) -> ([7]); // 10
+store_temp<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>>([10]) -> ([10]); // 11
+return([6], [7], [10]); // 12
+
+test::foo@0([0]: GasBuiltin, [1]: System, [2]: u64) -> (GasBuiltin, System, core::result::Result::<core::felt252, core::array::Array::<core::felt252>>);

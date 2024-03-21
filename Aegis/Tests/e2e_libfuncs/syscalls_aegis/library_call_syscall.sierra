@@ -1,0 +1,32 @@
+type GasBuiltin = GasBuiltin [storable: true, drop: false, dup: false, zero_sized: false];
+type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type Snapshot<Array<felt252>> = Snapshot<Array<felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::array::Span::<core::felt252> = Struct<ut@core::array::Span::<core::felt252>, Snapshot<Array<felt252>>> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>> = Enum<ut@core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, core::array::Span::<core::felt252>, Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type ClassHash = ClassHash [storable: true, drop: true, dup: true, zero_sized: false];
+type System = System [storable: true, drop: false, dup: false, zero_sized: false];
+
+libfunc library_call_syscall = library_call_syscall;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 0> = enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 0>;
+libfunc store_temp<GasBuiltin> = store_temp<GasBuiltin>;
+libfunc store_temp<System> = store_temp<System>;
+libfunc store_temp<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>> = store_temp<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>>;
+libfunc enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 1> = enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 1>;
+
+library_call_syscall([0], [1], [2], [3], [4]) { fallthrough([5], [6], [7]) 7([8], [9], [10]) }; // 0
+branch_align() -> (); // 1
+enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 0>([7]) -> ([11]); // 2
+store_temp<GasBuiltin>([5]) -> ([5]); // 3
+store_temp<System>([6]) -> ([6]); // 4
+store_temp<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>>([11]) -> ([11]); // 5
+return([5], [6], [11]); // 6
+branch_align() -> (); // 7
+enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 1>([10]) -> ([12]); // 8
+store_temp<GasBuiltin>([8]) -> ([8]); // 9
+store_temp<System>([9]) -> ([9]); // 10
+store_temp<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>>([12]) -> ([12]); // 11
+return([8], [9], [12]); // 12
+
+test::foo@0([0]: GasBuiltin, [1]: System, [2]: ClassHash, [3]: felt252, [4]: core::array::Span::<core::felt252>) -> (GasBuiltin, System, core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>);

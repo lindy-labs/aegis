@@ -1,0 +1,11 @@
+type ContractAddress = ContractAddress [storable: true, drop: true, dup: true, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc contract_address_to_felt252 = contract_address_to_felt252;
+libfunc store_temp<felt252> = store_temp<felt252>;
+
+contract_address_to_felt252([0]) -> ([1]); // 0
+store_temp<felt252>([1]) -> ([1]); // 1
+return([1]); // 2
+
+test::foo@0([0]: ContractAddress) -> (felt252);

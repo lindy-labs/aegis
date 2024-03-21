@@ -1,0 +1,20 @@
+type i64 = i64 [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<i64> = NonZero<i64> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc i64_is_zero = i64_is_zero;
+libfunc branch_align = branch_align;
+libfunc i64_const<123> = i64_const<123>;
+libfunc store_temp<i64> = store_temp<i64>;
+libfunc unwrap_non_zero<i64> = unwrap_non_zero<i64>;
+
+i64_is_zero([0]) { fallthrough() 5([1]) }; // 0
+branch_align() -> (); // 1
+i64_const<123>() -> ([2]); // 2
+store_temp<i64>([2]) -> ([2]); // 3
+return([2]); // 4
+branch_align() -> (); // 5
+unwrap_non_zero<i64>([1]) -> ([3]); // 6
+store_temp<i64>([3]) -> ([3]); // 7
+return([3]); // 8
+
+test::foo@0([0]: i64) -> (i64);
