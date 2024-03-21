@@ -232,7 +232,7 @@ def buildContractCallHyp (metadataRef : FVarId) (cd : ContractCallData) : MetaM 
         let cond := mkApp cond d
         withLocalDeclsD impls fun outputImpls =>
           let cond := mkAppN cond outputImpls
-          withLocalDeclD `s' q(System) fun s' =>
+          withLocalDeclD `s' q(System) fun s' => do
             let cond := mkApp cond s'
             let cr := q($(m).callResult $addr $sel)
             let caller := q($(m).contractAddress)
@@ -242,7 +242,8 @@ def buildContractCallHyp (metadataRef : FVarId) (cd : ContractCallData) : MetaM 
             let sumInl : Q(List F → List F ⊕ Unit × List F) := q(Sum.inl)
             let cond := mkApp cond <| mkApp sumInl <| .proj `Prod 0 cr
             -- Add Statement about post-call system state
-            let cond := mkAnd cond <| Sierra.Expr.mkEq q(System) s' <| .proj `Prod 1 cr
+            let systemCond := Sierra.Expr.mkEq q(System) s' <| .proj `Prod 1 cr
+            let cond ← mkArrow systemCond cond
             mkForallFVars (inputImpls ++ [s, d] ++ outputImpls ++ [s']) cond
 
 def getLocalDeclInfos (ident : Identifier) (pc : ℕ) (inputArgs : List (ℕ × Identifier))
