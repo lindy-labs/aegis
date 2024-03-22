@@ -97,6 +97,18 @@ def array_snapshot_pop_back (t : SierraType) : FuncData where
                  condition := fun (a ρ : Q(List $(⟦t⟧))) =>
                    q($a = [] ∧ $ρ = []) }]
 
+def array_slice (t : SierraType) : FuncData where
+  inputTypes := [.RangeCheck, .Snapshot (.Array t), .U32, .U32]
+  branches := [{ outputTypes := [.RangeCheck, .Array t],
+                 condition := fun _ (a : Q(List $t.toQuote)) (i j : Q(Sierra.UInt32))
+                   _ (ρ : Q(List $t.toQuote)) =>
+                   q($(i).val ≤ $(j).val
+                     ∧ $(j).val ≤ $(a).length
+                     ∧ $ρ = $(a).toArray[$(i).val:$(j).val].toArray.toList) },
+               { outputTypes := [.RangeCheck],
+                 condition := fun _ (a : Q(List $t.toQuote)) (i j : Q(Sierra.UInt32)) _ =>
+                   q(($(j).val < $(i).val ∨ $(a).length < $(j).val)) }]
+
 def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "array_new" [.identifier ident] .none =>
   return array_new (← typeRefs.find? ident)
@@ -114,4 +126,6 @@ def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Op
   return array_pop_front_consume metadataRef (← typeRefs.find? ident)
 | .name "array_snapshot_pop_back" [.identifier ident] .none =>
   return array_snapshot_pop_back metadataRef (← typeRefs.find? ident)
+| .name "array_slice" [.identifier ident] .none =>
+  return array_slice (← typeRefs.find? ident)
 | _ => .none
