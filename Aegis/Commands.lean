@@ -110,6 +110,12 @@ initialize sierraContractCalls : SimplePersistentEnvExtension ContractCallData
     addImportedFn := fun _ => []
   }
 
+def getSierraFile : CommandElabM SierraFile := do
+  let env ← getEnv
+  match loadedSierraFile.getState env with
+  | .some sf => return sf
+  | _ => throwError "No Sierra file given"
+
 /- Provide elaboration functions for the commands -/
 
 def sierraLoadString (s : String) : CommandElabM Unit := do
@@ -129,8 +135,7 @@ elab "aegis_load_file " path:term : command => do
   sierraLoadString str
 
 elab "aegis_info" name:str : command => do  -- TODO change from `str` to `ident`
-  let env ← getEnv
-  let sf := (loadedSierraFile.getState env).get!
+  let sf ← getSierraFile
   match ← liftCoreM <| parseIdentifier name.getString with
   | .ok i => do
     withFindByIdentifier sf i fun pc inputs outputs =>
@@ -141,15 +146,14 @@ elab "aegis_info" name:str : command => do  -- TODO change from `str` to `ident`
   | .error str => throwError toString str
 
 elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `str` to `ident`
-  let env ← getEnv
-  let sf := (loadedSierraFile.getState env).get!
+  let sf ← getSierraFile
   let typeDefs ← match buildTypeDefs sf.typedefs with
   | .ok x => pure x
   | .error err => throwError err
   let val ← liftMacroM <| declValToTerm val
   match ← liftCoreM <| parseIdentifier name.getString with
   | .ok i =>
-    if (sierraSpecs.getState env).contains i then
+    if (sierraSpecs.getState (← getEnv)).contains i then
       throwError "A specification has already been given"
     withRef val do
       liftTermElabM do
@@ -174,7 +178,7 @@ elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `st
 
 elab "aegis_prove" name:str val:declVal : command => do
   let env ← getEnv
-  let sf := (loadedSierraFile.getState env).get!
+  let sf ← getSierraFile
   let val ← liftMacroM <| declValToTerm val
   match ← liftCoreM <| parseIdentifier name.getString with
   | .ok i =>
@@ -207,7 +211,7 @@ elab "aegis_prove" name:str val:declVal : command => do
 
 elab "aegis_complete" : command => do
   let env ← getEnv
-  let sf := (loadedSierraFile.getState env).get!
+  let sf ← getSierraFile
   let mut missingDecls : Array Identifier := #[]
   for (i, _) in sf.declarations do
     unless (sierraSoundness.getState env).contains i do missingDecls := missingDecls.push i
