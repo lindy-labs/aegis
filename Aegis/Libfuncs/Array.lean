@@ -41,14 +41,20 @@ def array_len (t : SierraType) : FuncData where
                  condition := fun (a : Q(List $t.toQuote)) (ρ : Q(UInt32)) =>
                    q($ρ = ($a).length) }]
 
+def array_get_aux (T : Q(Type)) (m' : Q(Option $T)) (i : Q(Nat)) (a : Q(List $T)) : Q(Prop) :=
+  q(∃ ρ', $m' = .some ρ' ∧ $(a).get? $i = .some ρ')
+
 def array_get (t : SierraType) : FuncData where
   inputTypes := [.RangeCheck, .Snapshot (.Array t), .U32]
   branches := [{ outputTypes := [.RangeCheck, .Box t]
-                 condition := fun _ (a : Q(List $t.toQuote)) (i : Q(UInt32)) _ (ρ : Q($t.toQuote)) =>
-                   q(Option.some $ρ = List.get? $a ($i).val) },
+                 condition := fun _ (a : Q(List $t.toQuote)) (i : Q(UInt32)) _ (ρ : Q(Nat)) =>
+                   let m : Q(Metadata) := .fvar metadataRef
+                   let m' : Expr := q($(m).boxHeap $t $ρ)
+                   let p : Q(Prop) := array_get_aux ⟦t⟧ m' q($(i).val) a
+                   q(($i).val < ($a).length ∧ $p) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(List $t.toQuote)) (i : Q(UInt32)) _ =>
-                   q(($i).val ≥ ($a).length) }]
+                   q(($a).length ≤ ($i).val) }]
 
 def array_snapshot_pop_front (t : SierraType) : FuncData where
   inputTypes := [.Snapshot (.Array t)]
@@ -72,7 +78,7 @@ def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Op
 | .name "array_len" [.identifier ident] .none =>
   return array_len (← typeRefs.find? ident)
 | .name "array_get" [.identifier ident] .none =>
-  return array_get (← typeRefs.find? ident)
+  return array_get metadataRef (← typeRefs.find? ident)
 | .name "array_snapshot_pop_front" [.identifier ident] .none =>
   return array_snapshot_pop_front metadataRef (← typeRefs.find? ident)
 | _ => .none
