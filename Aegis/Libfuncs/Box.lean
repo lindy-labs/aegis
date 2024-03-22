@@ -24,6 +24,15 @@ def unbox (t : SierraType) : FuncData where
                    let lhs := mkAppN (mkConst `Option.some [levelZero]) #[t.toQuote, ρ]
                    Expr.mkEq q(Option ($(t).toType)) lhs rhs }]
 
+def box_forward_snapshot (t : SierraType) : FuncData where
+  inputTypes := [.Snapshot (.Box t)]
+  branches := [{ outputTypes := [.Box (.Snapshot t)]
+                 condition := fun (a ρ : Q(Nat)) =>
+                   let m : Q(Metadata) := .fvar metadataRef
+                   let lhs : Expr := q($(m).boxHeap (.Snapshot $t) $ρ)
+                   let rhs : Expr := q($(m).boxHeap $t $a)
+                   Expr.mkEq q(Option ($(t).toType)) lhs rhs }]
+
 def boxLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "into_box" [.identifier ident] _ =>
   match getMuBody <$> typeRefs.find? ident with
@@ -33,4 +42,6 @@ def boxLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Opti
   match getMuBody <$> typeRefs.find? ident with
   | .some t => unbox metadataRef t
   | _ => .none
+| .name "box_forward_snapshot" [.identifier ident] .none =>
+  return box_forward_snapshot metadataRef (← typeRefs.find? ident)
 | _ => .none
