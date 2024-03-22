@@ -82,6 +82,21 @@ def array_pop_front_consume (t : SierraType) : FuncData where
                  condition := fun (a : Q(List $t.toQuote)) =>
                    q($a = []) }]
 
+def array_snapshot_pop_back_aux (T : Q(Type)) (m' : Q(Option $T)) (a ρ₁ : Q(List $T)) : Q(Prop) :=
+  q(∃ ρ₂', $m' = .some ρ₂' ∧ $ρ₁ ++ [ρ₂'] = $a)
+
+def array_snapshot_pop_back (t : SierraType) : FuncData where
+  inputTypes := [.Snapshot (.Array t)]
+  branches := [{ outputTypes := [.Snapshot (.Array t), .Box t]
+                 condition :=
+                   fun a ρ₁ (ρ₂ : Q(Nat)) =>
+                   let m : Q(Metadata) := .fvar metadataRef
+                   let m' : Expr := q($(m).boxHeap $t $ρ₂)
+                   array_snapshot_pop_back_aux ⟦t⟧ m' a ρ₁ },
+               { outputTypes := [.Snapshot (.Array t)]
+                 condition := fun (a ρ : Q(List $(⟦t⟧))) =>
+                   q($a = [] ∧ $ρ = []) }]
+
 def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "array_new" [.identifier ident] .none =>
   return array_new (← typeRefs.find? ident)
@@ -97,4 +112,6 @@ def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Op
   return array_snapshot_pop_front metadataRef (← typeRefs.find? ident)
 | .name "array_pop_front_consume" [.identifier ident] .none =>
   return array_pop_front_consume metadataRef (← typeRefs.find? ident)
+| .name "array_snapshot_pop_back" [.identifier ident] .none =>
+  return array_snapshot_pop_back metadataRef (← typeRefs.find? ident)
 | _ => .none
