@@ -79,6 +79,14 @@ def u8_wide_mul : FuncData where
                  condition := fun (a b : Q(UInt8)) (ρ : Q(UInt16)) =>
                    q($ρ = $(a).cast * $(b).cast) }]
 
+def u8_bitwise : FuncData where
+  inputTypes := [Bitwise, U8, U8]
+  branches := [{ outputTypes := [Bitwise, U8, U8, U8]
+                 condition := fun _ (lhs rhs : Q(UInt8)) _ (and xor or : Q(UInt8)) =>
+                   q($and = (Nat.land $(lhs).val $(rhs).val).cast
+                     ∧ $xor = (Nat.xor $(lhs).val $(rhs).val).cast
+                     ∧ $or = (Nat.lor $(lhs).val $(rhs).val).cast) }]
+
 def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_overflowing_add" [] .none      => u8_overflowing_add
 | .name "u8_overflowing_sub" [] .none      => u8_overflowing_sub
@@ -90,4 +98,5 @@ def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_eq" [] .none                   => u8_eq
 | .name "u8_try_from_felt252" [] .none     => u8_try_from_felt252
 | .name "u8_wide_mul" [] .none             => u8_wide_mul
+| .name "u8_bitwise" [] .none              => u8_bitwise
 | _                                        => .none

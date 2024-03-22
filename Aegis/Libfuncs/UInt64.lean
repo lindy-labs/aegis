@@ -79,6 +79,14 @@ def u64_wide_mul : FuncData where
                  condition := fun (a b : Q(UInt64)) (ρ : Q(UInt128)) =>
                    q($ρ = $(a).cast * $(b).cast) }]
 
+def u64_bitwise : FuncData where
+  inputTypes := [Bitwise, U64, U64]
+  branches := [{ outputTypes := [Bitwise, U64, U64, U64]
+                 condition := fun _ (lhs rhs : Q(UInt64)) _ (and xor or : Q(UInt64)) =>
+                   q($and = (Nat.land $(lhs).val $(rhs).val).cast
+                     ∧ $xor = (Nat.xor $(lhs).val $(rhs).val).cast
+                     ∧ $or = (Nat.lor $(lhs).val $(rhs).val).cast) }]
+
 def uint64Libfuncs : Identifier → Option FuncData
 | .name "u64_overflowing_add" [] .none      => u64_overflowing_add
 | .name "u64_overflowing_sub" [] .none      => u64_overflowing_sub
@@ -90,4 +98,5 @@ def uint64Libfuncs : Identifier → Option FuncData
 | .name "u64_eq" [] .none                   => u64_eq
 | .name "u64_try_from_felt252" [] .none     => u64_try_from_felt252
 | .name "u64_wide_mul" [] .none             => u64_wide_mul
+| .name "u64_bitwise" [] .none              => u64_bitwise
 | _                                         => .none
