@@ -87,6 +87,12 @@ def u8_bitwise : FuncData where
                      ∧ $xor = (Nat.xor $(lhs).val $(rhs).val).cast
                      ∧ $or = (Nat.lor $(lhs).val $(rhs).val).cast) }]
 
+def u8_sqrt : FuncData where
+  inputTypes := [RangeCheck, U8]
+  branches := [{ outputTypes := [RangeCheck, U8]
+                 condition := fun _ (a : Q(UInt8)) _ (ρ : Q(UInt8)) =>
+                   q($ρ * $ρ = $a) }]
+
 def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_overflowing_add" [] .none      => u8_overflowing_add
 | .name "u8_overflowing_sub" [] .none      => u8_overflowing_sub
@@ -99,4 +105,5 @@ def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_try_from_felt252" [] .none     => u8_try_from_felt252
 | .name "u8_wide_mul" [] .none             => u8_wide_mul
 | .name "u8_bitwise" [] .none              => u8_bitwise
+| .name "u8_sqrt" [] .none                 => u8_sqrt
 | _                                        => .none
