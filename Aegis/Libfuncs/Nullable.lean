@@ -29,7 +29,8 @@ def match_nullable (t : SierraType) : FuncData where
                    let m : Q(Metadata) := .fvar metadataRef
                    let t' : Q(Type) := q(Option $(⟦t⟧))
                    let m' : Expr := q($(m).boxHeap $t $ρ)
-                   Expr.mkEq t' a m' }]
+                   let eq : Q(Prop) := Expr.mkEq t' a m'
+                   q($(a).isSome ∧ $eq) }]
 
 def nullableLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "null" [.identifier ident] .none => return null (← typeRefs.find? ident)
