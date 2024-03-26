@@ -21,11 +21,13 @@ def storage_address_from_base_and_offset : FuncData where
                      q($ρ = $(a).cast + $(b).cast) }]
 
 def storage_address_try_from_felt252 : FuncData where
-  inputTypes := [.Felt252]
+  inputTypes := [.RangeCheck, .Felt252]
   branches := [{ outputTypes := [.RangeCheck, .StorageAddress]
-                 condition := fun (a : Q(F)) _ (ρ : Q(StorageAddress)) =>
+                 condition := fun _ (a : Q(F)) _ (ρ : Q(StorageAddress)) =>
                    q($(a).val < ADDRESS_MOD ∧ $ρ = $(a).cast) },
-               { outputTypes := [.RangeCheck] }]
+               { outputTypes := [.RangeCheck]
+                 condition := fun _ (a : Q(F)) _ =>
+                   q(ADDRESS_MOD ≤ $(a).val) }]
 
 def storage_address_from_base : FuncData where
   inputTypes := [.StorageBaseAddress]

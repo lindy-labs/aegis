@@ -2,12 +2,12 @@ import Aegis.Commands
 
 open Sierra
 
-aegis_load_file "../../e2e_libfuncs/contract_address_aegis/contract_address_try_from_felt252.sierra"
+aegis_load_file "../../e2e_libfuncs/storage_address_aegis/storage_address_try_from_felt252.sierra"
 
 aegis_spec "test::foo" :=
   fun _ _ a _ ρ =>
-  a.val < CONTRACT_ADDRESS_MOD ∧ ρ = .inl a.cast
-  ∨ CONTRACT_ADDRESS_MOD ≤ a.val ∧ ρ = .inr ()
+  a.val < ADDRESS_MOD ∧ ρ = .inl a.cast
+  ∨ ADDRESS_MOD ≤ a.val ∧ ρ = .inr ()
 
 aegis_prove "test::foo" :=
   fun _ _ a _ ρ => by
