@@ -61,7 +61,6 @@ def u8_const (n : Q(UInt8)) : FuncData where
 
 def u8_eq : FuncData where
   inputTypes := [U8, U8]
-  -- TODO double check the order of branches
   branches := [{ condition := fun (a b : Q(UInt8)) => q($a ≠ $b) },
                { condition := fun (a b : Q(UInt8)) => q($a = $b) }]
 
@@ -91,7 +90,7 @@ def u8_sqrt : FuncData where
   inputTypes := [RangeCheck, U8]
   branches := [{ outputTypes := [RangeCheck, U8]
                  condition := fun _ (a : Q(UInt8)) _ (ρ : Q(UInt8)) =>
-                   q($ρ * $ρ = $a) }]
+                   q($(ρ).val = $(a).val.sqrt) }]
 
 def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_overflowing_add" [] .none      => u8_overflowing_add
