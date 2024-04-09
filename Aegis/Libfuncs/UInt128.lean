@@ -73,7 +73,6 @@ def u128_const (n : Q(UInt128)) : FuncData where
 
 def u128_eq : FuncData where
   inputTypes := [U128, U128]
-  -- TODO double check the order of branches
   branches := [{ condition := fun (a b : Q(UInt128)) => q($a ≠ $b) },
                { condition := fun (a b : Q(UInt128)) => q($a = $b) }]
 
@@ -84,6 +83,12 @@ def bitwise : FuncData where
                    q($and = (Nat.land $(lhs).val $(rhs).val).cast
                      ∧ $xor = (Nat.xor $(lhs).val $(rhs).val).cast
                      ∧ $or = (Nat.lor $(lhs).val $(rhs).val).cast) }]
+
+def u128_sqrt : FuncData where
+  inputTypes := [RangeCheck, U128]
+  branches := [{ outputTypes := [RangeCheck, U64]
+                 condition := fun _ (a : Q(UInt128)) _ (ρ : Q(UInt64)) =>
+                   q($(ρ).val = $(a).val.sqrt) }]
 
 def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_overflowing_add" [] .none      => u128_overflowing_add
@@ -97,4 +102,5 @@ def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_const" [.const n] .none        => u128_const q($n)
 | .name "u128_eq" [] .none                   => u128_eq
 | .name "bitwise" [] .none                   => bitwise
+| .name "u128_sqrt" [] .none                 => u128_sqrt
 | _                                          => .none
