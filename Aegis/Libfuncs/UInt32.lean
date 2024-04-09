@@ -87,6 +87,12 @@ def u32_bitwise : FuncData where
                      ∧ $xor = (Nat.xor $(lhs).val $(rhs).val).cast
                      ∧ $or = (Nat.lor $(lhs).val $(rhs).val).cast) }]
 
+def u32_sqrt : FuncData where
+  inputTypes := [RangeCheck, U32]
+  branches := [{ outputTypes := [RangeCheck, U16]
+                 condition := fun _ (a : Q(UInt32)) _ (ρ : Q(UInt16)) =>
+                   q($(ρ).val = $(a).val.sqrt) }]
+
 def uint32Libfuncs : Identifier → Option FuncData
 | .name "u32_overflowing_add" [] .none      => u32_overflowing_add
 | .name "u32_overflowing_sub" [] .none      => u32_overflowing_sub
@@ -99,4 +105,5 @@ def uint32Libfuncs : Identifier → Option FuncData
 | .name "u32_try_from_felt252" [] .none     => u32_try_from_felt252
 | .name "u32_wide_mul" [] .none             => u32_wide_mul
 | .name "u32_bitwise" [] .none              => u32_bitwise
+| .name "u32_sqrt" [] .none                 => u32_sqrt
 | _                                         => .none
