@@ -43,9 +43,9 @@ def u128s_from_felt252 : FuncData where
                  condition := fun _ (a : Q(F)) _ (ρ : Q(UInt128)) =>
                    q(($a).val < U128_MOD ∧ $ρ = ($a).cast) },
                { outputTypes := [RangeCheck, U128, U128]
-                 -- TODO check that `ρ_high` and `ρ_low` are really in the correct order
                  condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt128)) =>
-                   q($ρ_high ≠ 0 ∧ U128_MOD * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
+                   q(U128_MOD ≤ ($a).val ∧ $ρ_high = $(a).val % U128_MOD
+                     ∧ $ρ_low = $(a).cast) }]
 
 def u128_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U128, NonZero U128]
