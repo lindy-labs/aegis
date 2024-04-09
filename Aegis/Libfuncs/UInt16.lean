@@ -61,7 +61,6 @@ def u16_const (n : Q(UInt16)) : FuncData where
 
 def u16_eq : FuncData where
   inputTypes := [U16, U16]
-  -- TODO double check the order of branches
   branches := [{ condition := fun (a b : Q(UInt16)) => q($a ≠ $b) },
                { condition := fun (a b : Q(UInt16)) => q($a = $b) }]
 
@@ -87,6 +86,12 @@ def u16_bitwise : FuncData where
                      ∧ $xor = (Nat.xor $(lhs).val $(rhs).val).cast
                      ∧ $or = (Nat.lor $(lhs).val $(rhs).val).cast) }]
 
+def u16_sqrt : FuncData where
+  inputTypes := [RangeCheck, U16]
+  branches := [{ outputTypes := [RangeCheck, U8]
+                 condition := fun _ (a : Q(UInt16)) _ (ρ : Q(UInt8)) =>
+                   q($(ρ).val = $(a).val.sqrt) }]
+
 def uint16Libfuncs : Identifier → Option FuncData
 | .name "u16_overflowing_add" [] .none      => u16_overflowing_add
 | .name "u16_overflowing_sub" [] .none      => u16_overflowing_sub
@@ -99,4 +104,5 @@ def uint16Libfuncs : Identifier → Option FuncData
 | .name "u16_try_from_felt252" [] .none     => u16_try_from_felt252
 | .name "u16_wide_mul" [] .none             => u16_wide_mul
 | .name "u16_bitwise" [] .none              => u16_bitwise
+| .name "u16_sqrt" [] .none                 => u16_sqrt
 | _                                         => .none
