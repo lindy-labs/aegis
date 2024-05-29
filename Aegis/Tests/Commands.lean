@@ -373,7 +373,7 @@ aegis_spec "test::match_nullable" :=
 aegis_prove "test::match_nullable" :=
   fun m a b ρ => by
   unfold «spec_test::match_nullable»
-  rintro ⟨_,(⟨rfl,rfl⟩|⟨rfl,rfl⟩)⟩
+  rintro ⟨_,(⟨rfl,rfl⟩|⟨h,h',h''⟩)⟩
   · aesop
   · aesop
 
