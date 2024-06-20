@@ -1,5 +1,5 @@
 import Mathlib.Data.ZMod.Basic
-import Mathlib.Data.Int.Basic
+import Mathlib.Data.Int.Lemmas
 
 
 namespace ZMod

@@ -201,6 +201,7 @@ def System.writeStorage (s : System) (contract : F) (addr : StorageAddress) (val
   { s with contracts := Function.update s.contracts contract <|
              { s.contracts contract with storage := Function.update (s.contracts contract).storage addr val } }
 
+@[semireducible]
 def SierraType.toType (ctx : List Type := []) : SierraType → Type
   | .Felt252 => F
   | .U8 => UInt8

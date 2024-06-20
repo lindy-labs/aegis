@@ -165,7 +165,7 @@ def OfInputs.toExpr {Ts : List Q(Type)} (f : OfInputs Q(Prop) Ts) : MetaM Expr :
 match Ts with
 | [] => pure f
 | (T :: Ts) =>
-  withLocalDeclD s!"x{Ts.length}" T fun fv => do
+  withLocalDeclD (.mkSimple s!"x{Ts.length}") T fun fv => do
     let r ← OfInputs.toExpr (f fv)
     mkLambdaFVars #[fv] r
 

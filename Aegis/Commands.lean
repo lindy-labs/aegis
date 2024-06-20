@@ -162,7 +162,7 @@ elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `st
         Term.synthesizeSyntheticMVarsNoPostponing
         let val ← instantiateMVars val
         let name : String := "spec_" ++ name.getString  -- TODO handle name clashes
-        addAndCompile <| .defnDecl {  name := name
+        addAndCompile <| .defnDecl {  name := .mkSimple name
                                       type := ty
                                       levelParams := []
                                       value := val
@@ -173,7 +173,7 @@ elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `st
           let fd := funcDataFromCondition typeDefs inputArgs outputTypes val
           let fd ← FuncData.persist fd
           -- Add the spec to the cache
-          modifyEnv (sierraSpecs.addEntry · (i, name, fd))
+          modifyEnv (sierraSpecs.addEntry · (i, .mkSimple name, fd))
   | .error str => throwError toString str
 
 elab "aegis_prove" name:str val:declVal : command => do
@@ -196,7 +196,7 @@ elab "aegis_prove" name:str val:declVal : command => do
         Term.synthesizeSyntheticMVarsNoPostponing
         let val ← instantiateMVars val
         let name : String := "sound_" ++ name.getString
-        let name ← mkFreshUserName name
+        let name ← mkFreshUserName <| .mkSimple name
         addDecl <| .defnDecl {  name := name
                                 type := type
                                 levelParams := []

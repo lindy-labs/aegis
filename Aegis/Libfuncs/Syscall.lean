@@ -31,7 +31,8 @@ def get_execution_info_syscall : FuncData where
                        ∃ ρ' rbi bi rti ti, $(m).boxHeap .ExecutionInfo $ρ = .some ρ'
                          ∧ $(m).boxHeap .BlockInfo rbi = .some bi
                          ∧ $(m).boxHeap .TxInfo rti = .some ti
-                         ∧ bi = ⟨$(m).blockNumber, $(m).blockTimestamp, $(m).sequencerAddress⟩
+                         ∧ bi =
+                             ($(m).blockNumber, $(m).blockTimestamp, $(m).sequencerAddress)
                          ∧ ti = ⟨$(m).txVersion, $(m).txContract, $(m).txMaxFee, $(m).txSignature,
                              $(m).txHash, $(m).txChainIdentifier, $(m).txNonce⟩
                          ∧ ρ' = ⟨rbi, rti,

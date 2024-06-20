@@ -39,7 +39,7 @@ def getOrMkNewRef (n : ℕ) (t : Expr) : M FVarId := do
   match s.refs.find? n with
   | .some x => pure x
   | _ => do
-    let name ← mkFreshUserName ("ref" ++ n.repr : String)
+    let name ← mkFreshUserName (.mkSimple ("ref" ++ n.repr))
     let fv ← mkFreshFVarId
     let lctx' := (← get).lctx.mkLocalDecl fv name t
     set { s with lctx := lctx', refs := s.refs.insert n fv }

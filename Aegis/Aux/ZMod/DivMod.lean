@@ -29,4 +29,4 @@ theorem val_nmod (hb : b ≠ 0) : (nmod a b).val = a.val % b.val := by
       intro h
       rw [val_eq_zero] at h
       contradiction
-    rw [ZMod.val_nat_cast, Nat.mod_eq_of_lt (lt_trans (Nat.mod_lt _ this) b.val_lt)]
+    rw [ZMod.val_natCast, Nat.mod_eq_of_lt (lt_trans (Nat.mod_lt _ this) b.val_lt)]
