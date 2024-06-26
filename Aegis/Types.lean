@@ -34,6 +34,8 @@ inductive SierraType : Type
 | StorageAddress
 | System
 | ContractAddress
+| ConstNum (ty : SierraType) (val : ℤ)
+| ConstStruct (ty : SierraType) (vals : List  SierraType)
 /-- De-Bruĳn index for µ calculus -/
 | Ref (n : ℕ)
 /-- Anonymous μ binder -/
@@ -119,7 +121,7 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
     | .some <| .name "Enum" (_ :: ps) .none =>
       let idents ← flip mapM ps fun x => match x with
       | .identifier ident => pure ident
-      | _ => throw "Expected Enum parameter to refer a to a type"
+      | _ => throw "Expected Enum parameters to refer a to a type"
       let x ← idents.mapM <| translate raw (i :: ctx)
       let (lvs, tys) := x.unzip
       if lvs.join.contains i then .ok (lvs.join.removeAll [i], .Mu <| .Enum tys)
@@ -127,11 +129,30 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
     | .some <| .name "Struct" (_ :: ps) .none =>
       let idents ← flip mapM ps fun x => match x with
       | .identifier ident => pure ident
-      | _ => throw "Expected Struct parameter to refer a to a type"
+      | _ => throw "Expected Struct parameters to refer a to a type"
       let x ← idents.mapM <| translate raw (i :: ctx)
       let (lvs, tys) := x.unzip
       if lvs.join.contains i then .ok (lvs.join.removeAll [i], .Mu <| .Struct tys)
       else .ok (lvs.join, .Struct <| tys.map <| decreaseRefs 0)
+    | .some <| .name "Const" (p :: ps) .none =>
+      let ident ← match p with
+      | .identifier ident => pure ident
+      | _ => throw "Expected Const type to refer to a type"
+      let (lvsty, ty) ← translate raw (i :: ctx) ident
+      match ty with
+      | .Struct _ =>
+        let idents ← flip mapM ps fun x => match x with
+        | .identifier ident => pure ident
+        | _ => throw "Expected Const parameters to refer a to a type"
+        let x ← idents.mapM <| translate raw (i :: ident :: ctx)  -- really add `ident`?
+        let (lvs, tys) := x.unzip
+        .ok (lvs.join, .ConstStruct ty tys)
+      | .U8 | .U16 | .U32 | .U64 | .U128 =>
+        let num : ℤ ← match ps with
+        | [.const n] => pure n
+        | _ => throw "parameter to numerical constant type must be a numeral"
+        .ok (lvsty, .ConstNum ty num)  -- really `lvsty`?
+      | _ => throw "type not able to form constant types"
     | _ => throw s!"Type not translatable: {i}"
 
 def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
@@ -231,6 +252,8 @@ def SierraType.toType (ctx : List Type := []) : SierraType → Type
   | .StorageAddress => Sierra.StorageAddress
   | .System => Sierra.System
   | .ContractAddress => Sierra.ContractAddress
+  | .ConstNum _ _ => Unit  -- no runtime information in const types
+  | .ConstStruct _ _ => Unit  -- no runtime information in const types
   | .Ref n => ctx.get! n  -- TODO check whether `drop n` is right
   | .Mu t => toType (toType ctx t :: ctx) t -- ???
 
@@ -263,6 +286,8 @@ partial def SierraType.toQuote (ctx : List SierraType := []) : SierraType → Q(
   | .StorageAddress => q(Sierra.StorageAddress)
   | .System => q(Sierra.System)
   | .ContractAddress => q(Sierra.ContractAddress)
+  | .ConstNum _ _ => q(Unit)
+  | .ConstStruct _ _ => q(Unit)
   | .Ref n => toQuote (ctx.drop n) (ctx.get! n)  -- TODO check whether `drop n` is right
   | .Mu t => toQuote (t :: ctx) t
 
