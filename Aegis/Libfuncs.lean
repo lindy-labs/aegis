@@ -66,4 +66,4 @@ def libfuncs :
   <|> storageLibfuncs i
   <|> contractAddressLibfuncs i
   <|> castsLibfuncs i
-  <|> constLibfuncs typeRefs i
+  <|> constLibfuncs metadataRef typeRefs i

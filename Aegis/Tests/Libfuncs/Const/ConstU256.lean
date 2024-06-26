@@ -46,3 +46,21 @@ aegis_prove "test::bar2" :=
   fun _ ρ => by
   unfold «spec_test::bar2»
   aesop
+
+aegis_spec "test::foo1" :=
+  fun m ρ =>
+  m.boxHeap (.Struct [.U128, .U128]) ρ = .some (by simp only [SierraType.toType]; exact (16, 32))
+
+aegis_prove "test::foo1" :=
+  fun m ρ => by
+  unfold «spec_test::foo1»
+  aesop
+
+aegis_spec "test::foo2" :=
+  fun m ρ =>
+  m.boxHeap (.Struct [.U128, .U128]) ρ = .some (by simp only [SierraType.toType]; exact (16, 32))
+
+aegis_prove "test::foo2" :=
+  fun m ρ => by
+  unfold «spec_test::foo2»
+  aesop

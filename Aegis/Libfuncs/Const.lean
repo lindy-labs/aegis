@@ -4,7 +4,7 @@ open Qq Sierra.SierraType Lean
 
 namespace Sierra.FuncData
 
-variable (typeRefs : HashMap Identifier SierraType)
+variable (metadataRef : FVarId) (typeRefs : HashMap Identifier SierraType)
 
 def const_quote_of_num (ty : SierraType) (val : ℤ) : Q($(⟦ty⟧)) :=
 match ty with
@@ -53,10 +53,35 @@ def const_struct_as_immediate (ty : SierraType) (vals : List SierraType) : FuncD
                  condition := fun (a : Q($(⟦ty⟧))) =>
                   Expr.mkEq q($(⟦ty⟧)) a (const_quote_of_struct ty vals) }]
 
+def const_num_as_box (ty : SierraType) (val : ℤ) : FuncData where
+  inputTypes := []
+  branches := [{ outputTypes := [.Box ty]
+                 condition := fun (a : Q(Nat)) =>
+                   let m : Q(Metadata) := .fvar metadataRef
+                   let lhs : Q(Option ($(ty).toType)) := q($(m).boxHeap $ty $a)
+                   let rhs' := const_quote_of_num ty val
+                   let rhs := mkAppN (mkConst `Option.some [levelZero]) #[ty.toQuote, rhs']
+                   Expr.mkEq q(Option ($(ty).toType)) lhs rhs }]
+
+def const_struct_as_box (ty : SierraType) (vals : List SierraType) : FuncData where
+  inputTypes := []
+  branches := [{ outputTypes := [.Box ty]
+                 condition := fun (a : Q(Nat)) =>
+                   let m : Q(Metadata) := .fvar metadataRef
+                   let lhs : Q(Option ($(ty).toType)) := q($(m).boxHeap $ty $a)
+                   let rhs' := const_quote_of_struct ty vals
+                   let rhs := mkAppN (mkConst `Option.some [levelZero]) #[ty.toQuote, rhs']
+                   Expr.mkEq q(Option ($(ty).toType)) lhs rhs }]
+
 def constLibfuncs : Identifier → Option FuncData
 | .name "const_as_immediate" [.identifier ident] .none => do
   match ← typeRefs.find? ident with
   | .ConstNum ty val => .some <| const_num_as_immediate ty val
   | .ConstStruct ty vals => .some <| const_struct_as_immediate ty vals
+  | _ => .none
+| .name "const_as_box" [.identifier ident, _] .none => do  -- TODO find out about const segmentation
+  match ← typeRefs.find? ident with
+  | .ConstNum ty val => .some <| const_num_as_box metadataRef ty val
+  | .ConstStruct ty vals => .some <| const_struct_as_box metadataRef ty vals
   | _ => .none
 | _ => .none
