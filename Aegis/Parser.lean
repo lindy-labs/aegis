@@ -20,6 +20,7 @@ inductive Parameter where
   | userfunc (s : Identifier)
   | libfunc (i : Identifier)
   | tuple (ps : List Parameter)
+  | placeholder
   deriving Repr, Inhabited, Hashable, BEq, ToExpr
 
 end
@@ -62,6 +63,7 @@ partial def parameterToString : Parameter → String
 | .usertype i => "ut@" ++ identifierToString i
 | .userfunc i => "user@" ++ identifierToString i
 | .libfunc i => "lib@" ++ identifierToString i
+| .placeholder => "_"
 
 end
 
@@ -84,6 +86,7 @@ syntax "end" : atom
 syntax atom ("[" ident "]")? atomic("::"? "<" parameter,* ">")?  ("::" identifier)? : identifier
 syntax "[" num "]" : identifier
 
+syntax "_" : parameter
 syntax "-" num : parameter
 syntax num : parameter
 syntax "user@" identifier : parameter
@@ -133,6 +136,7 @@ partial def elabIdentifier : Syntax → Except String Identifier
 | _ => .error "Could not elab identifier"
 
 partial def elabParameter : TSyntax `parameter → Except String Parameter
+| `(parameter|_) => .ok .placeholder
 | `(parameter|-$n:num) => .ok <| .const <| -n.getNat
 | `(parameter|user@$i) => do
   let i ← elabIdentifier i

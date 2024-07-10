@@ -391,6 +391,7 @@ partial def Parameter.quote : Parameter → Q(Parameter)
 | .userfunc i => q(.userfunc $(Identifier.quote i))
 | .libfunc i => q(.libfunc $(Identifier.quote i))
 | .tuple ps => ParameterList.quote ps
+| .placeholder => q(.placeholder)
 
 partial def ParameterList.quote : List Parameter → Q(List Parameter)
 | [] => q([])
