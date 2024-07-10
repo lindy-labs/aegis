@@ -147,7 +147,7 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
         let x ← idents.mapM <| translate raw (i :: ident :: ctx)  -- really add `ident`?
         let (lvs, tys) := x.unzip
         .ok (lvs.join, .ConstStruct ty tys)
-      | .U8 | .U16 | .U32 | .U64 | .U128 =>
+      | .U8 | .U16 | .U32 | .U64 | .U128 | .Felt252 =>
         let num : ℤ ← match ps with
         | [.const n] => pure n
         | _ => throw "parameter to numerical constant type must be a numeral"
