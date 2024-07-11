@@ -316,6 +316,36 @@ def SierraType.ExecutionInfo : SierraType :=
         , .Felt252  -- entry point selector
         ]
 
+def SierraType.ResourceBounds : SierraType :=
+.Struct [ .Felt252  -- resource
+        , .U64  -- max amount
+        , .U128  -- max price per unit
+        ]
+
+def SierraType.V2TxInfo : SierraType :=
+.Struct [ .Felt252  -- transaction version
+        , .ContractAddress  -- the account contract from which this tx originates
+        , .U128  -- max fee
+        , .Struct [.Snapshot <| .Array .Felt252] -- signature of the tx
+        , .Felt252  -- transaction hash
+        , .Felt252  -- identifier of the chain
+        , .Felt252  -- nonce
+        , .Struct [.Snapshot <| .Array .ResourceBounds] -- resource bounds
+        , .U128  -- tip
+        , .Struct [.Snapshot <| .Array .Felt252] -- paymaster data
+        , .U32  -- data availability for nonce
+        , .U32  -- data availability for fee
+        , .Struct [.Snapshot <| .Array .Felt252] -- account deployment data
+        ]
+
+def SierraType.V2ExecutionInfo : SierraType :=
+.Struct [ .Box .BlockInfo
+        , .Box .V2TxInfo
+        , .ContractAddress  -- caller address
+        , .ContractAddress  -- contract address
+        , .Felt252  -- entry point selector
+        ]
+
 /-- A type holding the metadata that will not be contained in Sierra's `System` type -/
 structure Metadata : Type where
   (pedersen : F → F → F)  -- TODO this dummy should be replaced by a real reimplementation
@@ -330,6 +360,12 @@ structure Metadata : Type where
   (txHash : F)
   (txChainIdentifier : F)
   (txNonce : F)
+  (txResourceBounds : List (F × UInt64 × UInt128))
+  (txTip : UInt128)
+  (txPaymasterData : List F)
+  (txDataAvailabilityNonce : UInt32)
+  (txDataAvailabilityFee : UInt32)
+  (txAccountDeploymentData : List F)
   (blockNumber : UInt64)
   (blockTimestamp : UInt64)
   (sequencerAddress : ContractAddress)
