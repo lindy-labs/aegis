@@ -1,9 +1,17 @@
 import Aegis.Commands
 
+set_option linter.hashCommand false
+
 open Sierra
 
 aegis_load_file "ternary_add.sierra"
 
+/--
+info: Starting pc: 0
+Input types: [F, F, F]
+Output types: [F]
+-/
+#guard_msgs in
 aegis_info "ternary_add"
 
 aegis_spec "ternary_add" := fun _ a b c ρ => ρ = a + b + c
@@ -609,6 +617,12 @@ aegis_spec "test::trivial_contract" :=
   fun _ _ _ _ _ _ ρ =>
   ρ = .inl [42]
 
+/--
+info: Starting pc: 3
+Input types: [GasBuiltin, RangeCheck, System]
+Output types: [GasBuiltin, System, Array<felt252>]
+-/
+#guard_msgs in
 aegis_info "test::caller"
 
 aegis_spec "test::caller" :=

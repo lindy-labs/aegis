@@ -139,10 +139,7 @@ elab "aegis_info" name:str : command => do  -- TODO change from `str` to `ident`
   match ← liftCoreM <| parseIdentifier name.getString with
   | .ok i => do
     withFindByIdentifier sf i fun pc inputs outputs =>
-    dbg_trace "Starting pc: {pc}"
-    dbg_trace "Input types: {inputs.map (·.2)}"
-    dbg_trace "Output types: {outputs}"
-    return ()
+    logInfo s!"Starting pc: {pc}\nInput types: {inputs.map (·.2)}\nOutput types: {outputs}"
   | .error str => throwError toString str
 
 elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `str` to `ident`

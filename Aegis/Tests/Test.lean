@@ -18,7 +18,32 @@ return ([2]);
 
 negparam@0() -> (F);"
 
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Identifier.name "felt252" [] none)],
+  libfuncs := [(Sierra.Identifier.name "c1" [] none,
+                Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const -1] none),
+               (Sierra.Identifier.name "c2" [] none,
+                Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const 1] none),
+               (Sierra.Identifier.name "add" [] none, Sierra.Identifier.name "felt252_add" [] none)],
+  statements := [{ libfunc_id := Sierra.Identifier.name "c1" [] none,
+                   args := [],
+                   branches := [{ target := none, results := [0] }] },
+                 { libfunc_id := Sierra.Identifier.name "c2" [] none,
+                   args := [],
+                   branches := [{ target := none, results := [1] }] },
+                 { libfunc_id := Sierra.Identifier.name "add" [] none,
+                   args := [0, 1],
+                   branches := [{ target := none, results := [2] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [2], branches := [] }],
+  declarations := [(Sierra.Identifier.name "negparam" [] none, 0, [], [Sierra.Identifier.name "F" [] none])] }
+-/
+#guard_msgs in
 #eval parseGrammar negParam
+/--
+info: fun m ρ => ↑(Int.negSucc 0) + ↑(Int.ofNat 1) = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Prop
+-/
+#guard_msgs in
 #eval analyzeFile negParam
 
 def code01 := "
@@ -28,6 +53,118 @@ type Tuple<wad_ray::wad_ray::Wad> = Struct<ut@Tuple, wad_ray::wad_ray::Wad>;
 type wad_ray::wad_ray::Ray = Struct<ut@wad_ray::wad_ray::Ray, u128>;
 type Tuple<wad_ray::wad_ray::Ray> = Struct<ut@Tuple, wad_ray::wad_ray::Ray>;
 type Tuple<u128, u128> = Struct<ut@Tuple, u128, u128>;"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name
+                  "core"
+                  []
+                  (some (Sierra.Identifier.name
+                     "option"
+                     []
+                     (some (Sierra.Identifier.name
+                        "Option"
+                        [Sierra.Parameter.identifier
+                           (Sierra.Identifier.name
+                             "core"
+                             []
+                             (some (Sierra.Identifier.name
+                                "integer"
+                                []
+                                (some (Sierra.Identifier.name "u128" [] none)))))]
+                        none)))),
+                Sierra.Identifier.name
+                  "Enum"
+                  [Sierra.Parameter.usertype
+                     (Sierra.Identifier.name
+                       "core"
+                       []
+                       (some (Sierra.Identifier.name
+                          "option"
+                          []
+                          (some (Sierra.Identifier.name
+                             "Option"
+                             [Sierra.Parameter.identifier
+                                (Sierra.Identifier.name
+                                  "core"
+                                  []
+                                  (some (Sierra.Identifier.name
+                                     "integer"
+                                     []
+                                     (some (Sierra.Identifier.name "u128" [] none)))))]
+                             none))))),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "Unit" [] none)]
+                  none),
+               (Sierra.Identifier.name
+                  "Tuple"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none)]
+                  none,
+                Sierra.Identifier.name
+                  "Struct"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "Tuple" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none)]
+                  none),
+               (Sierra.Identifier.name
+                  "Tuple"
+                  [Sierra.Parameter.identifier
+                     (Sierra.Identifier.name
+                       "wad_ray"
+                       []
+                       (some (Sierra.Identifier.name "wad_ray" [] (some (Sierra.Identifier.name "Wad" [] none)))))]
+                  none,
+                Sierra.Identifier.name
+                  "Struct"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "Tuple" [] none),
+                   Sierra.Parameter.identifier
+                     (Sierra.Identifier.name
+                       "wad_ray"
+                       []
+                       (some (Sierra.Identifier.name "wad_ray" [] (some (Sierra.Identifier.name "Wad" [] none)))))]
+                  none),
+               (Sierra.Identifier.name
+                  "wad_ray"
+                  []
+                  (some (Sierra.Identifier.name "wad_ray" [] (some (Sierra.Identifier.name "Ray" [] none)))),
+                Sierra.Identifier.name
+                  "Struct"
+                  [Sierra.Parameter.usertype
+                     (Sierra.Identifier.name
+                       "wad_ray"
+                       []
+                       (some (Sierra.Identifier.name "wad_ray" [] (some (Sierra.Identifier.name "Ray" [] none))))),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none)]
+                  none),
+               (Sierra.Identifier.name
+                  "Tuple"
+                  [Sierra.Parameter.identifier
+                     (Sierra.Identifier.name
+                       "wad_ray"
+                       []
+                       (some (Sierra.Identifier.name "wad_ray" [] (some (Sierra.Identifier.name "Ray" [] none)))))]
+                  none,
+                Sierra.Identifier.name
+                  "Struct"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "Tuple" [] none),
+                   Sierra.Parameter.identifier
+                     (Sierra.Identifier.name
+                       "wad_ray"
+                       []
+                       (some (Sierra.Identifier.name "wad_ray" [] (some (Sierra.Identifier.name "Ray" [] none)))))]
+                  none),
+               (Sierra.Identifier.name
+                  "Tuple"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none)]
+                  none,
+                Sierra.Identifier.name
+                  "Struct"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "Tuple" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none)]
+                  none)],
+  libfuncs := [],
+  statements := [],
+  declarations := [] }-/
+#guard_msgs in
 #eval parseGrammar code01
 
 def code02 := "type [0] = felt252;
@@ -35,7 +172,23 @@ libfunc [0] = felt252_const<5>;
 [0]() -> ([5]);
 return([5]);
 foo@0([0]: [0] , [1]: [0]) -> ([0]);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name "felt252" [] none)],
+  libfuncs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const 5] none)],
+  statements := [{ libfunc_id := Sierra.Identifier.ref 0,
+                   args := [],
+                   branches := [{ target := none, results := [5] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [5], branches := [] }],
+  declarations := [(Sierra.Identifier.name "foo" [] none,
+                    0,
+                    [(0, Sierra.Identifier.ref 0), (1, Sierra.Identifier.ref 0)],
+                    [Sierra.Identifier.ref 0])] } -/
+#guard_msgs in
 #eval parseGrammar code02
+/--
+info: fun m ref0 ref1 ρ => ↑(Int.ofNat 5) = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile code02
 
 def code03 :=
@@ -52,6 +205,10 @@ libfunc [3] = jump;
 return([4]); // 3
 
 [0]@0([0]: [0], [1]: [0], [2]: [0]) -> ([0]);"
+/--
+info: fun m ref0 ref1 ref2 ρ => ref0 + ref1 + ref2 = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile code03
 
 def code04 :=
@@ -87,7 +244,73 @@ libfunc [10] = rename<[0]>;
 return([7]);
 
 [0]@0([0]: [0]) -> ([0]);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name "felt252" [] none),
+               (Sierra.Identifier.ref 1,
+                Sierra.Identifier.name "NonZero" [Sierra.Parameter.identifier (Sierra.Identifier.ref 0)] none)],
+  libfuncs := [(Sierra.Identifier.ref 2, Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const 5] none),
+               (Sierra.Identifier.ref 3,
+                Sierra.Identifier.name "dup" [Sierra.Parameter.identifier (Sierra.Identifier.ref 0)] none),
+               (Sierra.Identifier.ref 1, Sierra.Identifier.name "felt252_sub" [] none),
+               (Sierra.Identifier.ref 9,
+                Sierra.Identifier.name "store_temp" [Sierra.Parameter.identifier (Sierra.Identifier.ref 0)] none),
+               (Sierra.Identifier.ref 0, Sierra.Identifier.name "felt252_is_zero" [] none),
+               (Sierra.Identifier.ref 4, Sierra.Identifier.name "branch_align" [] none),
+               (Sierra.Identifier.ref 5,
+                Sierra.Identifier.name "drop" [Sierra.Parameter.identifier (Sierra.Identifier.ref 0)] none),
+               (Sierra.Identifier.ref 6, Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const 0] none),
+               (Sierra.Identifier.ref 7, Sierra.Identifier.name "jump" [] none),
+               (Sierra.Identifier.ref 8,
+                Sierra.Identifier.name "drop" [Sierra.Parameter.identifier (Sierra.Identifier.ref 1)] none),
+               (Sierra.Identifier.ref 10,
+                Sierra.Identifier.name "rename" [Sierra.Parameter.identifier (Sierra.Identifier.ref 0)] none)],
+  statements := [{ libfunc_id := Sierra.Identifier.ref 2,
+                   args := [],
+                   branches := [{ target := none, results := [1] }] },
+                 { libfunc_id := Sierra.Identifier.ref 3,
+                   args := [0],
+                   branches := [{ target := none, results := [0, 3] }] },
+                 { libfunc_id := Sierra.Identifier.ref 1,
+                   args := [3, 1],
+                   branches := [{ target := none, results := [2] }] },
+                 { libfunc_id := Sierra.Identifier.ref 9,
+                   args := [2],
+                   branches := [{ target := none, results := [2] }] },
+                 { libfunc_id := Sierra.Identifier.ref 0,
+                   args := [2],
+                   branches := [{ target := none, results := [] }, { target := some 10, results := [4] }] },
+                 { libfunc_id := Sierra.Identifier.ref 4, args := [], branches := [{ target := none, results := [] }] },
+                 { libfunc_id := Sierra.Identifier.ref 5,
+                   args := [0],
+                   branches := [{ target := none, results := [] }] },
+                 { libfunc_id := Sierra.Identifier.ref 6,
+                   args := [],
+                   branches := [{ target := none, results := [5] }] },
+                 { libfunc_id := Sierra.Identifier.ref 9,
+                   args := [5],
+                   branches := [{ target := none, results := [6] }] },
+                 { libfunc_id := Sierra.Identifier.ref 7,
+                   args := [],
+                   branches := [{ target := some 13, results := [] }] },
+                 { libfunc_id := Sierra.Identifier.ref 4, args := [], branches := [{ target := none, results := [] }] },
+                 { libfunc_id := Sierra.Identifier.ref 8,
+                   args := [4],
+                   branches := [{ target := none, results := [] }] },
+                 { libfunc_id := Sierra.Identifier.ref 9,
+                   args := [0],
+                   branches := [{ target := none, results := [6] }] },
+                 { libfunc_id := Sierra.Identifier.ref 10,
+                   args := [6],
+                   branches := [{ target := none, results := [7] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [7], branches := [] }],
+  declarations := [(Sierra.Identifier.ref 0, 0, [(0, Sierra.Identifier.ref 0)], [Sierra.Identifier.ref 0])] }
+-/
+#guard_msgs in
 #eval parseGrammar code04
+/--
+info: fun m ref0 ρ => ref0 - ↑(Int.ofNat 5) = 0 ∧ ↑(Int.ofNat 0) = ρ ∨ ref0 - ↑(Int.ofNat 5) ≠ 0 ∧ ref0 = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile code04
 
 /-- Tests the genration of fresh names. -/
@@ -102,7 +325,28 @@ libfunc [1] = felt252_const<4>; -- TODO test negative constants
 return([1]);
 
 foo@0([0]: [0]) -> ([0]);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name "felt252" [] none)],
+  libfuncs := [(Sierra.Identifier.ref 0,
+                Sierra.Identifier.name "rename" [Sierra.Parameter.identifier (Sierra.Identifier.ref 0)] none),
+               (Sierra.Identifier.ref 1, Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const 4] none)],
+  statements := [{ libfunc_id := Sierra.Identifier.ref 0,
+                   args := [0],
+                   branches := [{ target := none, results := [1] }] },
+                 { libfunc_id := Sierra.Identifier.ref 1,
+                   args := [],
+                   branches := [{ target := none, results := [0] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [1], branches := [] }],
+  declarations := [(Sierra.Identifier.name "foo" [] none,
+                    0,
+                    [(0, Sierra.Identifier.ref 0)],
+                    [Sierra.Identifier.ref 0])] } -/
+#guard_msgs in
 #eval parseGrammar code05
+/--
+info: fun m ref0 ρ => ref0 = ↑(Int.ofNat 4) ∧ ref0 = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile code05
 
 def e2etest_felt_add :=
@@ -122,7 +366,74 @@ store_temp<felt252>([5]) -> ([6]);
 return([6]);
 
 test::foo@0([0]: felt252, [1]: felt252) -> (felt252);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "felt252" [] none, Sierra.Identifier.name "felt252" [] none)],
+  libfuncs := [(Sierra.Identifier.name
+                  "dup"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                  none,
+                Sierra.Identifier.name
+                  "dup"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                  none),
+               (Sierra.Identifier.name "felt252_add" [] none, Sierra.Identifier.name "felt252_add" [] none),
+               (Sierra.Identifier.name
+                  "drop"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                  none,
+                Sierra.Identifier.name
+                  "drop"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                  none),
+               (Sierra.Identifier.name
+                  "store_temp"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                  none,
+                Sierra.Identifier.name
+                  "store_temp"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                  none)],
+  statements := [{ libfunc_id := Sierra.Identifier.name
+                                   "dup"
+                                   [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                                   none,
+                   args := [0],
+                   branches := [{ target := none, results := [0, 3] }] },
+                 { libfunc_id := Sierra.Identifier.name
+                                   "dup"
+                                   [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                                   none,
+                   args := [1],
+                   branches := [{ target := none, results := [1, 4] }] },
+                 { libfunc_id := Sierra.Identifier.name "felt252_add" [] none,
+                   args := [3, 4],
+                   branches := [{ target := none, results := [2] }] },
+                 { libfunc_id := Sierra.Identifier.name
+                                   "drop"
+                                   [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                                   none,
+                   args := [2],
+                   branches := [{ target := none, results := [] }] },
+                 { libfunc_id := Sierra.Identifier.name "felt252_add" [] none,
+                   args := [0, 1],
+                   branches := [{ target := none, results := [5] }] },
+                 { libfunc_id := Sierra.Identifier.name
+                                   "store_temp"
+                                   [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                                   none,
+                   args := [5],
+                   branches := [{ target := none, results := [6] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [6], branches := [] }],
+  declarations := [(Sierra.Identifier.name "test" [] (some (Sierra.Identifier.name "foo" [] none)),
+                    0,
+                    [(0, Sierra.Identifier.name "felt252" [] none), (1, Sierra.Identifier.name "felt252" [] none)],
+                    [Sierra.Identifier.name "felt252" [] none])] } -/
+#guard_msgs in
 #eval parseGrammar e2etest_felt_add
+/--
+info: fun m ref0 ref1 ρ => ref0 + ref1 = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile e2etest_felt_add
 
 def test_enum_init :=
@@ -138,7 +449,49 @@ libfunc [1] = enum_init<[2], 1>;
 return([2]);
 
 foo@0([0]: [0]) -> ([2]);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name "felt252" [] none),
+               (Sierra.Identifier.ref 1,
+                Sierra.Identifier.name
+                  "Enum"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "foo" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.ref 0),
+                   Sierra.Parameter.identifier (Sierra.Identifier.ref 0)]
+                  none),
+               (Sierra.Identifier.ref 2,
+                Sierra.Identifier.name
+                  "Enum"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "bar" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.ref 1),
+                   Sierra.Parameter.identifier (Sierra.Identifier.ref 1)]
+                  none)],
+  libfuncs := [(Sierra.Identifier.ref 0,
+                Sierra.Identifier.name
+                  "enum_init"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.ref 1), Sierra.Parameter.const 1]
+                  none),
+               (Sierra.Identifier.ref 1,
+                Sierra.Identifier.name
+                  "enum_init"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.ref 2), Sierra.Parameter.const 1]
+                  none)],
+  statements := [{ libfunc_id := Sierra.Identifier.ref 0,
+                   args := [0],
+                   branches := [{ target := none, results := [1] }] },
+                 { libfunc_id := Sierra.Identifier.ref 1,
+                   args := [1],
+                   branches := [{ target := none, results := [2] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [2], branches := [] }],
+  declarations := [(Sierra.Identifier.name "foo" [] none,
+                    0,
+                    [(0, Sierra.Identifier.ref 0)],
+                    [Sierra.Identifier.ref 2])] } -/
+#guard_msgs in
 #eval parseGrammar test_enum_init
+/--
+info: fun m ref0 ρ => Sum.inr (Sum.inr ref0) = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → (Sierra.F ⊕ Sierra.F) ⊕ Sierra.F ⊕ Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile test_enum_init
 
 def test_enum_match :=
@@ -154,7 +507,43 @@ return([2]);
 return([3]);
 
 foo@0([0]: F) -> (F);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Identifier.name "felt252" [] none),
+               (Sierra.Identifier.name "E" [] none,
+                Sierra.Identifier.name
+                  "Enum"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "foo" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "F" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "F" [] none)]
+                  none)],
+  libfuncs := [(Sierra.Identifier.name "init" [] none,
+                Sierra.Identifier.name
+                  "enum_init"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "E" [] none), Sierra.Parameter.const 1]
+                  none),
+               (Sierra.Identifier.name "ematch" [] none,
+                Sierra.Identifier.name
+                  "enum_match"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "E" [] none)]
+                  none)],
+  statements := [{ libfunc_id := Sierra.Identifier.name "init" [] none,
+                   args := [0],
+                   branches := [{ target := none, results := [1] }] },
+                 { libfunc_id := Sierra.Identifier.name "ematch" [] none,
+                   args := [1],
+                   branches := [{ target := none, results := [2] }, { target := some 3, results := [3] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [2], branches := [] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [3], branches := [] }],
+  declarations := [(Sierra.Identifier.name "foo" [] none,
+                    0,
+                    [(0, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none])] } -/
+#guard_msgs in
 #eval parseGrammar test_enum_match
+/--
+info: fun m ref0 ρ => ∃ ref2 ref3, Sum.inl ref2 = Sum.inr ref0 ∧ ref2 = ρ ∨ Sum.inr ref3 = Sum.inr ref0 ∧ ref3 = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile test_enum_match
 
 def test_struct_construct :=
@@ -167,7 +556,34 @@ construct([0], [1]) -> ([2]);
 return([2]);
 
 foo@0([0]: F, [1]: F) -> (F);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Identifier.name "felt252" [] none),
+               (Sierra.Identifier.name "S" [] none,
+                Sierra.Identifier.name
+                  "Struct"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "foo" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "F" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "F" [] none)]
+                  none)],
+  libfuncs := [(Sierra.Identifier.name "construct" [] none,
+                Sierra.Identifier.name
+                  "struct_construct"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "S" [] none)]
+                  none)],
+  statements := [{ libfunc_id := Sierra.Identifier.name "construct" [] none,
+                   args := [0, 1],
+                   branches := [{ target := none, results := [2] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [2], branches := [] }],
+  declarations := [(Sierra.Identifier.name "foo" [] none,
+                    0,
+                    [(0, Sierra.Identifier.name "F" [] none), (1, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none])] } -/
+#guard_msgs in
 #eval parseGrammar test_struct_construct
+/--
+info: fun m ref0 ref1 ρ => (ref0, ref1) = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile test_struct_construct
 
 def test_struct_deconstruct :=
@@ -182,7 +598,42 @@ deconstruct([2]) -> ([3], [4]);
 return([3]);
 
 foo@0([0]: F, [1]: F) -> (F);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Identifier.name "felt252" [] none),
+               (Sierra.Identifier.name "S" [] none,
+                Sierra.Identifier.name
+                  "Struct"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "foo" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "F" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "F" [] none)]
+                  none)],
+  libfuncs := [(Sierra.Identifier.name "construct" [] none,
+                Sierra.Identifier.name
+                  "struct_construct"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "S" [] none)]
+                  none),
+               (Sierra.Identifier.name "deconstruct" [] none,
+                Sierra.Identifier.name
+                  "struct_deconstruct"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "S" [] none)]
+                  none)],
+  statements := [{ libfunc_id := Sierra.Identifier.name "construct" [] none,
+                   args := [0, 1],
+                   branches := [{ target := none, results := [2] }] },
+                 { libfunc_id := Sierra.Identifier.name "deconstruct" [] none,
+                   args := [2],
+                   branches := [{ target := none, results := [3, 4] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [3], branches := [] }],
+  declarations := [(Sierra.Identifier.name "foo" [] none,
+                    0,
+                    [(0, Sierra.Identifier.name "F" [] none), (1, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none])] } -/
+#guard_msgs in
 #eval parseGrammar test_struct_deconstruct
+/--
+info: fun m ref0 ref1 ρ => ∃ ref3 ref4, (ref3, ref4) = (ref0, ref1) ∧ ref3 = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile test_struct_deconstruct
 
 def test_struct_deconstruct' :=
@@ -197,7 +648,42 @@ deconstruct([1]) -> ([2], [3]);
 return([0]);
 
 foo@0([0]: F) -> (F);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Identifier.name "felt252" [] none),
+               (Sierra.Identifier.name "S" [] none,
+                Sierra.Identifier.name
+                  "Struct"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "foo" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "F" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "F" [] none)]
+                  none)],
+  libfuncs := [(Sierra.Identifier.name "construct" [] none,
+                Sierra.Identifier.name
+                  "struct_construct"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "S" [] none)]
+                  none),
+               (Sierra.Identifier.name "deconstruct" [] none,
+                Sierra.Identifier.name
+                  "struct_deconstruct"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "S" [] none)]
+                  none)],
+  statements := [{ libfunc_id := Sierra.Identifier.name "construct" [] none,
+                   args := [0, 0],
+                   branches := [{ target := none, results := [1] }] },
+                 { libfunc_id := Sierra.Identifier.name "deconstruct" [] none,
+                   args := [1],
+                   branches := [{ target := none, results := [2, 3] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [0], branches := [] }],
+  declarations := [(Sierra.Identifier.name "foo" [] none,
+                    0,
+                    [(0, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none])] } -/
+#guard_msgs in
 #eval parseGrammar test_struct_deconstruct'
+/--
+info: fun m ref0 ρ => ∃ ref2 ref3, (ref2, ref3) = (ref0, ref0) ∧ ref0 = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile test_struct_deconstruct'
 
 def test_parse_tuples :=
@@ -209,8 +695,121 @@ type core::option::Option::<core::integer::u128> = Enum<ut@core::option::Option:
 type Tuple<u128> = Struct<ut@Tuple, u128>;
 type Array<felt252> = Array<felt252>;
 type core::PanicResult::<(core::integer::u128,)> = Enum<ut@core::PanicResult::<(core::integer::u128,)>, Tuple<u128>, Array<felt252>>;"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "felt252" [] none, Sierra.Identifier.name "felt252" [] none),
+               (Sierra.Identifier.name "RangeCheck" [] none, Sierra.Identifier.name "RangeCheck" [] none),
+               (Sierra.Identifier.name "u128" [] none, Sierra.Identifier.name "u128" [] none),
+               (Sierra.Identifier.name "Unit" [] none,
+                Sierra.Identifier.name
+                  "Struct"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "Tuple" [] none)]
+                  none),
+               (Sierra.Identifier.name
+                  "core"
+                  []
+                  (some (Sierra.Identifier.name
+                     "option"
+                     []
+                     (some (Sierra.Identifier.name
+                        "Option"
+                        [Sierra.Parameter.identifier
+                           (Sierra.Identifier.name
+                             "core"
+                             []
+                             (some (Sierra.Identifier.name
+                                "integer"
+                                []
+                                (some (Sierra.Identifier.name "u128" [] none)))))]
+                        none)))),
+                Sierra.Identifier.name
+                  "Enum"
+                  [Sierra.Parameter.usertype
+                     (Sierra.Identifier.name
+                       "core"
+                       []
+                       (some (Sierra.Identifier.name
+                          "option"
+                          []
+                          (some (Sierra.Identifier.name
+                             "Option"
+                             [Sierra.Parameter.identifier
+                                (Sierra.Identifier.name
+                                  "core"
+                                  []
+                                  (some (Sierra.Identifier.name
+                                     "integer"
+                                     []
+                                     (some (Sierra.Identifier.name "u128" [] none)))))]
+                             none))))),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "Unit" [] none)]
+                  none),
+               (Sierra.Identifier.name
+                  "Tuple"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none)]
+                  none,
+                Sierra.Identifier.name
+                  "Struct"
+                  [Sierra.Parameter.usertype (Sierra.Identifier.name "Tuple" [] none),
+                   Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none)]
+                  none),
+               (Sierra.Identifier.name
+                  "Array"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                  none,
+                Sierra.Identifier.name
+                  "Array"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                  none),
+               (Sierra.Identifier.name
+                  "core"
+                  []
+                  (some (Sierra.Identifier.name
+                     "PanicResult"
+                     [Sierra.Parameter.tuple
+                        [Sierra.Parameter.identifier
+                           (Sierra.Identifier.name
+                             "core"
+                             []
+                             (some (Sierra.Identifier.name
+                                "integer"
+                                []
+                                (some (Sierra.Identifier.name "u128" [] none)))))]]
+                     none)),
+                Sierra.Identifier.name
+                  "Enum"
+                  [Sierra.Parameter.usertype
+                     (Sierra.Identifier.name
+                       "core"
+                       []
+                       (some (Sierra.Identifier.name
+                          "PanicResult"
+                          [Sierra.Parameter.tuple
+                             [Sierra.Parameter.identifier
+                                (Sierra.Identifier.name
+                                  "core"
+                                  []
+                                  (some (Sierra.Identifier.name
+                                     "integer"
+                                     []
+                                     (some (Sierra.Identifier.name "u128" [] none)))))]]
+                          none))),
+                   Sierra.Parameter.identifier
+                     (Sierra.Identifier.name
+                       "Tuple"
+                       [Sierra.Parameter.identifier (Sierra.Identifier.name "u128" [] none)]
+                       none),
+                   Sierra.Parameter.identifier
+                     (Sierra.Identifier.name
+                       "Array"
+                       [Sierra.Parameter.identifier (Sierra.Identifier.name "felt252" [] none)]
+                       none)]
+                  none)],
+  libfuncs := [],
+  statements := [],
+  declarations := [] } -/
+#guard_msgs in
 #eval parseGrammar test_parse_tuples
-
 
 def test_function_call_01 :=
 "type F = felt252;
@@ -225,7 +824,37 @@ return([3]);
 
 foo@0([0]: F) -> (F);
 bar@2([2]: F) -> (F);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Identifier.name "felt252" [] none)],
+  libfuncs := [(Sierra.Identifier.name "c5" [] none,
+                Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const 5] none),
+               (Sierra.Identifier.name "call" [] none,
+                Sierra.Identifier.name
+                  "function_call"
+                  [Sierra.Parameter.userfunc (Sierra.Identifier.name "foo" [] none)]
+                  none)],
+  statements := [{ libfunc_id := Sierra.Identifier.name "c5" [] none,
+                   args := [],
+                   branches := [{ target := none, results := [1] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [1], branches := [] },
+                 { libfunc_id := Sierra.Identifier.name "call" [] none,
+                   args := [2],
+                   branches := [{ target := none, results := [3] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [3], branches := [] }],
+  declarations := [(Sierra.Identifier.name "foo" [] none,
+                    0,
+                    [(0, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none]),
+                   (Sierra.Identifier.name "bar" [] none,
+                    2,
+                    [(2, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none])] } -/
+#guard_msgs in
 #eval parseGrammar test_function_call_01
+/--
+info: fun m ref0 ρ => ↑(Int.ofNat 5) = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile test_function_call_01 0
 
 def test_parser_change :=
@@ -241,6 +870,32 @@ return([3]);
 
 bar@0([0]: F) -> (F);
 baz@2([2]: F) -> (F);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Identifier.name "felt252" [] none)],
+  libfuncs := [(Sierra.Identifier.name "c5" [] none,
+                Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const 5] none),
+               (Sierra.Identifier.name "call_bar" [] none,
+                Sierra.Identifier.name
+                  "function_call"
+                  [Sierra.Parameter.userfunc (Sierra.Identifier.name "bar" [] none)]
+                  none)],
+  statements := [{ libfunc_id := Sierra.Identifier.name "c5" [] none,
+                   args := [],
+                   branches := [{ target := none, results := [1] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [1], branches := [] },
+                 { libfunc_id := Sierra.Identifier.name "call_bar" [] none,
+                   args := [2],
+                   branches := [{ target := none, results := [3] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [3], branches := [] }],
+  declarations := [(Sierra.Identifier.name "bar" [] none,
+                    0,
+                    [(0, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none]),
+                   (Sierra.Identifier.name "baz" [] none,
+                    2,
+                    [(2, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none])] } -/
+#guard_msgs in
 #eval parseGrammar test_parser_change
 
 
@@ -257,11 +912,59 @@ return([3]);
 
 bar[expr42]@0([0]: F) -> (F);
 baz@2([2]: F) -> (F);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Identifier.name "felt252" [] none)],
+  libfuncs := [(Sierra.Identifier.name "c5" [] none,
+                Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const 5] none),
+               (Sierra.Identifier.name "call_bar" [] none,
+                Sierra.Identifier.name
+                  "function_call"
+                  [Sierra.Parameter.userfunc (Sierra.Identifier.name "bar[expr42]" [] none)]
+                  none)],
+  statements := [{ libfunc_id := Sierra.Identifier.name "c5" [] none,
+                   args := [],
+                   branches := [{ target := none, results := [1] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [1], branches := [] },
+                 { libfunc_id := Sierra.Identifier.name "call_bar" [] none,
+                   args := [2],
+                   branches := [{ target := none, results := [3] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [3], branches := [] }],
+  declarations := [(Sierra.Identifier.name "bar[expr42]" [] none,
+                    0,
+                    [(0, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none]),
+                   (Sierra.Identifier.name "baz" [] none,
+                    2,
+                    [(2, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none])] } -/
+#guard_msgs in
 #eval parseGrammar test_square_brackets
+/--
+info: fun m ref0 ρ => ↑(Int.ofNat 5) = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile test_square_brackets
 
 def test_end :=
 "libfunc function_call<user@foo::end> = function_call<user@foo::end::bar>;"
+/--
+info: Except.ok { typedefs := [],
+  libfuncs := [(Sierra.Identifier.name
+                  "function_call"
+                  [Sierra.Parameter.userfunc
+                     (Sierra.Identifier.name "foo" [] (some (Sierra.Identifier.name "end" [] none)))]
+                  none,
+                Sierra.Identifier.name
+                  "function_call"
+                  [Sierra.Parameter.userfunc
+                     (Sierra.Identifier.name
+                       "foo"
+                       []
+                       (some (Sierra.Identifier.name "end" [] (some (Sierra.Identifier.name "bar" [] none)))))]
+                  none)],
+  statements := [],
+  declarations := [] } -/
+#guard_msgs in
 #eval parseGrammar test_end
 
 def test_local :=
@@ -275,5 +978,33 @@ s([1], [0]) -> ([2]);
 return([2]);
 
 foo@0([0]: F) -> (F);"
+/--
+info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Identifier.name "felt252" [] none)],
+  libfuncs := [(Sierra.Identifier.name "a" [] none,
+                Sierra.Identifier.name
+                  "alloc_local"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "F" [] none)]
+                  none),
+               (Sierra.Identifier.name "s" [] none,
+                Sierra.Identifier.name
+                  "store_local"
+                  [Sierra.Parameter.identifier (Sierra.Identifier.name "F" [] none)]
+                  none)],
+  statements := [{ libfunc_id := Sierra.Identifier.name "a" [] none,
+                   args := [],
+                   branches := [{ target := none, results := [1] }] },
+                 { libfunc_id := Sierra.Identifier.name "s" [] none,
+                   args := [1, 0],
+                   branches := [{ target := none, results := [2] }] },
+                 { libfunc_id := Sierra.Identifier.name "return" [] none, args := [2], branches := [] }],
+  declarations := [(Sierra.Identifier.name "foo" [] none,
+                    0,
+                    [(0, Sierra.Identifier.name "F" [] none)],
+                    [Sierra.Identifier.name "F" [] none])] } -/
+#guard_msgs in
 #eval parseGrammar test_local
+/--
+info: fun m ref0 ρ => ref0 = ρ
+ Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+#guard_msgs in
 #eval analyzeFile test_local
