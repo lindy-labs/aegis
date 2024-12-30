@@ -1,4 +1,4 @@
-import Aegis.Commands
+import Aegis.Tactic
 
 open Sierra
 
@@ -11,10 +11,10 @@ aegis_spec "test::foo" :=
 
 aegis_prove "test::foo" :=
   fun _ _ a b _ ρ => by
-  unfold «spec_test::foo»
+  unfold_spec "test::foo"
   rename_i x x_1 x_2
   intro h_auto
-  unhygienic aesop_cases h_auto
+  unhygienic cases h_auto
   · simp_all only [and_self, true_or]
   · simp_all only [and_self, or_true]
 

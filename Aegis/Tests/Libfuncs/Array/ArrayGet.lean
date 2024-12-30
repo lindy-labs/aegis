@@ -1,4 +1,4 @@
-import Aegis.Commands
+import Aegis.Tactic
 
 open Sierra
 
@@ -13,13 +13,9 @@ aegis_spec "test::foo" :=
 
 aegis_prove "test::foo" :=
   fun m _ a b _ ρ => by
-  unfold «spec_test::foo»
+  unfold_spec "test::foo"
   rintro ⟨x,(h|h)⟩
-  · rename_i x_1 x_2
-    simp_all only [exists_and_left, true_and]
-    unhygienic with_reducible aesop_destruct_products
-    aesop_subst right_1
-    simp_all only [Sum.inl.injEq, Option.some.injEq, exists_eq_left', and_false, or_false]
+  · aesop
   · simp [h]
 
 aegis_complete

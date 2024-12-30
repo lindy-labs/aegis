@@ -40,8 +40,8 @@ return([11], [12]);
 test::foo@0([0]: RangeCheck, [1]: Snapshot<Array<felt252>>, [2]: u32) -> (RangeCheck, core::option::Option::<core::box::Box::<@core::felt252>>);"
 
 aegis_spec "test::foo" := fun _ _ a i _ ρ =>
-  ρ = if hl : i.val ≥ a.length then .inr ()
-      else .inl (a.get ⟨i.val, lt_of_not_ge hl⟩)
+  ρ = if hl : i.val ≥ a.length then Sum.inr ()
+      else Sum.inl (a.get ⟨i.val, lt_of_not_ge hl⟩)
 
 aegis_prove "test::foo" := fun _ _ a i _ ρ => by
   rintro ⟨_, (h | h)⟩

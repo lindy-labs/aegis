@@ -1,4 +1,4 @@
-import Aegis.Commands
+import Aegis.Tactic
 
 open Sierra
 
@@ -11,6 +11,6 @@ aegis_spec "test::foo" :=
 
 aegis_prove "test::foo" :=
   fun m a ρ => by
-  unfold «spec_test::foo»
+  unfold_spec "test::foo"
   intro h_auto
   simp_all only [exists_eq_right]

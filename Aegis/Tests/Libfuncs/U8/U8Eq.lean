@@ -1,6 +1,8 @@
-import Aegis.Commands
+import Aegis.Tactic
 
 open Sierra
+
+namespace Test.U8
 
 aegis_load_file "../../e2e_libfuncs/u8_aegis/u8_eq.sierra"
 
@@ -10,7 +12,7 @@ aegis_spec "test::foo" :=
 
 aegis_prove "test::foo" :=
   fun _ ρ => by
-  unfold «spec_test::foo»
+  unfold_spec "test::foo"
   rintro (⟨-,rfl⟩|⟨h,rfl⟩)
   · simp
   · rw [← sub_eq_zero] at h

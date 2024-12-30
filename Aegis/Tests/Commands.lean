@@ -1,4 +1,4 @@
-import Aegis.Commands
+import Aegis.Tactic
 
 set_option linter.hashCommand false
 
@@ -656,5 +656,5 @@ set_option aegis.filterUnused false
 set_option aegis.normalize false
 aegis_prove "test::foo" := fun _ a b ρ => by
   unfold Bool.toSierraBool
-  unfold «spec_test::foo»
+  unfold_spec "test::foo"
   aesop

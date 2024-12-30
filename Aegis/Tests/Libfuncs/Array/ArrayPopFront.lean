@@ -1,4 +1,4 @@
-import Aegis.Commands
+import Aegis.Tactic
 
 open Sierra
 
@@ -12,7 +12,7 @@ aegis_spec "test::foo" :=
 
 aegis_prove "test::foo" :=
   fun m a ρ₁ ρ₂ => by
-  unfold «spec_test::foo»
+  unfold_spec "test::foo"
   rintro ⟨_,_,(⟨⟨ρ₂',h,rfl⟩,rfl,rfl⟩|⟨rfl,rfl,rfl⟩)⟩
   · rename_i w w_1
     simp_all only [List.tail_cons, List.length_cons, Nat.succ_ne_zero, and_self, Sum.inl.injEq, List.head!_cons,
