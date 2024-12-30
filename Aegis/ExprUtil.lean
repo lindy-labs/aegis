@@ -129,7 +129,7 @@ partial def AndOrTree.separateTupleEqs (t : AndOrTree) : AndOrTree :=
 
 /-- Contract equalities in an `AndOrTree` which fulfill a given criterion -/
 partial def AndOrTree.contractEqs (t : AndOrTree) (crit : FVarId → Bool)
-    (s : FVarSubst := .empty) (fvs : HashSet FVarId := ∅) : AndOrTree :=
+    (s : FVarSubst := .empty) (fvs : Std.HashSet FVarId := ∅) : AndOrTree :=
   match t with
   | nil => nil
   | cons e ts =>

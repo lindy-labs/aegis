@@ -61,11 +61,11 @@ def getMuBody : SierraType → SierraType
 | .Mu ty => getMuBody ty
 | ty => ty
 
-partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifier)
+partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Identifier)
     (i : Identifier) : Except String (List Identifier × SierraType) := do
   match ctx.indexOf? i with
   | .some idx => .ok ([i], .Ref idx)
-  | .none => match raw.find? i with
+  | .none => match raw[i]? with
     | .some <| .name "felt252" [] .none => .ok ([], .Felt252)
     | .some <| .name "u8" [] .none => .ok ([], .U8)
     | .some <| .name "u16" [] .none => .ok ([], .U16)
@@ -124,16 +124,16 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
       | _ => throw "Expected Enum parameters to refer a to a type"
       let x ← idents.mapM <| translate raw (i :: ctx)
       let (lvs, tys) := x.unzip
-      if lvs.join.contains i then .ok (lvs.join.removeAll [i], .Mu <| .Enum tys)
-      else .ok (lvs.join, .Enum <| tys.map <| decreaseRefs 0)
+      if lvs.flatten.contains i then .ok (lvs.flatten.removeAll [i], .Mu <| .Enum tys)
+      else .ok (lvs.flatten, .Enum <| tys.map <| decreaseRefs 0)
     | .some <| .name "Struct" (_ :: ps) .none =>
       let idents ← flip mapM ps fun x => match x with
       | .identifier ident => pure ident
       | _ => throw "Expected Struct parameters to refer a to a type"
       let x ← idents.mapM <| translate raw (i :: ctx)
       let (lvs, tys) := x.unzip
-      if lvs.join.contains i then .ok (lvs.join.removeAll [i], .Mu <| .Struct tys)
-      else .ok (lvs.join, .Struct <| tys.map <| decreaseRefs 0)
+      if lvs.flatten.contains i then .ok (lvs.flatten.removeAll [i], .Mu <| .Struct tys)
+      else .ok (lvs.flatten, .Struct <| tys.map <| decreaseRefs 0)
     | .some <| .name "Const" (p :: ps) .none =>
       let ident ← match p with
       | .identifier ident => pure ident
@@ -146,7 +146,7 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
         | _ => throw "Expected Const parameters to refer a to a type"
         let x ← idents.mapM <| translate raw (i :: ident :: ctx)  -- really add `ident`?
         let (lvs, tys) := x.unzip
-        .ok (lvs.join, .ConstStruct ty tys)
+        .ok (lvs.flatten, .ConstStruct ty tys)
       | .U8 | .U16 | .U32 | .U64 | .U128 | .Felt252 =>
         let num : ℤ ← match ps with
         | [.const n] => pure n
@@ -156,12 +156,12 @@ partial def translate (raw : HashMap Identifier Identifier) (ctx : List Identifi
     | _ => throw s!"Type not translatable: {i}"
 
 def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
-    Except String (HashMap Identifier SierraType) := do
+    Except String (Std.HashMap Identifier SierraType) := do
   let idents := typedefs.map (·.1)
   let x ← idents.mapM <| translate (.ofList typedefs) []
-  .ok <| HashMap.ofList <| idents.zip <| x.map (·.2)
+  .ok <| .ofList <| idents.zip <| x.map (·.2)
 
-abbrev RefTable := HashMap Nat FVarId
+abbrev RefTable := Std.HashMap Nat FVarId
 
 instance : ToString RefTable where toString x := toString $ repr x.toList
 

@@ -33,15 +33,15 @@ def box_forward_snapshot (t : SierraType) : FuncData where
                    let rhs : Expr := q($(m).boxHeap $t $a)
                    Expr.mkEq q(Option ($(t).toType)) lhs rhs }]
 
-def boxLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
+def boxLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "into_box" [.identifier ident] _ =>
-  match getMuBody <$> typeRefs.find? ident with
+  match getMuBody <$> typeRefs[ident]? with
   | .some t => into_box metadataRef t
   | _ => .none
 | .name "unbox" [.identifier ident] _ =>
-  match getMuBody <$> typeRefs.find? ident with
+  match getMuBody <$> typeRefs[ident]? with
   | .some t => unbox metadataRef t
   | _ => .none
 | .name "box_forward_snapshot" [.identifier ident] .none =>
-  return box_forward_snapshot metadataRef (← typeRefs.find? ident)
+  return box_forward_snapshot metadataRef (← typeRefs[ident]?)
 | _ => .none

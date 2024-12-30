@@ -9,11 +9,11 @@ namespace Sierra
 
 def buildFuncSignatures
   (currentFunc : Identifier)
-  (typedefs : HashMap Identifier SierraType)
+  (typedefs : Std.HashMap Identifier SierraType)
   (funcdefs : List (Identifier × Identifier))
-  (specs : HashMap Identifier (Name × (FVarId → FuncData)))
+  (specs : Std.HashMap Identifier (Name × (FVarId → FuncData)))
   (metadataRef : FVarId) :
-  MetaM (HashMap Identifier FuncData) := do
+  MetaM (Std.HashMap Identifier FuncData) := do
   let mut acc := ∅
   for (name, sig) in funcdefs do
     match FuncData.libfuncs currentFunc typedefs specs metadataRef sig with
@@ -36,7 +36,7 @@ abbrev M := StateT State MetaM
 
 def getOrMkNewRef (n : ℕ) (t : Expr) : M FVarId := do
   let s ← get
-  match s.refs.find? n with
+  match s.refs[n]? with
   | .some x => pure x
   | _ => do
     let name ← mkFreshUserName (.mkSimple ("ref" ++ n.repr))
@@ -62,7 +62,7 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     M Expr := do
   let s ← get
   withLCtx s.lctx #[] do
-    let allRefs := HashSet.ofArray <| s.refs.toArray.map (·.2) ++ s.outputRefs
+    let allRefs := Std.HashSet.ofArray <| s.refs.toArray.map (·.2) ++ s.outputRefs
     let allRefs := allRefs.insert s.metadataRef
     -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
     let mut cs := cs.filter (¬ ·.hasAnyFVar (¬ allRefs.contains ·))
@@ -93,8 +93,8 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     return e
 
 partial def processState
-  (typeDefs : HashMap Identifier SierraType)
-  (funcSigs : HashMap Identifier FuncData)
+  (typeDefs : Std.HashMap Identifier SierraType)
+  (funcSigs : Std.HashMap Identifier FuncData)
   (f : SierraFile)
   (finputs : List (Nat × Identifier))
   (gas : ℕ := 2500) : M AndOrTree := do
@@ -104,18 +104,18 @@ partial def processState
   | .name "return" [] .none =>
     let s ← get
     let es := (s.outputRefs.zip (← st.args.mapM fun n => do
-      let .some sn := s.refs.find? n
+      let .some sn := s.refs[n]?
         | throwError "Could not find reference {n} in ref table"
       pure sn)).zip s.outputTypes
     let es ← es.mapM fun ((ofv, rfv), t) => do
-      let .some st := typeDefs.find? t
+      let .some st := typeDefs[t]?
         | throwError "Could not find type def for {t}"
       pure <| Expr.mkEq (SierraType.toQuote [] <| st) (.fvar rfv) (.fvar ofv)
     return .cons (Expr.mkAnds es) []
   | _ => do
     let .some st := f.statements.get? (← get).pc
       | throwError "Program counter out of bounds"
-    let .some fd := funcSigs.find? st.libfunc_id
+    let .some fd := funcSigs[st.libfunc_id]?
       | throwError "Could not find libfunc used in code: {st.libfunc_id}"
     unless fd.branches.length = st.branches.length do
       throwError "Incorrect number of branches to {st.libfunc_id}"
@@ -150,18 +150,18 @@ def withFindByIdentifier (ident : Identifier)
   | [⟨_, pc, inputArgs, outputTypes⟩] => k pc inputArgs outputTypes
   | _ => throwError "Ambiguous identifier, please edit Sierra file to make them unique"
 
-def funcDataFromCondition (typeDefs : HashMap Identifier SierraType)
+def funcDataFromCondition (typeDefs : Std.HashMap Identifier SierraType)
     (inputArgs : List (ℕ × Identifier))
     (outputTypes : List Identifier)
     (cond : Expr)
     (metadataRef : FVarId) : FuncData :=
   let cond := cond.beta #[.fvar metadataRef]
-  { inputTypes := inputArgs.map fun (_, i) => typeDefs.find! i
-    branches := [{ outputTypes := outputTypes.map typeDefs.find!
+  { inputTypes := inputArgs.map fun (_, i) => typeDefs[i]!
+    branches := [{ outputTypes := outputTypes.map typeDefs.get!
                    condition := OfInputs.abstract fun ios =>
                      mkAppN cond ios.toArray }] }
 
-variable (specs : HashMap Identifier (Name × (FVarId → FuncData)))
+variable (specs : Std.HashMap Identifier (Name × (FVarId → FuncData)))
   (contractCalls : List ContractCallData)
 
 partial def getFuncCondition (ident : Identifier) (pc : ℕ) (inputArgs : List (ℕ × Identifier))
@@ -174,7 +174,7 @@ partial def getFuncCondition (ident : Identifier) (pc : ℕ) (inputArgs : List (
   for t in outputTypes do
     let name ← mkFreshUserName `ρ
     let fv ← mkFreshFVarId
-    let .some st := typeDefs.find? t
+    let .some st := typeDefs[t]?
       | throwError "Could not find type def for {t}"
     lctx := lctx.mkLocalDecl fv name <| SierraType.toQuote [] st
     outputRefs := outputRefs.push fv
@@ -194,7 +194,7 @@ partial def getFuncCondition (ident : Identifier) (pc : ℕ) (inputArgs : List (
     let mut refs : RefTable := ∅
     -- Add input arguments to initial local context and refs table
     for (i, t) in inputArgs do
-      let .some st := typeDefs.find? t
+      let .some st := typeDefs[t]?
         | throwError "Could not find type def for {t}"
       refs := refs.insert i <| ← getOrMkNewRef i <| SierraType.toQuote [] st
     set { (← get) with refs := refs }
@@ -209,8 +209,8 @@ def getSpecsType (inputArgs : List (ℕ × Identifier)) (outputTypes : List Iden
   let typeDefs ← match buildTypeDefs sf.typedefs with
     | .ok x => pure x
     | .error err => throwError err
-  let inputs := inputArgs.map (SierraType.toQuote ∘ (typeDefs.find! ·.2))
-  let outputs := outputTypes.map (SierraType.toQuote ∘ typeDefs.find!)
+  let inputs := inputArgs.map (SierraType.toQuote ∘ (typeDefs.get! ·.2))
+  let outputs := outputTypes.map (SierraType.toQuote ∘ typeDefs.get!)
   return OfInputsQ q(Prop) (q(Metadata) :: inputs ++ outputs)
 
 def getSpecTypeOfName (ident : Identifier) : MetaM Q(Type) :=
@@ -219,7 +219,7 @@ def getSpecTypeOfName (ident : Identifier) : MetaM Q(Type) :=
 def buildContractCallHyp (metadataRef : FVarId) (cd : ContractCallData) : MetaM Expr := do
   let ⟨ident, addr, sel, impls⟩ := cd
   unless specs.contains ident do throwError "specification for referenced contract call {ident} not given"
-  let cond := (((specs.find! ident).2 metadataRef).branches.get! 0).condition
+  let cond := (((specs.get! ident).2 metadataRef).branches.get! 0).condition
   let cond ← cond.toExpr -- TODO change
   let m : Q(Metadata) := Expr.fvar metadataRef
   let cond ← Core.betaReduce cond
@@ -256,10 +256,10 @@ def getLocalDeclInfos (ident : Identifier) (pc : ℕ) (inputArgs : List (ℕ × 
   ret := ret.push <| .mk (← mkFreshUserName `m) fun _ => pure q(Metadata)
   for (_, t) in inputArgs do
     let n ← mkFreshUserName `a  -- TODO make anonymous?
-    ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote [] <| typeDefs.find! t
+    ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote [] <| typeDefs[t]!
   for t in outputTypes do
     let n ← mkFreshUserName `ρ  -- TODO make anonymous?
-    ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote [] <| typeDefs.find! t
+    ret := ret.push <| .mk n fun _ => pure <| SierraType.toQuote [] <| typeDefs[t]!
   -- Add the callResult specs, to which the metadata reference is applied
   for cd in contractCalls do
     ret := ret.push <| .mk `callSpec fun call_args => do

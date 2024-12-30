@@ -37,20 +37,20 @@ def enum_snapshot_match (fields : List SierraType) : FuncData where
       condition := fun (a : Q($(⟦.Enum fields⟧))) ρ =>
         Expr.mkEq q($(⟦.Enum fields⟧)) (enum_selector fields idx ρ) a }
 
-def enumLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
+def enumLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "enum_init" [.identifier ident, .const (.ofNat n)] .none =>
-  match getMuBody <$> typeRefs.find? ident with
+  match getMuBody <$> typeRefs[ident]? with
   | .some (.Enum fields) =>
     if hn : n < fields.length then enum_init fields ⟨n, hn⟩
     else .none
   | _ => .none
 | .name "enum_match" [.identifier ident] .none =>
-  match getMuBody <$> typeRefs.find? ident with
+  match getMuBody <$> typeRefs[ident]? with
   | .some (.Enum fields) =>
     enum_match fields
   | _ => .none
 | .name "enum_snapshot_match" [.identifier ident] .none =>
-  match getMuBody <$> typeRefs.find? ident with
+  match getMuBody <$> typeRefs[ident]? with
   | .some (.Enum fields) =>
     enum_snapshot_match fields
   | _ => .none

@@ -74,7 +74,7 @@ proofs. -/
 initialize cairoPath : SimplePersistentEnvExtension System.FilePath (Option System.FilePath) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun _ p => p
-    addImportedFn := fun ⟨pss⟩ => (pss.map Array.toList).join.getLast?
+    addImportedFn := fun ⟨pss⟩ => (pss.map Array.toList).flatten.getLast?
   }
 
 initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile (Option SierraFile) ←
@@ -90,17 +90,17 @@ initialize loadedSierraFile : SimplePersistentEnvExtension SierraFile (Option Si
   }
 
 initialize sierraSpecs : SimplePersistentEnvExtension (Identifier × Name × PersistantFuncData)
-    (HashMap Identifier (Name × PersistantFuncData)) ←
+    (Std.HashMap Identifier (Name × PersistantFuncData)) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun specs (i, n) => specs.insert i n
-    addImportedFn := fun ⟨pss⟩ => (HashMap.ofList (pss.map Array.toList).join)
+    addImportedFn := fun ⟨pss⟩ => .ofList (pss.map Array.toList).flatten
   }
 
 initialize sierraSoundness : SimplePersistentEnvExtension (Identifier × Name)
-    (HashMap Identifier Name) ←
+    (Std.HashMap Identifier Name) ←
   registerSimplePersistentEnvExtension {
     addEntryFn := fun specs (i, n) => specs.insert i n
-    addImportedFn := fun ⟨pss⟩ => (HashMap.ofList (pss.map Array.toList).join)
+    addImportedFn := fun ⟨pss⟩ => .ofList (pss.map Array.toList).flatten
   }
 
 initialize sierraContractCalls : SimplePersistentEnvExtension ContractCallData
@@ -164,7 +164,7 @@ elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `st
                                       levelParams := []
                                       value := val
                                       hints := default
-                                      safety := default }
+                                      safety := .safe }
         withFindByIdentifier sf i fun _ inputArgs outputTypes => do
           -- Generate the `FuncData`
           let fd := funcDataFromCondition typeDefs inputArgs outputTypes val
@@ -182,11 +182,11 @@ elab "aegis_prove" name:str val:declVal : command => do
     withRef val do
       liftTermElabM do
         let specs := sierraSpecs.getState env
-        let specs := HashMap.ofList <| specs.toList.map fun (i, n, pfd) => (i, n, pfd.unpersist)
+        let specs := .ofList <| specs.toList.map fun (i, n, pfd) => (i, n, pfd.unpersist)
         let contractCalls := sierraContractCalls.getState env
         let type ← withLocalDeclsD (← getLocalDeclInfosOfName specs contractCalls sf i) fun fvs => do
           let ioArgs := fvs[:fvs.size - 1 - contractCalls.length]
-          let .some (specName, _) := (sierraSpecs.getState env).find? i
+          let .some (specName, _) := (sierraSpecs.getState env)[i]?
             | throwError "Could not find manual specification for {i}"
           mkForallFVars fvs <| ← mkAppM specName ioArgs
         let val ← Term.elabTermEnsuringType val type
@@ -199,7 +199,7 @@ elab "aegis_prove" name:str val:declVal : command => do
                                 levelParams := []
                                 value := val
                                 hints := default
-                                safety := default }
+                                safety := .safe }
         -- Add to list of soundness proofs
         modifyEnv (sierraSoundness.addEntry · (i, name))
         -- Remove used contract call hypotheses

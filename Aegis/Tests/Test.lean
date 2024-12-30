@@ -21,7 +21,7 @@ negparam@0() -> (F);"
 /--
 info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Identifier.name "felt252" [] none)],
   libfuncs := [(Sierra.Identifier.name "c1" [] none,
-                Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const -1] none),
+                Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const (-1)] none),
                (Sierra.Identifier.name "c2" [] none,
                 Sierra.Identifier.name "felt252_const" [Sierra.Parameter.const 1] none),
                (Sierra.Identifier.name "add" [] none, Sierra.Identifier.name "felt252_add" [] none)],
@@ -40,8 +40,8 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
 #guard_msgs in
 #eval parseGrammar negParam
 /--
-info: fun m ρ => ↑(Int.negSucc 0) + ↑(Int.ofNat 1) = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Prop
+info: fun m ρ => ↑(-1) + ↑1 = ρ
+ Inferred Type:Metadata → F → Prop
 -/
 #guard_msgs in
 #eval analyzeFile negParam
@@ -186,8 +186,8 @@ info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name 
 #guard_msgs in
 #eval parseGrammar code02
 /--
-info: fun m ref0 ref1 ρ => ↑(Int.ofNat 5) = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Sierra.F → Prop -/
+info: fun m ref0 ref1 ρ => ↑5 = ρ
+ Inferred Type:Metadata → F → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile code02
 
@@ -207,7 +207,7 @@ return([4]); // 3
 [0]@0([0]: [0], [1]: [0], [2]: [0]) -> ([0]);"
 /--
 info: fun m ref0 ref1 ref2 ρ => ref0 + ref1 + ref2 = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Sierra.F → Sierra.F → Prop -/
+ Inferred Type:Metadata → F → F → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile code03
 
@@ -308,8 +308,8 @@ info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name 
 #guard_msgs in
 #eval parseGrammar code04
 /--
-info: fun m ref0 ρ => ref0 - ↑(Int.ofNat 5) = 0 ∧ ↑(Int.ofNat 0) = ρ ∨ ref0 - ↑(Int.ofNat 5) ≠ 0 ∧ ref0 = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+info: fun m ref0 ρ => ref0 - ↑5 = 0 ∧ ↑0 = ρ ∨ ref0 - ↑5 ≠ 0 ∧ ref0 = ρ
+ Inferred Type:Metadata → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile code04
 
@@ -344,8 +344,8 @@ info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name 
 #guard_msgs in
 #eval parseGrammar code05
 /--
-info: fun m ref0 ρ => ref0 = ↑(Int.ofNat 4) ∧ ref0 = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+info: fun m ref0 ρ => ref0 = ↑4 ∧ ref0 = ρ
+ Inferred Type:Metadata → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile code05
 
@@ -432,7 +432,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "felt252" [] none, Sierra
 #eval parseGrammar e2etest_felt_add
 /--
 info: fun m ref0 ref1 ρ => ref0 + ref1 = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Sierra.F → Prop -/
+ Inferred Type:Metadata → F → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile e2etest_felt_add
 
@@ -490,7 +490,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name 
 #eval parseGrammar test_enum_init
 /--
 info: fun m ref0 ρ => Sum.inr (Sum.inr ref0) = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → (Sierra.F ⊕ Sierra.F) ⊕ Sierra.F ⊕ Sierra.F → Prop -/
+ Inferred Type:Metadata → F → (F ⊕ F) ⊕ F ⊕ F → Prop -/
 #guard_msgs in
 #eval analyzeFile test_enum_init
 
@@ -542,7 +542,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
 #eval parseGrammar test_enum_match
 /--
 info: fun m ref0 ρ => ∃ ref2 ref3, Sum.inl ref2 = Sum.inr ref0 ∧ ref2 = ρ ∨ Sum.inr ref3 = Sum.inr ref0 ∧ ref3 = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+ Inferred Type:Metadata → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile test_enum_match
 
@@ -582,7 +582,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
 #eval parseGrammar test_struct_construct
 /--
 info: fun m ref0 ref1 ρ => (ref0, ref1) = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Sierra.F → Prop -/
+ Inferred Type:Metadata → F → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile test_struct_construct
 
@@ -632,7 +632,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
 #eval parseGrammar test_struct_deconstruct
 /--
 info: fun m ref0 ref1 ρ => ∃ ref3 ref4, (ref3, ref4) = (ref0, ref1) ∧ ref3 = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Sierra.F → Prop -/
+ Inferred Type:Metadata → F → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile test_struct_deconstruct
 
@@ -682,7 +682,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
 #eval parseGrammar test_struct_deconstruct'
 /--
 info: fun m ref0 ρ => ∃ ref2 ref3, (ref2, ref3) = (ref0, ref0) ∧ ref0 = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+ Inferred Type:Metadata → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile test_struct_deconstruct'
 
@@ -852,8 +852,8 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
 #guard_msgs in
 #eval parseGrammar test_function_call_01
 /--
-info: fun m ref0 ρ => ↑(Int.ofNat 5) = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+info: fun m ref0 ρ => ↑5 = ρ
+ Inferred Type:Metadata → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile test_function_call_01 0
 
@@ -940,8 +940,8 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
 #guard_msgs in
 #eval parseGrammar test_square_brackets
 /--
-info: fun m ref0 ρ => ↑(Int.ofNat 5) = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+info: fun m ref0 ρ => ↑5 = ρ
+ Inferred Type:Metadata → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile test_square_brackets
 
@@ -1005,6 +1005,6 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
 #eval parseGrammar test_local
 /--
 info: fun m ref0 ρ => ref0 = ρ
- Inferred Type:Sierra.Metadata → Sierra.F → Sierra.F → Prop -/
+ Inferred Type:Metadata → F → F → Prop -/
 #guard_msgs in
 #eval analyzeFile test_local

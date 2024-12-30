@@ -32,10 +32,10 @@ def match_nullable (t : SierraType) : FuncData where
                    let eq : Q(Prop) := Expr.mkEq t' a m'
                    q($(a).isSome ∧ $eq) }]
 
-def nullableLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
-| .name "null" [.identifier ident] .none => return null (← typeRefs.find? ident)
+def nullableLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier → Option FuncData
+| .name "null" [.identifier ident] .none => return null (← typeRefs[ident]?)
 | .name "nullable_from_box" [.identifier ident] .none =>
-  return nullable_from_box metadataRef (← typeRefs.find? ident)
+  return nullable_from_box metadataRef (← typeRefs[ident]?)
 | .name "match_nullable" [.identifier ident] .none =>
-  return match_nullable metadataRef (← typeRefs.find? ident)
+  return match_nullable metadataRef (← typeRefs[ident]?)
 | _ => .none

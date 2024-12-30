@@ -28,11 +28,11 @@ open Lean Qq
 
 namespace Sierra.FuncData
 
-variable (currentFunc : Identifier) (typeRefs : HashMap Identifier SierraType)
-  (specs : HashMap Identifier (Name × (FVarId → FuncData)))  (metadataRef : FVarId)
+variable (currentFunc : Identifier) (typeRefs : Std.HashMap Identifier SierraType)
+  (specs : Std.HashMap Identifier (Name × (FVarId → FuncData)))  (metadataRef : FVarId)
   (i : Identifier)
 
-/-- The definition of `libfuncs` is split into pieces do to slow elaboration time. -/
+/-- The definition of `libfuncs` is split into pieces due to slow elaboration time. -/
 private def libfuncs_aux :=
   controlFlowLibfuncs typeRefs i
   <|> felt252Libfuncs i
@@ -55,8 +55,7 @@ private def libfuncs_aux2 :=
   <|> hashLibfuncs metadataRef i
 
 /-- Compile-time function data registry -/
-def libfuncs :
-    Option FuncData :=
+def libfuncs : Option FuncData :=
   libfuncs_aux2 currentFunc typeRefs specs metadataRef i
   <|> uint16Libfuncs i
   <|> uint32Libfuncs i

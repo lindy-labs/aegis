@@ -62,17 +62,17 @@ def revoke_ap_tracking : FuncData where
 
 def enable_ap_tracking : FuncData where
 
-def controlFlowLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
-| .name "rename" [.identifier ident] .none => return rename (← typeRefs.find? ident)
-| .name "drop" [.identifier ident] .none => return drop (← typeRefs.find? ident)
-| .name "store_temp" [.identifier ident] .none => return store_temp (← typeRefs.find? ident)
-| .name "dup" [.identifier ident] .none => return dup (← typeRefs.find? ident)
+def controlFlowLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier → Option FuncData
+| .name "rename" [.identifier ident] .none => return rename (← typeRefs[ident]?)
+| .name "drop" [.identifier ident] .none => return drop (← typeRefs[ident]?)
+| .name "store_temp" [.identifier ident] .none => return store_temp (← typeRefs[ident]?)
+| .name "dup" [.identifier ident] .none => return dup (← typeRefs[ident]?)
 | .name "branch_align" [] .none => branch_align
 | .name "jump" [] .none => jump
 | .name "disable_ap_tracking" [] .none => disable_ap_tracking
 | .name "finalize_locals" [] .none => finalize_locals
-| .name "alloc_local" [.identifier ident] .none => return alloc_local (← typeRefs.find? ident)
-| .name "store_local" [.identifier ident] .none => return store_local (← typeRefs.find? ident)
+| .name "alloc_local" [.identifier ident] .none => return alloc_local (← typeRefs[ident]?)
+| .name "store_local" [.identifier ident] .none => return store_local (← typeRefs[ident]?)
 | .name "revoke_ap_tracking" [] .none => revoke_ap_tracking
 | .name "enable_ap_tracking" [] .none => enable_ap_tracking
 | _  => .none

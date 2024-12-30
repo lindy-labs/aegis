@@ -109,23 +109,23 @@ def array_slice (t : SierraType) : FuncData where
                  condition := fun _ (a : Q(List $t.toQuote)) (i j : Q(Sierra.UInt32)) _ =>
                    q(($(j).val < $(i).val ∨ $(a).length < $(j).val)) }]
 
-def arrayLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
+def arrayLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "array_new" [.identifier ident] .none =>
-  return array_new (← typeRefs.find? ident)
+  return array_new (← typeRefs[ident]?)
 | .name "array_append" [.identifier ident] .none =>
-  return array_append (← typeRefs.find? ident)
+  return array_append (← typeRefs[ident]?)
 | .name "array_pop_front" [.identifier ident] .none =>
-  return array_pop_front metadataRef (← typeRefs.find? ident)
+  return array_pop_front metadataRef (← typeRefs[ident]?)
 | .name "array_len" [.identifier ident] .none =>
-  return array_len (← typeRefs.find? ident)
+  return array_len (← typeRefs[ident]?)
 | .name "array_get" [.identifier ident] .none =>
-  return array_get metadataRef (← typeRefs.find? ident)
+  return array_get metadataRef (← typeRefs[ident]?)
 | .name "array_snapshot_pop_front" [.identifier ident] .none =>
-  return array_snapshot_pop_front metadataRef (← typeRefs.find? ident)
+  return array_snapshot_pop_front metadataRef (← typeRefs[ident]?)
 | .name "array_pop_front_consume" [.identifier ident] .none =>
-  return array_pop_front_consume metadataRef (← typeRefs.find? ident)
+  return array_pop_front_consume metadataRef (← typeRefs[ident]?)
 | .name "array_snapshot_pop_back" [.identifier ident] .none =>
-  return array_snapshot_pop_back metadataRef (← typeRefs.find? ident)
+  return array_snapshot_pop_back metadataRef (← typeRefs[ident]?)
 | .name "array_slice" [.identifier ident] .none =>
-  return array_slice (← typeRefs.find? ident)
+  return array_slice (← typeRefs[ident]?)
 | _ => .none

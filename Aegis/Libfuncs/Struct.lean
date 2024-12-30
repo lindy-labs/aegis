@@ -45,17 +45,17 @@ def struct_snapshot_deconstruct (fields : List SierraType) : FuncData where
                    OfInputs.apply (OfInputs.map (fun ρ => Expr.mkEq q($(⟦.Struct fields⟧)) ρ a)
                    (struct_deconstruct_condition fields)) as }]
 
-def structLibfuncs (typeRefs : HashMap Identifier SierraType) : Identifier → Option FuncData
+def structLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "struct_construct" [.identifier ident] _ =>
-  match getMuBody <$> typeRefs.find? ident with
+  match getMuBody <$> typeRefs[ident]? with
   | .some (.Struct fields) => struct_construct fields
   | _ => .none
 | .name "struct_deconstruct" [.identifier ident] _ =>
-  match getMuBody <$> typeRefs.find? ident with
+  match getMuBody <$> typeRefs[ident]? with
   | .some (.Struct fields) => struct_deconstruct fields
   | _ => .none
 | .name "struct_snapshot_deconstruct" [.identifier ident] _ =>
-  match getMuBody <$> typeRefs.find? ident with
+  match getMuBody <$> typeRefs[ident]? with
   | .some (.Struct fields) => struct_snapshot_deconstruct fields
   | _ => .none
 | _ => .none
