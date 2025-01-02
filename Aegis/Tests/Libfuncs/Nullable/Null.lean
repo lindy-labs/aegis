@@ -1,6 +1,6 @@
 import Aegis.Commands
 
-open Sierra
+namespace Sierra.Test.Nullable.Null
 
 aegis_load_file "../../e2e_libfuncs/nullable_aegis/null.sierra"
 

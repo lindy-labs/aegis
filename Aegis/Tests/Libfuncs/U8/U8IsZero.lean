@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.U8.U8IsZero
 
 aegis_load_file "../../e2e_libfuncs/u8_aegis/u8_is_zero.sierra"
 

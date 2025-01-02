@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.U16.U16SafeDivmod
 
 aegis_load_file "../../e2e_libfuncs/u16_aegis/u16_safe_divmod.sierra"
 

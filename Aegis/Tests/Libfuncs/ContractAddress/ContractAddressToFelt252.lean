@@ -1,6 +1,6 @@
 import Aegis.Commands
 
-open Sierra
+namespace Sierra.Test.ContractAddress.ContractAddressToFelt252
 
 aegis_load_file "../../e2e_libfuncs/contract_address_aegis/contract_address_to_felt252.sierra"
 

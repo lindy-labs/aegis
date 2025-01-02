@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.Array.ArraySlice
 
 aegis_load_file "../../e2e_libfuncs/array_aegis/array_slice.sierra"
 

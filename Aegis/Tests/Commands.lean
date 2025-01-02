@@ -2,7 +2,7 @@ import Aegis.Tactic
 
 set_option linter.hashCommand false
 
-open Sierra
+namespace Sierra.Test.Commands
 
 aegis_load_file "ternary_add.sierra"
 

@@ -2,7 +2,7 @@ import Aegis.Tactic
 
 open Sierra
 
-namespace Test.U8
+namespace Sierra.Test.U8.U8Eq
 
 aegis_load_file "../../e2e_libfuncs/u8_aegis/u8_eq.sierra"
 

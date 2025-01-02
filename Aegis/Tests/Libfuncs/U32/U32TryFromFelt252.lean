@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.U32.U32TryFromFelt252
 
 aegis_load_file "../../e2e_libfuncs/u32_aegis/u32_try_from_felt252.sierra"
 

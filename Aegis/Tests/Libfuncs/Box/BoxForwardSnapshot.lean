@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.Box.BoxForwardSnapshot
 
 aegis_load_file "../../e2e_libfuncs/box_aegis/box_forward_snapshot.sierra"
 

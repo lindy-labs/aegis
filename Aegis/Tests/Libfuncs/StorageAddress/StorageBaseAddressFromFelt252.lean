@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.StorageAddress.StorageBaseAddressFromFelt252
 
 aegis_load_file "../../e2e_libfuncs/storage_address_aegis/storage_base_address_from_felt252.sierra"
 

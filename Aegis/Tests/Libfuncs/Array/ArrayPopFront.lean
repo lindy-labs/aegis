@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.Array.ArrayPopFront
 
 aegis_load_file "../../e2e_libfuncs/array_aegis/array_pop_front.sierra"
 

@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.U128.U128OverflowingSub
 
 aegis_load_file "../../e2e_libfuncs/u128_aegis/u128_overflowing_sub.sierra"
 

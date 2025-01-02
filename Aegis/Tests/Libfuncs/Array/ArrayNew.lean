@@ -1,6 +1,6 @@
 import Aegis.Commands
 
-open Sierra
+namespace Sierra.Test.Array.ArrayNew
 
 aegis_load_file "../../e2e_libfuncs/array_aegis/array_new.sierra"
 

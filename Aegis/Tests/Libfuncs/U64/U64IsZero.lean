@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.U64.U64IsZero
 
 aegis_load_file "../../e2e_libfuncs/u64_aegis/u64_is_zero.sierra"
 

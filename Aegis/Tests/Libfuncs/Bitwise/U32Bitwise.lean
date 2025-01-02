@@ -1,6 +1,6 @@
 import Aegis.Commands
 
-open Sierra
+namespace Sierra.Test.Bitwise.U32Bitwise
 
 aegis_load_file "../../e2e_libfuncs/bitwise_aegis/u32_bitwise.sierra"
 

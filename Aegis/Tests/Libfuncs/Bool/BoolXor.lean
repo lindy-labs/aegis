@@ -1,6 +1,6 @@
 import Aegis.Commands
 
-open Sierra
+namespace Sierra.Test.Bool.BoolXor
 
 aegis_load_file "../../e2e_libfuncs/bool_aegis/bool_xor.sierra"
 

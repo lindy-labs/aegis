@@ -1,6 +1,6 @@
 import Aegis.Commands
 
-open Sierra
+namespace Sierra.Test.StorageAddress.StorageAddressFromBasAndOffset
 
 aegis_load_file "../../e2e_libfuncs/storage_address_aegis/storage_address_from_base_and_offset.sierra"
 

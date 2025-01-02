@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.Box.IntoBox
 
 aegis_load_file "../../e2e_libfuncs/box_aegis/into_box.sierra"
 

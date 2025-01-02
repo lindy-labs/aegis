@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.U128.U128TryFromFelt252
 
 aegis_load_file "../../e2e_libfuncs/u128_aegis/u128s_from_felt252.sierra"
 

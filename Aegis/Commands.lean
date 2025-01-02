@@ -158,8 +158,9 @@ elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `st
         let val ← Term.elabTermEnsuringType val ty
         Term.synthesizeSyntheticMVarsNoPostponing
         let val ← instantiateMVars val
-        let name : String := "spec_" ++ name.getString  -- TODO handle name clashes
-        addAndCompile <| .defnDecl {  name := .mkSimple name
+        let name : Name := .mkSimple <| "spec_" ++ name.getString
+        let (name, _) ← mkDeclName (← getCurrNamespace) default name  -- TODO check modifiers
+        addAndCompile <| .defnDecl {  name := name
                                       type := ty
                                       levelParams := []
                                       value := val
@@ -170,7 +171,7 @@ elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `st
           let fd := funcDataFromCondition typeDefs inputArgs outputTypes val
           let fd ← FuncData.persist fd
           -- Add the spec to the cache
-          modifyEnv (sierraSpecs.addEntry · (i, .mkSimple name, fd))
+          modifyEnv (sierraSpecs.addEntry · (i, name, fd))
   | .error str => throwError toString str
 
 elab "aegis_prove" name:str val:declVal : command => do

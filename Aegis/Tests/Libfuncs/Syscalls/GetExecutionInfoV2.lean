@@ -1,6 +1,6 @@
 import Aegis.Tactic
 
-open Sierra
+namespace Sierra.Test.Syscalls.GetExecutionInfoV2
 
 aegis_load_file "../../e2e_libfuncs/syscalls_aegis/get_execution_info_v2_syscall.sierra"
 
