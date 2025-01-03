@@ -1,4 +1,3 @@
-call_contract_syscall
 class_hash_const
 class_hash_to_felt252
 class_hash_try_from_felt252
@@ -23,5 +22,4 @@ replace_class_syscall
 send_message_to_l1_syscall
 storage_address_to_felt252
 struct_snapshot_deconstruct
-withdraw_gas
 

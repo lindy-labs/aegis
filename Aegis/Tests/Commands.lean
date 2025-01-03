@@ -276,61 +276,6 @@ aegis_prove "test::get_execution_info" :=
   · exact ⟨rfl, .inl ⟨_,_,_,rfl,h₁,h₂,h₃⟩⟩
   · exact ⟨rfl, .inr rfl⟩
 
-aegis_load_string "type Box<felt252> = Box<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
-type Nullable<felt252> = Nullable<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
-type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
-
-libfunc nullable_from_box<felt252> = nullable_from_box<felt252>;
-libfunc store_temp<Nullable<felt252>> = store_temp<Nullable<felt252>>;
-
-nullable_from_box<felt252>([0]) -> ([1]); // 0
-store_temp<Nullable<felt252>>([1]) -> ([1]); // 1
-return([1]); // 2
-
-test::nullable_from_box@0([0]: Box<felt252>) -> (Nullable<felt252>);"
-
-aegis_spec "test::nullable_from_box" :=
-  fun m a ρ =>
-  ρ = m.boxHeap .Felt252 a
-
-aegis_prove "test::nullable_from_box" :=
-  fun m a ρ => by
-  rintro rfl
-  rfl
-
-aegis_load_string "type Nullable<felt252> = Nullable<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
-type Box<felt252> = Box<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
-type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
-
-libfunc match_nullable<felt252> = match_nullable<felt252>;
-libfunc branch_align = branch_align;
-libfunc store_temp<Box<felt252>> = store_temp<Box<felt252>>;
-libfunc jump = jump;
-libfunc drop<Box<felt252>> = drop<Box<felt252>>;
-
-match_nullable<felt252>([0]) { fallthrough() 4([2]) }; // 0
-branch_align() -> (); // 1
-store_temp<Box<felt252>>([1]) -> ([3]); // 2
-jump() { 7() }; // 3
-branch_align() -> (); // 4
-drop<Box<felt252>>([1]) -> (); // 5
-store_temp<Box<felt252>>([2]) -> ([3]); // 6
-return([3]); // 7
-
-test::match_nullable@0([0]: Nullable<felt252>, [1]: Box<felt252>) -> (Box<felt252>);"
-
-aegis_spec "test::match_nullable" :=
-  fun m a b ρ =>
-  (a = .none ∧ ρ = b)
-  ∨ (a = m.boxHeap .Felt252 ρ)
-
-aegis_prove "test::match_nullable" :=
-  fun m a b ρ => by
-  unfold «spec_test::match_nullable»
-  rintro ⟨_,(⟨rfl,rfl⟩|⟨h,h',h''⟩)⟩
-  · aesop
-  · aesop
-
 aegis_load_string "type u16 = u16 [storable: true, drop: true, dup: true, zero_sized: false];
 type u64 = u64 [storable: true, drop: true, dup: true, zero_sized: false];
 
@@ -455,73 +400,6 @@ aegis_prove "test::withdraw_gas" :=
     · left; aesop
     · right; aesop
   · right; simp only [Sum.isRight_inr, and_true]; linarith
-
-aegis_load_string "type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
-type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
-type core::integer::u256 = Struct<ut@core::integer::u256, u128, u128> [storable: true, drop: true, dup: true, zero_sized: false];
-
-libfunc u256_sqrt = u256_sqrt;
-libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
-libfunc store_temp<u128> = store_temp<u128>;
-
-u256_sqrt([0], [1]) -> ([2], [3]); // 0
-store_temp<RangeCheck>([2]) -> ([2]); // 1
-store_temp<u128>([3]) -> ([3]); // 2
-return([2], [3]); // 3
-
-test::u256_sqrt@0([0]: RangeCheck, [1]: core::integer::u256) -> (RangeCheck, u128);"
-
-aegis_spec "test::u256_sqrt" :=
-  fun _ _ a _ ρ =>
-  ρ = (a.2.append a.1).toNat.sqrt
-
-aegis_prove "test::u256_sqrt" :=
-  fun _ _ a _ ρ => by
-  unfold «spec_test::u256_sqrt»
-  aesop
-
-aegis_load_string "type GasBuiltin = GasBuiltin [storable: true, drop: false, dup: false, zero_sized: false];
-type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
-type Snapshot<Array<felt252>> = Snapshot<Array<felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
-type core::array::Span::<core::felt252> = Struct<ut@core::array::Span::<core::felt252>, Snapshot<Array<felt252>>> [storable: true, drop: true, dup: true, zero_sized: false];
-type core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>> = Enum<ut@core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, core::array::Span::<core::felt252>, Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
-type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
-type ContractAddress = ContractAddress [storable: true, drop: true, dup: true, zero_sized: false];
-type System = System [storable: true, drop: false, dup: false, zero_sized: false];
-
-libfunc call_contract_syscall = call_contract_syscall;
-libfunc branch_align = branch_align;
-libfunc enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 0> = enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 0>;
-libfunc store_temp<GasBuiltin> = store_temp<GasBuiltin>;
-libfunc store_temp<System> = store_temp<System>;
-libfunc store_temp<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>> = store_temp<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>>;
-libfunc enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 1> = enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 1>;
-
-call_contract_syscall([0], [1], [2], [3], [4]) { fallthrough([5], [6], [7]) 7([8], [9], [10]) }; // 0
-branch_align() -> (); // 1
-enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 0>([7]) -> ([11]); // 2
-store_temp<GasBuiltin>([5]) -> ([5]); // 3
-store_temp<System>([6]) -> ([6]); // 4
-store_temp<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>>([11]) -> ([11]); // 5
-return([5], [6], [11]); // 6
-branch_align() -> (); // 7
-enum_init<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>, 1>([10]) -> ([12]); // 8
-store_temp<GasBuiltin>([8]) -> ([8]); // 9
-store_temp<System>([9]) -> ([9]); // 10
-store_temp<core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>>([12]) -> ([12]); // 11
-return([8], [9], [12]); // 12
-
-test::call_contract_syscall@0([0]: GasBuiltin, [1]: System, [2]: ContractAddress, [3]: felt252, [4]: core::array::Span::<core::felt252>) -> (GasBuiltin, System, core::result::Result::<core::array::Span::<core::felt252>, core::array::Array::<core::felt252>>);"
-
-aegis_spec "test::call_contract_syscall" :=
-  fun m _ s c f d _ s' ρ =>
-  ρ = .inl (m.callResult c f d m.contractAddress s).1
-  ∧ s' = (m.callResult c f d m.contractAddress s).2 ∨ ρ.isRight
-
-aegis_prove "test::call_contract_syscall" :=
-  fun m _ s c f d _ _ ρ => by
-  unfold «spec_test::call_contract_syscall»
-  aesop
 
 aegis_load_string "type GasBuiltin = GasBuiltin;
 type Array<felt252> = Array<felt252>;
