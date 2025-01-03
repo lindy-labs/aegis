@@ -18,7 +18,7 @@ def storage_address_from_base_and_offset : FuncData where
                    (a : Q(ZMod 3618502788666131106986593281521497120414687020801267626233049500247285300992))
                    (b : Q(UInt8))
                    (ρ : Q(ZMod 3618502788666131106986593281521497120414687020801267626233049500247285301248)) =>
-                     q($ρ = $(a).cast + $(b).cast) }]
+                     q($ρ = $(a).cast + $(b).toNat) }]
 
 def storage_address_try_from_felt252 : FuncData where
   inputTypes := [.RangeCheck, .Felt252]

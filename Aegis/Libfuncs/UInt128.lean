@@ -10,27 +10,25 @@ def u128_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U128, U128]
   branches := [{ outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
-                   q(($a).val + ($b).val < U128_MOD ∧ $ρ = $a + $b) },
-               -- TODO check branch order
+                   q(($a).toNat + ($b).toNat < U128_MOD ∧ $ρ = $a + $b) },
                { outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
-                   q(U128_MOD ≤ ($a).val + ($b).val ∧ $ρ = $a + $b) }]
+                   q(U128_MOD ≤ ($a).toNat + ($b).toNat ∧ $ρ = $a + $b) }]
 
 def u128_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U128, U128]
   branches := [{ outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
-                   q(($b).val ≤ ($a).val ∧ $ρ = $a - $b) },
-               -- TODO check branch order
+                   q($b ≤ $a ∧ $ρ = $a - $b) },
                { outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
-                   q(($a).val < ($b).val ∧ $ρ = $a - $b) }]
+                   q($a < $b ∧ $ρ = $a - $b) }]
 
 def u128_guarantee_mul : FuncData where
   inputTypes := [U128, U128]
   branches := [{ outputTypes := [U128, U128, U128MulGuarantee]
                  condition := fun (a b ρ_high ρ_low : Q(UInt128)) _ =>
-                   q($ρ_low = $a * $b ∧ $ρ_high = ZMod.hmul $a $b) }]
+                   q($(ρ_high).append $ρ_low = $(a).zeroExtend _ * $(b).zeroExtend _) }]
 
 def u128_mul_guarantee_verify : FuncData where
   inputTypes := [RangeCheck, U128MulGuarantee]
@@ -41,23 +39,21 @@ def u128s_from_felt252 : FuncData where
   inputTypes := [RangeCheck, Felt252]
   branches := [{ outputTypes := [RangeCheck, U128]
                  condition := fun _ (a : Q(F)) _ (ρ : Q(UInt128)) =>
-                   q(($a).val < U128_MOD ∧ $ρ = ($a).cast) },
+                   q(($a).val < U128_MOD ∧ $ρ = ($a).val) },
                { outputTypes := [RangeCheck, U128, U128]
                  condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt128)) =>
-                   q(U128_MOD ≤ ($a).val ∧ $ρ_high = $(a).val / U128_MOD
-                     ∧ $ρ_low = $(a).cast) }]
+                   q(U128_MOD ≤ ($a).val ∧ $(ρ_high).append $ρ_low = $(a).val) }]
 
 def u128_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U128, NonZero U128]
   branches := [{ outputTypes := [RangeCheck, U128, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ_div ρ_mod : Q(UInt128)) =>
-                   q($ρ_div = ZMod.ndiv $a $b ∧ $ρ_mod = ZMod.nmod $a $b) }]
+                   q($ρ_div = $a / $b ∧ $ρ_mod = $a % $b) }]
 
 def u128_to_felt252 : FuncData where
   inputTypes := [U128]
   branches := [{ outputTypes := [Felt252]
-                 condition := fun (a : Q(UInt128)) (ρ : Q(F)) =>
-                   q($ρ = $(a).cast) }]
+                 condition := fun (a : Q(UInt128)) (ρ : Q(F)) => q($ρ = $(a).toNat) }]
 
 def u128_is_zero : FuncData where
   inputTypes := [U128]
@@ -80,15 +76,13 @@ def bitwise : FuncData where
   inputTypes := [Bitwise, U128, U128]
   branches := [{ outputTypes := [Bitwise, U128, U128, U128]
                  condition := fun _ (lhs rhs : Q(UInt128)) _ (and xor or : Q(UInt128)) =>
-                   q($and = (Nat.land $(lhs).val $(rhs).val).cast
-                     ∧ $xor = (Nat.xor $(lhs).val $(rhs).val).cast
-                     ∧ $or = (Nat.lor $(lhs).val $(rhs).val).cast) }]
+                   q($and = BitVec.and $lhs $rhs ∧ $xor = BitVec.xor $lhs $rhs
+                     ∧ $or = BitVec.or $lhs $rhs) }]
 
 def u128_sqrt : FuncData where
   inputTypes := [RangeCheck, U128]
   branches := [{ outputTypes := [RangeCheck, U64]
-                 condition := fun _ (a : Q(UInt128)) _ (ρ : Q(UInt64)) =>
-                   q($(ρ).val = $(a).val.sqrt) }]
+                 condition := fun _ (a : Q(UInt64)) _ (ρ : Q(UInt32)) => q($ρ = $(a).toNat.sqrt) }]
 
 def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_overflowing_add" [] .none      => u128_overflowing_add

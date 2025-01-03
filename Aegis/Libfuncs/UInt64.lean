@@ -9,43 +9,30 @@ def u64_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U64, U64]
   branches := [{ outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
-                   q(($a).val + ($b).val < U64_MOD ∧ $ρ = $a + $b) },
-               -- TODO check branch order
+                   q(($a).toNat + ($b).toNat < U64_MOD ∧ $ρ = $a + $b) },
                { outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
-                   q(U64_MOD ≤ ($a).val + ($b).val ∧ $ρ = $a + $b) }]
+                   q(U64_MOD ≤ ($a).toNat + ($b).toNat ∧ $ρ = $a + $b) }]
 
 def u64_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U64, U64]
   branches := [{ outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
-                   q(($b).val ≤ ($a).val ∧ $ρ = $a - $b) },
-               -- TODO check branch order
+                   q($b ≤ $a ∧ $ρ = $a - $b) },
                { outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
-                   q(($a).val < ($b).val ∧ $ρ = $a - $b) }]
-
-def u64s_from_felt252 : FuncData where
-  inputTypes := [RangeCheck, Felt252]
-  branches := [{ outputTypes := [RangeCheck, U64]
-                 condition := fun _ (a : Q(F)) _ (ρ : Q(UInt64)) =>
-                   q(($ρ).val = ($a).val) },
-               { outputTypes := [RangeCheck, U64, U64]
-                 -- TODO check that `ρ_high` and `ρ_low` are really in the correct order
-                 condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt64)) =>
-                   q(U64_MOD * ($ρ_high).val + ($ρ_low).val = ($a).val) }]
+                   q($a < $b ∧ $ρ = $a - $b) }]
 
 def u64_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U64, NonZero U64]
   branches := [{ outputTypes := [RangeCheck, U64, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ_div ρ_mod : Q(UInt64)) =>
-                   q($ρ_div = ZMod.ndiv $a $b ∧ $ρ_mod = ZMod.nmod $a $b) }]
+                   q($ρ_div = $a / $b ∧ $ρ_mod = $a % $b) }]
 
 def u64_to_felt252 : FuncData where
   inputTypes := [U64]
   branches := [{ outputTypes := [Felt252]
-                 condition := fun (a : Q(UInt64)) (ρ : Q(F)) =>
-                   q($(ρ) = $(a).cast) }]
+                 condition := fun (a : Q(UInt64)) (ρ : Q(F)) => q($(ρ) = $(a).toNat) }]
 
 def u64_is_zero : FuncData where
   inputTypes := [U64]
@@ -68,7 +55,7 @@ def u64_try_from_felt252 : FuncData where
   inputTypes := [.RangeCheck, .Felt252]
   branches := [{ outputTypes := [.RangeCheck, .U64]
                  condition := fun _ (a : Q(F)) _ (ρ : Q(UInt64)) =>
-                   q($(a).val < U64_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).val < U64_MOD ∧ $ρ = $(a).val) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(F)) _ => q(U64_MOD ≤ $(a).val) }]
 
@@ -76,26 +63,23 @@ def u64_wide_mul : FuncData where
   inputTypes := [.U64, .U64]
   branches := [{ outputTypes := [.U128]
                  condition := fun (a b : Q(UInt64)) (ρ : Q(UInt128)) =>
-                   q($ρ = $(a).cast * $(b).cast) }]
+                   q($ρ = $(a).zeroExtend 7 * $(b).zeroExtend 7) }]
 
 def u64_bitwise : FuncData where
   inputTypes := [Bitwise, U64, U64]
   branches := [{ outputTypes := [Bitwise, U64, U64, U64]
                  condition := fun _ (lhs rhs : Q(UInt64)) _ (and xor or : Q(UInt64)) =>
-                   q($and = (Nat.land $(lhs).val $(rhs).val).cast
-                     ∧ $xor = (Nat.xor $(lhs).val $(rhs).val).cast
-                     ∧ $or = (Nat.lor $(lhs).val $(rhs).val).cast) }]
+                   q($and = BitVec.and $lhs $rhs ∧ $xor = BitVec.xor $lhs $rhs
+                     ∧ $or = BitVec.or $lhs $rhs) }]
 
 def u64_sqrt : FuncData where
   inputTypes := [RangeCheck, U64]
   branches := [{ outputTypes := [RangeCheck, U32]
-                 condition := fun _ (a : Q(UInt64)) _ (ρ : Q(UInt32)) =>
-                   q($(ρ).val = $(a).val.sqrt) }]
+                 condition := fun _ (a : Q(UInt64)) _ (ρ : Q(UInt32)) => q($ρ = $(a).toNat.sqrt) }]
 
 def uint64Libfuncs : Identifier → Option FuncData
 | .name "u64_overflowing_add" [] .none      => u64_overflowing_add
 | .name "u64_overflowing_sub" [] .none      => u64_overflowing_sub
-| .name "u64s_from_felt252" [] .none        => u64s_from_felt252
 | .name "u64_safe_divmod" [] .none          => u64_safe_divmod
 | .name "u64_to_felt252" [] .none           => u64_to_felt252
 | .name "u64_is_zero" [] .none              => u64_is_zero

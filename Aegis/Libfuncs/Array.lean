@@ -50,11 +50,11 @@ def array_get (t : SierraType) : FuncData where
                  condition := fun _ (a : Q(List $t.toQuote)) (i : Q(UInt32)) _ (ρ : Q(Nat)) =>
                    let m : Q(Metadata) := .fvar metadataRef
                    let m' : Expr := q($(m).boxHeap $t $ρ)
-                   let p : Q(Prop) := array_get_aux ⟦t⟧ m' q($(i).val) a
-                   q(($i).val < ($a).length ∧ $p) },
+                   let p : Q(Prop) := array_get_aux ⟦t⟧ m' q($(i).toNat) a
+                   q(($i).toNat < ($a).length ∧ $p) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(List $t.toQuote)) (i : Q(UInt32)) _ =>
-                   q(($a).length ≤ ($i).val) }]
+                   q(($a).length ≤ ($i).toNat) }]
 
 def array_snapshot_pop_front (t : SierraType) : FuncData where
   inputTypes := [.Snapshot (.Array t)]
@@ -102,12 +102,12 @@ def array_slice (t : SierraType) : FuncData where
   branches := [{ outputTypes := [.RangeCheck, .Array t],
                  condition := fun _ (a : Q(List $t.toQuote)) (i j : Q(Sierra.UInt32))
                    _ (ρ : Q(List $t.toQuote)) =>
-                   q($(i).val ≤ $(j).val
-                     ∧ $(j).val ≤ $(a).length
-                     ∧ $ρ = $(a).toArray[$(i).val:$(j).val].toArray.toList) },
+                   q($(i).toNat ≤ $(j).toNat
+                     ∧ $(j).toNat ≤ $(a).length
+                     ∧ $ρ = $(a).toArray[$(i).toNat:$(j).toNat].toArray.toList) },
                { outputTypes := [.RangeCheck],
                  condition := fun _ (a : Q(List $t.toQuote)) (i j : Q(Sierra.UInt32)) _ =>
-                   q(($(j).val < $(i).val ∨ $(a).length < $(j).val)) }]
+                   q(($(j).toNat < $(i).toNat ∨ $(a).length < $(j).toNat)) }]
 
 def arrayLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "array_new" [.identifier ident] .none =>
