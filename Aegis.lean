@@ -40,6 +40,8 @@ import Aegis.Tests.Libfuncs.U128.U128Eq
 import Aegis.Tests.Libfuncs.U128.U128OverflowingAdd
 import Aegis.Tests.Libfuncs.U128.U128OverflowingSub
 import Aegis.Tests.Libfuncs.U128.U128Sqrt
+import Aegis.Tests.Libfuncs.U256.U256SafeDivmod
+import Aegis.Tests.Libfuncs.U256.U256Sqrt
 import Aegis.Tests.Libfuncs.Array.ArrayAppend
 import Aegis.Tests.Libfuncs.Array.ArrayGet
 import Aegis.Tests.Libfuncs.Array.ArrayLen
@@ -72,3 +74,4 @@ import Aegis.Tests.Libfuncs.StorageAddress.StorageAddressFromBaseAndOffset
 import Aegis.Tests.Libfuncs.StorageAddress.StorageAddressTryFromFelt252
 import Aegis.Tests.Libfuncs.StorageAddress.StorageBaseAddressFromFelt252
 import Aegis.Tests.Libfuncs.Syscalls.GetExecutionInfoV2
+import Aegis.Tests.Libfuncs.Syscalls.CallContractSyscall

@@ -14,19 +14,19 @@ def u8u16_upcast : FuncData where
   inputTypes := [.U8]
   branches := [{ outputTypes := [.U16]
                  condition := fun (a : Q(UInt8)) (ρ : Q(UInt16)) =>
-                   q($ρ = $(a).cast) }]
+                   q($ρ = $(a).zeroExtend _) }]
 
 def u8u32_upcast : FuncData where
   inputTypes := [.U8]
   branches := [{ outputTypes := [.U32]
                  condition := fun (a : Q(UInt8)) (ρ : Q(UInt32)) =>
-                   q($ρ = $(a).cast) }]
+                   q($ρ = $(a).zeroExtend _) }]
 
 def u8u64_upcast : FuncData where
   inputTypes := [.U8]
   branches := [{ outputTypes := [.U64]
                  condition := fun (a : Q(UInt8)) (ρ : Q(UInt64)) =>
-                   q($ρ = $(a).cast) }]
+                   q($ρ = $(a).zeroExtend _) }]
 
 def u16u16_upcast : FuncData where
   inputTypes := [.U16]
@@ -38,25 +38,25 @@ def u8u128_upcast : FuncData where
   inputTypes := [.U8]
   branches := [{ outputTypes := [.U128]
                  condition := fun (a : Q(UInt8)) (ρ : Q(UInt128)) =>
-                   q($ρ = $(a).cast) }]
+                   q($ρ = $(a).zeroExtend _) }]
 
 def u16u32_upcast : FuncData where
   inputTypes := [.U16]
   branches := [{ outputTypes := [.U32]
                  condition := fun (a : Q(UInt16)) (ρ : Q(UInt32)) =>
-                   q($ρ = $(a).cast) }]
+                   q($ρ = $(a).zeroExtend _) }]
 
 def u16u64_upcast : FuncData where
   inputTypes := [.U16]
   branches := [{ outputTypes := [.U64]
                  condition := fun (a : Q(UInt16)) (ρ : Q(UInt64)) =>
-                   q($ρ = $(a).cast) }]
+                   q($ρ = $(a).zeroExtend _) }]
 
 def u16u128_upcast : FuncData where
   inputTypes := [.U16]
   branches := [{ outputTypes := [.U128]
                  condition := fun (a : Q(UInt16)) (ρ : Q(UInt128)) =>
-                   q($ρ = $(a).cast) }]
+                   q($ρ = $(a).zeroExtend _) }]
 
 def u32u32_upcast : FuncData where
   inputTypes := [.U32]
@@ -68,13 +68,13 @@ def u32u64_upcast : FuncData where
   inputTypes := [.U32]
   branches := [{ outputTypes := [.U64]
                  condition := fun (a : Q(UInt32)) (ρ : Q(UInt64)) =>
-                   q($ρ = $(a).cast) }]
+                   q($ρ = $(a).zeroExtend _) }]
 
 def u32u128_upcast : FuncData where
   inputTypes := [.U32]
   branches := [{ outputTypes := [.U128]
                  condition := fun (a : Q(UInt32)) (ρ : Q(UInt128)) =>
-                   q($ρ = $(a).cast) }]
+                   q($ρ = $(a).zeroExtend _) }]
 
 def u64u64_upcast : FuncData where
   inputTypes := [.U64]
@@ -86,7 +86,7 @@ def u64u128_upcast : FuncData where
   inputTypes := [.U64]
   branches := [{ outputTypes := [.U128]
                  condition := fun (a : Q(UInt64)) (ρ : Q(UInt128)) =>
-                   q($ρ = $(a).cast) }]
+                   q($ρ = $(a).zeroExtend _) }]
 
 def u128u128_upcast : FuncData where
   inputTypes := [.U128]
@@ -98,91 +98,90 @@ def u16u8_downcast : FuncData where
   inputTypes := [.RangeCheck, .U16]
   branches := [{ outputTypes := [.RangeCheck, .U8]
                  condition := fun _ (a : Q(UInt16)) _ (ρ : Q(UInt8)) =>
-                   q($(a).val < U8_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).toNat < U8_MOD ∧ $ρ = $(a).zeroExtend _) },
                { outputTypes := [.RangeCheck]
-                 condition := fun _ (a : Q(UInt16)) _ =>
-                   q(U8_MOD ≤ $(a).val)}]
+                 condition := fun _ (a : Q(UInt16)) _ => q(U8_MOD ≤ $(a).toNat)}]
 
 def u32u8_downcast : FuncData where
   inputTypes := [.RangeCheck, .U32]
   branches := [{ outputTypes := [.RangeCheck, .U8]
                  condition := fun _ (a : Q(UInt32)) _ (ρ : Q(UInt8)) =>
-                   q($(a).val < U8_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).toNat < U8_MOD ∧ $ρ = $(a).zeroExtend _) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt32)) _ =>
-                   q(U8_MOD ≤ $(a).val)}]
+                   q(U8_MOD ≤ $(a).toNat)}]
 
 def u32u16_downcast : FuncData where
   inputTypes := [.RangeCheck, .U32]
   branches := [{ outputTypes := [.RangeCheck, .U16]
                  condition := fun _ (a : Q(UInt32)) _ (ρ : Q(UInt16)) =>
-                   q($(a).val < U16_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).toNat < U16_MOD ∧ $ρ = $(a).zeroExtend _) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt32)) _ =>
-                   q(U16_MOD ≤ $(a).val)}]
+                   q(U16_MOD ≤ $(a).toNat)}]
 
 def u64u8_downcast : FuncData where
   inputTypes := [.RangeCheck, .U64]
   branches := [{ outputTypes := [.RangeCheck, .U8]
                  condition := fun _ (a : Q(UInt64)) _ (ρ : Q(UInt8)) =>
-                   q($(a).val < U8_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).toNat < U8_MOD ∧ $ρ = $(a).zeroExtend _) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt64)) _ =>
-                   q(U8_MOD ≤ $(a).val)}]
+                   q(U8_MOD ≤ $(a).toNat)}]
 
 def u64u16_downcast : FuncData where
   inputTypes := [.RangeCheck, .U64]
   branches := [{ outputTypes := [.RangeCheck, .U16]
                  condition := fun _ (a : Q(UInt64)) _ (ρ : Q(UInt16)) =>
-                   q($(a).val < U16_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).toNat < U16_MOD ∧ $ρ = $(a).zeroExtend _) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt64)) _ =>
-                   q(U16_MOD ≤ $(a).val)}]
+                   q(U16_MOD ≤ $(a).toNat)}]
 
 def u64u32_downcast : FuncData where
   inputTypes := [.RangeCheck, .U64]
   branches := [{ outputTypes := [.RangeCheck, .U32]
                  condition := fun _ (a : Q(UInt64)) _ (ρ : Q(UInt32)) =>
-                   q($(a).val < U32_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).toNat < U32_MOD ∧ $ρ = $(a).zeroExtend _) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt64)) _ =>
-                   q(U32_MOD ≤ $(a).val)}]
+                   q(U32_MOD ≤ $(a).toNat)}]
 
 def u128u8_downcast : FuncData where
   inputTypes := [.RangeCheck, .U128]
   branches := [{ outputTypes := [.RangeCheck, .U8]
                  condition := fun _ (a : Q(UInt128)) _ (ρ : Q(UInt8)) =>
-                   q($(a).val < U8_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).toNat < U8_MOD ∧ $ρ = $(a).zeroExtend _) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt128)) _ =>
-                   q(U8_MOD ≤ $(a).val)}]
+                   q(U8_MOD ≤ $(a).toNat)}]
 
 def u128u16_downcast : FuncData where
   inputTypes := [.RangeCheck, .U128]
   branches := [{ outputTypes := [.RangeCheck, .U16]
                  condition := fun _ (a : Q(UInt128)) _ (ρ : Q(UInt16)) =>
-                   q($(a).val < U16_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).toNat < U16_MOD ∧ $ρ = $(a).zeroExtend _) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt128)) _ =>
-                   q(U16_MOD ≤ $(a).val)}]
+                   q(U16_MOD ≤ $(a).toNat)}]
 
 def u128u32_downcast : FuncData where
   inputTypes := [.RangeCheck, .U128]
   branches := [{ outputTypes := [.RangeCheck, .U32]
                  condition := fun _ (a : Q(UInt128)) _ (ρ : Q(UInt32)) =>
-                   q($(a).val < U32_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).toNat < U32_MOD ∧ $ρ = $(a).zeroExtend _) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt128)) _ =>
-                   q(U32_MOD ≤ $(a).val)}]
+                   q(U32_MOD ≤ $(a).toNat)}]
 
 def u128u64_downcast : FuncData where
   inputTypes := [.RangeCheck, .U128]
   branches := [{ outputTypes := [.RangeCheck, .U64]
                  condition := fun _ (a : Q(UInt128)) _ (ρ : Q(UInt64)) =>
-                   q($(a).val < U64_MOD ∧ $ρ = $(a).cast) },
+                   q($(a).toNat < U64_MOD ∧ $ρ = $(a).zeroExtend _) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt128)) _ =>
-                   q(U64_MOD ≤ $(a).val)}]
+                   q(U64_MOD ≤ $(a).toNat)}]
 
 def castsLibfuncs : Identifier → Option FuncData
 | .name "upcast" [.identifier (.name "u8" [] .none), .identifier (.name "u8" [] .none)] .none =>

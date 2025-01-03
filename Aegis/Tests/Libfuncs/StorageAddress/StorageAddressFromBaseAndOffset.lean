@@ -6,7 +6,7 @@ aegis_load_file "../../e2e_libfuncs/storage_address_aegis/storage_address_from_b
 
 aegis_spec "test::foo" :=
   fun _ a b ρ =>
-  ρ = a.cast + b.cast
+  ρ = a.cast + b.toNat
 
 aegis_prove "test::foo" :=
   fun _ a b ρ => by

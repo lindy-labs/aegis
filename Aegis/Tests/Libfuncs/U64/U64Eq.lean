@@ -13,10 +13,6 @@ aegis_prove "test::foo" :=
   unfold_spec "test::foo"
   rintro (⟨-,rfl⟩|⟨h,rfl⟩)
   · simp
-  · rw [← sub_eq_zero] at h
-    norm_num at h
-    letI : Fact (1 < U64_MOD) := ⟨by norm_num [U64_MOD]⟩
-    rw [← @ZMod.val_eq_zero, ZMod.val_one U64_MOD] at h
-    simp_all
+  · aesop (add simp [Int.cast, BitVec.instIntCast])
 
 aegis_complete
