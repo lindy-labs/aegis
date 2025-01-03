@@ -6,8 +6,8 @@ aegis_load_file "../../e2e_libfuncs/array_aegis/array_slice.sierra"
 
 aegis_spec "test::foo" :=
   fun _ _ a i j _ ρ =>
-  i.val ≤ j.val ∧ j.val ≤ a.length ∧ ρ = .inl a.toArray[i.val:j.val].toArray.toList
-  ∨ (j.val < i.val ∨ a.length < j.val) ∧ ρ = .inr ()
+  i.toNat ≤ j.toNat ∧ j.toNat ≤ a.length ∧ ρ = .inl a.toArray[i.toNat:j.toNat].toArray.toList
+  ∨ (j.toNat < i.toNat ∨ a.length < j.toNat) ∧ ρ = .inr ()
 
 aegis_prove "test::foo" :=
   fun _ _ a i j _ ρ => by

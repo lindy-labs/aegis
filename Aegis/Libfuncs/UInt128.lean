@@ -41,7 +41,8 @@ def u128s_from_felt252 : FuncData where
                  condition := fun _ (a : Q(F)) _ (ρ : Q(UInt128)) =>
                    q(($a).val < U128_MOD ∧ $ρ = ($a).val) },
                { outputTypes := [RangeCheck, U128, U128]
-                 condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt128)) =>
+                 condition := fun _ (a : Q(F)) _ (ρ_low ρ_high : Q(UInt128)) =>
+                   -- TODO check order of `ρ_low` and `ρ_high`
                    q(U128_MOD ≤ ($a).val ∧ $(ρ_high).append $ρ_low = $(a).val) }]
 
 def u128_safe_divmod : FuncData where
@@ -82,7 +83,7 @@ def bitwise : FuncData where
 def u128_sqrt : FuncData where
   inputTypes := [RangeCheck, U128]
   branches := [{ outputTypes := [RangeCheck, U64]
-                 condition := fun _ (a : Q(UInt64)) _ (ρ : Q(UInt32)) => q($ρ = $(a).toNat.sqrt) }]
+                 condition := fun _ (a : Q(UInt128)) _ (ρ : Q(UInt64)) => q($ρ = $(a).toNat.sqrt) }]
 
 def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_overflowing_add" [] .none      => u128_overflowing_add

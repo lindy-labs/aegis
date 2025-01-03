@@ -6,8 +6,8 @@ aegis_load_file "../../e2e_libfuncs/u8_aegis/u8_overflowing_add.sierra"
 
 aegis_spec "test::foo" :=
   fun _ _ a b _ ρ =>
-  a.val + b.val < U8_MOD ∧ ρ = .inl (a + b)
-  ∨ U8_MOD ≤ a.val + b.val ∧ ρ = .inr (a + b)
+  a.toNat + b.toNat < U8_MOD ∧ ρ = .inl (a + b)
+  ∨ U8_MOD ≤ a.toNat + b.toNat ∧ ρ = .inr (a + b)
 
 aegis_prove "test::foo" :=
   fun _ _ a b _ ρ => by

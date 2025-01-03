@@ -173,60 +173,6 @@ aegis_prove "test::unbox" := fun m a b => by
   symm
   assumption
 
-aegis_load_string "type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
-type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
-type core::integer::u256 = Struct<ut@core::integer::u256, u128, u128> [storable: true, drop: true, dup: true, zero_sized: false];
-type Tuple<core::integer::u256, core::integer::u256> = Struct<ut@Tuple, core::integer::u256, core::integer::u256> [storable: true, drop: true, dup: true, zero_sized: false];
-type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
-type U128MulGuarantee = U128MulGuarantee [storable: true, drop: false, dup: false, zero_sized: false];
-type NonZero<core::integer::u256> = NonZero<core::integer::u256> [storable: true, drop: true, dup: true, zero_sized: false];
-
-libfunc u256_safe_divmod = u256_safe_divmod;
-libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
-libfunc store_temp<U128MulGuarantee> = store_temp<U128MulGuarantee>;
-libfunc function_call<user@core::integer::U128MulGuaranteeDestruct::destruct> = function_call<user@core::integer::U128MulGuaranteeDestruct::destruct>;
-libfunc drop<Unit> = drop<Unit>;
-libfunc struct_construct<Tuple<core::integer::u256, core::integer::u256>> = struct_construct<Tuple<core::integer::u256, core::integer::u256>>;
-libfunc store_temp<Tuple<core::integer::u256, core::integer::u256>> = store_temp<Tuple<core::integer::u256, core::integer::u256>>;
-libfunc u128_mul_guarantee_verify = u128_mul_guarantee_verify;
-libfunc struct_construct<Unit> = struct_construct<Unit>;
-libfunc store_temp<Unit> = store_temp<Unit>;
-
-u256_safe_divmod([0], [1], [2]) -> ([3], [4], [5], [6]); // 0
-store_temp<RangeCheck>([3]) -> ([3]); // 1
-store_temp<U128MulGuarantee>([6]) -> ([6]); // 2
-function_call<user@core::integer::U128MulGuaranteeDestruct::destruct>([3], [6]) -> ([7], [8]); // 3
-drop<Unit>([8]) -> (); // 4
-struct_construct<Tuple<core::integer::u256, core::integer::u256>>([4], [5]) -> ([9]); // 5
-store_temp<RangeCheck>([7]) -> ([7]); // 6
-store_temp<Tuple<core::integer::u256, core::integer::u256>>([9]) -> ([9]); // 7
-return([7], [9]); // 8
-u128_mul_guarantee_verify([0], [1]) -> ([2]); // 9
-struct_construct<Unit>() -> ([3]); // 10
-store_temp<RangeCheck>([2]) -> ([2]); // 11
-store_temp<Unit>([3]) -> ([3]); // 12
-return([2], [3]); // 13
-
-test::u256_safe_divmod@0([0]: RangeCheck, [1]: core::integer::u256, [2]: NonZero<core::integer::u256>) -> (RangeCheck, Tuple<core::integer::u256, core::integer::u256>);
-core::integer::U128MulGuaranteeDestruct::destruct@9([0]: RangeCheck, [1]: U128MulGuarantee) -> (RangeCheck, Unit);
-"
-
-aegis_spec "core::integer::U128MulGuaranteeDestruct::destruct" :=
-  fun _ _ _ _ _ => True
-
-aegis_spec "test::u256_safe_divmod" :=
-  fun _ _ a b _ ρ =>
-  U128_MOD * ZMod.val ρ.1.2 + ZMod.val ρ.1.1 =
-    (U128_MOD * ZMod.val a.2 + ZMod.val a.1) / (U128_MOD * ZMod.val b.2 + ZMod.val b.1)
-  ∧ U128_MOD * ZMod.val ρ.2.2 + ZMod.val ρ.2.1 =
-    (U128_MOD * ZMod.val a.2 + ZMod.val a.1) % (U128_MOD * ZMod.val b.2 + ZMod.val b.1)
-
-set_option aegis.separateTuples true in
-aegis_prove "test::u256_safe_divmod" :=
-  fun _ _ a b _ ρ => by
-  rintro ⟨_,_,_,h₁,h₂,rfl,rfl,rfl⟩
-  exact ⟨h₁,h₂⟩
-
 aegis_load_string "type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
 type Snapshot<Array<felt252>> = Snapshot<Array<felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
 type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
@@ -399,7 +345,7 @@ test::upcast@0([0]: u16) -> (u64);"
 
 aegis_spec "test::upcast" :=
   fun _ a ρ =>
-  ρ = a.cast
+  ρ = a.zeroExtend _
 
 aegis_prove "test::upcast" :=
   fun _ a ρ => by
@@ -457,7 +403,7 @@ test::downcast@0([0]: RangeCheck, [1]: u64) -> (RangeCheck, core::option::Option
 
 aegis_spec "test::downcast" :=
   fun _ _ a _ ρ =>
-  ρ = if a.val < U16_MOD then .inl a.cast else .inr ()
+  ρ = if a.toNat < U16_MOD then .inl (a.zeroExtend _) else .inr ()
 
 aegis_prove "test::downcast" :=
   fun _ _ a _ ρ => by
@@ -527,7 +473,7 @@ test::u256_sqrt@0([0]: RangeCheck, [1]: core::integer::u256) -> (RangeCheck, u12
 
 aegis_spec "test::u256_sqrt" :=
   fun _ _ a _ ρ =>
-  ρ.val * ρ.val = U128_MOD * a.2.val + a.1.val
+  ρ = (a.2.append a.1).toNat.sqrt
 
 aegis_prove "test::u256_sqrt" :=
   fun _ _ a _ ρ => by

@@ -12,7 +12,7 @@ aegis_prove "test::foo" :=
   fun _ a ρ => by
   unfold_spec "test::foo"
   rintro (⟨rfl,rfl⟩|⟨h,rfl⟩)
-  · simp
-  · simp [h]
+  · rfl
+  · aesop
 
 aegis_complete
