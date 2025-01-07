@@ -64,7 +64,7 @@ def u16_wide_mul : FuncData where
   inputTypes := [.U16, .U16]
   branches := [{ outputTypes := [.U32]
                  condition := fun (a b : Q(UInt16)) (ρ : Q(UInt32)) =>
-                   q($ρ = $(a).zeroExtend 5 * $(b).zeroExtend 5) }]
+                   q($ρ = $(a).zeroExtend 32 * $(b).zeroExtend 32) }]
 
 def u16_bitwise : FuncData where
   inputTypes := [Bitwise, U16, U16]

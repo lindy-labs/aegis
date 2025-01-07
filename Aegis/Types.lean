@@ -193,11 +193,11 @@ def U8_MOD :=
   256
 
 abbrev F := ZMod PRIME
-abbrev UInt8 := BitVec 3
-abbrev UInt16 := BitVec 4
-abbrev UInt32 := BitVec 5
-abbrev UInt64 := BitVec 6
-abbrev UInt128 := BitVec 7
+abbrev UInt8 := BitVec 8
+abbrev UInt16 := BitVec 16
+abbrev UInt32 := BitVec 32
+abbrev UInt64 := BitVec 64
+abbrev UInt128 := BitVec 128
 abbrev StorageBaseAddress := ZMod BASE_MOD
 abbrev StorageAddress := ZMod ADDRESS_MOD
 abbrev ContractAddress := ZMod CONTRACT_ADDRESS_MOD
