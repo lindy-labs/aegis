@@ -13,7 +13,7 @@ aegis_load_file "../foo.sierra"
 
 -- Provide the specification of the function double
 aegis_spec "foo::foo::double" :=
-  fun _ a ρ => ρ = a * a
+  fun _ a ρ => ρ = a + a
 
 -- Prove the correctness of the specification
 aegis_prove "foo::foo::double" :=
