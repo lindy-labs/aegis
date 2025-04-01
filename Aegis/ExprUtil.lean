@@ -197,6 +197,6 @@ def OfInputsQ (r : Q(Type)) : List Q(Type) → Q(Type)
 
 def quoteFin {n : Nat} (x : Fin n) : Q(Fin $n) :=
 match n, x with
-| .succ _, ⟨m, _⟩ => q(Fin.ofNat $m)
+| .succ _, ⟨m, _⟩ => q(Fin.ofNat' _ $m)
 
 instance {n : Nat} : ToExpr (Fin n) := { toExpr := quoteFin, toTypeExpr := q(Type) }

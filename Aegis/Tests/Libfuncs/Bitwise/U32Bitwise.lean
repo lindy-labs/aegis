@@ -1,4 +1,4 @@
-import Aegis.Commands
+import Aegis.Tactic
 
 namespace Sierra.Test.Bitwise.U32Bitwise
 
@@ -11,4 +11,5 @@ aegis_spec "test::foo" :=
 aegis_prove "test::foo" :=
   fun _ _ a b _ ρ => by
   rintro rfl
+  unfold_spec "test::foo"
   rfl

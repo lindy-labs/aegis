@@ -42,7 +42,7 @@ def array_len (t : SierraType) : FuncData where
                    q($ρ = ($a).length) }]
 
 def array_get_aux (T : Q(Type)) (m' : Q(Option $T)) (i : Q(Nat)) (a : Q(List $T)) : Q(Prop) :=
-  q(∃ ρ', $m' = .some ρ' ∧ $(a).get? $i = .some ρ')
+  q(∃ ρ', $m' = .some ρ' ∧ $(a)[$i]? = .some ρ')
 
 def array_get (t : SierraType) : FuncData where
   inputTypes := [.RangeCheck, .Snapshot (.Array t), .U32]

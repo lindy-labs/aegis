@@ -63,7 +63,7 @@ def getMuBody : SierraType → SierraType
 
 partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Identifier)
     (i : Identifier) : Except String (List Identifier × SierraType) := do
-  match ctx.indexOf? i with
+  match ctx.idxOf? i with
   | .some idx => .ok ([i], .Ref idx)
   | .none => match raw[i]? with
     | .some <| .name "felt252" [] .none => .ok ([], .Felt252)
@@ -254,7 +254,7 @@ def SierraType.toType (ctx : List Type := []) : SierraType → Type
   | .ContractAddress => Sierra.ContractAddress
   | .ConstNum _ _ => Unit  -- no runtime information in const types
   | .ConstStruct _ _ => Unit  -- no runtime information in const types
-  | .Ref n => ctx.get! n  -- TODO check whether `drop n` is right
+  | .Ref n => ctx[n]!  -- TODO check whether `drop n` is right
   | .Mu t => toType (toType ctx t :: ctx) t -- ???
 
 partial def SierraType.toQuote (ctx : List SierraType := []) : SierraType → Q(Type)
@@ -288,7 +288,7 @@ partial def SierraType.toQuote (ctx : List SierraType := []) : SierraType → Q(
   | .ContractAddress => q(Sierra.ContractAddress)
   | .ConstNum _ _ => q(Unit)
   | .ConstStruct _ _ => q(Unit)
-  | .Ref n => toQuote (ctx.drop n) (ctx.get! n)  -- TODO check whether `drop n` is right
+  | .Ref n => toQuote (ctx.drop n) ctx[n]!  -- TODO check whether `drop n` is right
   | .Mu t => toQuote (t :: ctx) t
 
 notation "⟦" t "⟧" => SierraType.toQuote [] t

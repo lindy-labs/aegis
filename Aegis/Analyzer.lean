@@ -67,7 +67,8 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     -- Filter out conditions refering to "dangling" FVars (mostly due to `drop()`)
     let mut cs := cs.filter (¬ ·.hasAnyFVar (¬ allRefs.contains ·))
     -- Partition fvars into input variables and intermediate variables
-    let refs := s.refs.toList.reverse
+    let refs := s.refs.toList
+    --logInfo s!"refs: {refs.map (·.1)} \n"
     let (inRefs, intRefs) := (refs.partition (·.1 ∈ finputs.map (·.1)))
     let mut intRefs := intRefs
     -- Normalize conjunctions and disjunctions in the tree
@@ -98,7 +99,7 @@ partial def processState
   (f : SierraFile)
   (finputs : List (Nat × Identifier))
   (gas : ℕ := 2500) : M AndOrTree := do
-  let st := f.statements.get! (← get).pc
+  let st := f.statements[(← get).pc]!
   if gas = 0 then return .nil
   match st.libfunc_id with
   | .name "return" [] .none =>
@@ -113,7 +114,7 @@ partial def processState
       pure <| Expr.mkEq (SierraType.toQuote [] <| st) (.fvar rfv) (.fvar ofv)
     return .cons (Expr.mkAnds es) []
   | _ => do
-    let .some st := f.statements.get? (← get).pc
+    let .some st := f.statements[(← get).pc]?
       | throwError "Program counter out of bounds"
     let .some fd := funcSigs[st.libfunc_id]?
       | throwError "Could not find libfunc used in code: {st.libfunc_id}"
@@ -122,12 +123,12 @@ partial def processState
     unless fd.inputTypes.length = st.args.length do
       throwError "Incorrect number of arguments to {st.libfunc_id}"
     let mut bes : List AndOrTree := []
-    for (branchIdx, bi) in st.branches.enum do
-      let bd := fd.branches.get! branchIdx
-      unless bd.outputTypes.length = (st.branches.get! branchIdx).results.length do
+    for (bi, branchIdx) in st.branches.zipIdx do
+      let bd := fd.branches[branchIdx]!
+      unless bd.outputTypes.length = st.branches[branchIdx]!.results.length do
         throwError "Incorrect number of results to {st.libfunc_id} at branch {branchIdx}"
       let types := fd.inputTypes ++ bd.outputTypes
-      let inOutArgs := st.args ++ (st.branches.get! branchIdx).results
+      let inOutArgs := st.args ++ st.branches[branchIdx]!.results
       let fvs := .fvar <$> (← getOrMkNewRefs inOutArgs.reverse (types.map SierraType.toQuote).reverse)
       -- The new condition to be added
       let c := headBeta <| bd.condition.apply fvs  -- Apply fvars to condition and beta reduce
@@ -219,7 +220,7 @@ def getSpecTypeOfName (ident : Identifier) : MetaM Q(Type) :=
 def buildContractCallHyp (metadataRef : FVarId) (cd : ContractCallData) : MetaM Expr := do
   let ⟨ident, addr, sel, impls⟩ := cd
   unless specs.contains ident do throwError "specification for referenced contract call {ident} not given"
-  let cond := (((specs.get! ident).2 metadataRef).branches.get! 0).condition
+  let cond := (specs[ident]!.2 metadataRef).branches[0]!.condition
   let cond ← cond.toExpr -- TODO change
   let m : Q(Metadata) := Expr.fvar metadataRef
   let cond ← Core.betaReduce cond
@@ -263,7 +264,7 @@ def getLocalDeclInfos (ident : Identifier) (pc : ℕ) (inputArgs : List (ℕ × 
   -- Add the callResult specs, to which the metadata reference is applied
   for cd in contractCalls do
     ret := ret.push <| .mk `callSpec fun call_args => do
-      let metadataRef := call_args.get! 0 |> fvarId!
+      let metadataRef := call_args[0]! |> fvarId!
       buildContractCallHyp specs metadataRef cd
   let n ← mkFreshUserName `h_auto
   let e ← getFuncCondition sf specs ident pc inputArgs outputTypes
@@ -280,7 +281,7 @@ def getLocalDeclInfosOfName (sf : SierraFile) (ident : Identifier) :
 def analyzeFile (s : String) (idx : ℕ := 0) : MetaM Format := do
   match ← parseGrammar s with
   | .ok sf =>
-    let ⟨ident, pc, inputArgs, outputTypes⟩ := sf.declarations.get! idx
+    let ⟨ident, pc, inputArgs, outputTypes⟩ := sf.declarations[idx]!
     let e ← getFuncCondition sf ∅ ident pc inputArgs outputTypes
     let esType ← inferType e
     return (← ppExpr e) ++ "\n Inferred Type:" ++ (← ppExpr esType)

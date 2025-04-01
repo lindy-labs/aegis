@@ -96,7 +96,7 @@ syntax "(" parameter,*,? ")" : parameter
 syntax identifier : parameter
 
 syntax boolLit := "false" <|> "true"
-syntax typeInfo := "[storable:" boolLit ", drop:" boolLit ", dup:" boolLit ", zero_sized:" boolLit "]"
+syntax typeInfo := "[storable:" boolLit "," "drop:" boolLit "," "dup:" boolLit "," "zero_sized:" boolLit "]"
 
 
 syntax refTuple := "(" ("[" num "]"),* ")"

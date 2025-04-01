@@ -1,4 +1,4 @@
-import Aegis.Commands
+import Aegis.Tactic
 
 open Sierra
 
@@ -39,15 +39,17 @@ return([11], [12]);
 
 test::foo@0([0]: RangeCheck, [1]: Snapshot<Array<felt252>>, [2]: u32) -> (RangeCheck, core::option::Option::<core::box::Box::<@core::felt252>>);"
 
-aegis_spec "test::foo" := fun _ _ a i _ ρ =>
-  ρ = if hl : i.val ≥ a.length then Sum.inr ()
-      else Sum.inl (a.get ⟨i.val, lt_of_not_ge hl⟩)
+aegis_spec "test::foo" :=
+  fun m _ a i _ ρ =>
+  i.toNat < a.length ∧ ρ.isLeft ∧ m.boxHeap .Felt252 ρ.getLeft?.get! = .some a[i.toNat]!
+    ∨ a.length ≤ i.toNat ∧ ρ = .inr ()
 
 aegis_prove "test::foo" := fun _ _ a i _ ρ => by
+  unfold_spec "test::foo"
   rintro ⟨_, (h | h)⟩
-  · rcases h with ⟨h, rfl⟩
-    rw [eq_comm, List.get?_eq_some] at h
-    rcases h with ⟨hl, rfl⟩
-    simp [«spec_test::foo», not_le_of_gt hl]
+  · rcases h with ⟨h₁, ⟨h₂, h₃, h₄⟩, rfl⟩
+    left
+    refine ⟨h₁, ?_⟩
+    simpa [h₄]
   · rcases h with ⟨h, rfl⟩
     simp [«spec_test::foo», h]

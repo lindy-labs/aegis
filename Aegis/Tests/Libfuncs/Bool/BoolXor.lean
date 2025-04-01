@@ -1,4 +1,4 @@
-import Aegis.Commands
+import Aegis.Tactic
 
 namespace Sierra.Test.Bool.BoolXor
 
@@ -11,4 +11,5 @@ aegis_spec "test::foo" :=
 aegis_prove "test::foo" :=
   fun _ a b ρ => by
   rintro rfl
+  unfold_spec "test::foo"
   rfl

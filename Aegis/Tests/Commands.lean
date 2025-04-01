@@ -394,12 +394,14 @@ aegis_spec "test::withdraw_gas" :=
 
 aegis_prove "test::withdraw_gas" :=
   fun m _ g _ g' ρ => by
-  unfold «spec_test::withdraw_gas»
+  unfold_spec "test::withdraw_gas"
   rintro ⟨x,(⟨-,h₂,rfl⟩|⟨h,rfl⟩)⟩
   · rcases h₂ with (⟨h₂,h₃⟩|⟨h₂,h₃⟩)
     · left; aesop
     · right; aesop
-  · right; simp only [Sum.isRight_inr, and_true]; linarith
+  · right
+    simp only [Sum.isRight_inr, and_true]
+    omega
 
 aegis_load_string "type GasBuiltin = GasBuiltin;
 type Array<felt252> = Array<felt252>;

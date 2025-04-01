@@ -21,14 +21,14 @@ def enum_init (fields : List SierraType) (idx : Fin fields.length) : FuncData wh
 
 def enum_match (fields : List SierraType) : FuncData where
   inputTypes := [.Enum fields]
-  branches := fields.enum.map fun (idx, field) =>
+  branches := fields.zipIdx.map fun (field, idx) =>
     { outputTypes := [field]
       condition := fun (a : Q($(⟦.Enum fields⟧))) ρ =>
         Expr.mkEq q($(⟦.Enum fields⟧)) (enum_selector fields idx ρ) a }
 
 def enum_snapshot_match (fields : List SierraType) : FuncData where
   inputTypes := [.Snapshot <| .Enum fields]
-  branches := fields.enum.map fun (idx, field) =>
+  branches := fields.zipIdx.map fun (field, idx) =>
     { outputTypes :=
         [match field with
          -- TODO check if `Array` is really the only thing that gets snapshotted
