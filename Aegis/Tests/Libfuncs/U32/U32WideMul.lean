@@ -11,6 +11,7 @@ aegis_spec "test::foo" :=
 aegis_prove "test::foo" :=
   fun _ a b ρ => by
   unfold_spec "test::foo"
-  aesop
+  intro h
+  bv_decide
 
 aegis_complete

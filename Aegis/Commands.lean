@@ -152,14 +152,14 @@ elab "aegis_spec " name:str val:declVal : command => do  -- TODO change from `st
   | .ok i =>
     if (sierraSpecs.getState (← getEnv)).contains i then
       throwError "A specification has already been given"
-    withRef val do
-      liftTermElabM do
+    withRef val <| liftTermElabM do
+      let name : Name := .mkSimple <| "spec_" ++ name.getString
+      let (name, _) ← mkDeclName (← getCurrNamespace) default name  -- TODO check modifiers
+      Term.withDeclName name do
         let ty ← getSpecTypeOfName sf i
         let val ← Term.elabTermEnsuringType val ty
         Term.synthesizeSyntheticMVarsNoPostponing
         let val ← instantiateMVars val
-        let name : Name := .mkSimple <| "spec_" ++ name.getString
-        let (name, _) ← mkDeclName (← getCurrNamespace) default name  -- TODO check modifiers
         addAndCompile <| .defnDecl {  name := name
                                       type := ty
                                       levelParams := []
@@ -180,8 +180,10 @@ elab "aegis_prove" name:str val:declVal : command => do
   let val ← liftMacroM <| declValToTerm val
   match ← liftCoreM <| parseIdentifier name.getString with
   | .ok i =>
-    withRef val do
-      liftTermElabM do
+    withRef val <| liftTermElabM do
+      let name : String := "sound_" ++ name.getString
+      let name ← mkFreshUserName <| .mkSimple name
+      Term.withDeclName name do
         let specs := sierraSpecs.getState env
         let specs := .ofList <| specs.toList.map fun (i, n, pfd) => (i, n, pfd.unpersist)
         let contractCalls := sierraContractCalls.getState env
@@ -193,8 +195,6 @@ elab "aegis_prove" name:str val:declVal : command => do
         let val ← Term.elabTermEnsuringType val type
         Term.synthesizeSyntheticMVarsNoPostponing
         let val ← instantiateMVars val
-        let name : String := "sound_" ++ name.getString
-        let name ← mkFreshUserName <| .mkSimple name
         addDecl <| .defnDecl {  name := name
                                 type := type
                                 levelParams := []
