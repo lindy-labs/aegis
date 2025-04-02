@@ -54,7 +54,8 @@ def u128_safe_divmod : FuncData where
 def u128_to_felt252 : FuncData where
   inputTypes := [U128]
   branches := [{ outputTypes := [Felt252]
-                 condition := fun (a : Q(UInt128)) (ρ : Q(F)) => q($ρ = $(a).toNat) }]
+                 condition := fun (a : Q(UInt128)) (ρ : Q(F)) =>
+                   q($(ρ) = Fin.castLE (Nat.le_add_left (2 ^ 128) 3618502788666131213697322783095070105282824848410658236509717448704103809025) $(a).toFin) }]
 
 def u128_is_zero : FuncData where
   inputTypes := [U128]

@@ -33,7 +33,10 @@ def u32_to_felt252 : FuncData where
   inputTypes := [U32]
   branches := [{ outputTypes := [Felt252]
                  condition := fun (a : Q(UInt32)) (ρ : Q(F)) =>
-                   q($(ρ) = $(a).toNat) }]
+                   q($(ρ) = Fin.castLE (Nat.le_add_left (2 ^ 32) 3618502788666131213697322783095070105623107215331596699973092056131577053185) $(a).toFin) }]
+
+example (x : Fin 8) (h : x.castLE (by simp) = (0 : Fin 13)) : x = 0 := by
+  rwa [← Fin.castLE_zero (n := 7) (m := 12) (by simp), Fin.castLE_inj] at h
 
 def u32_is_zero : FuncData where
   inputTypes := [U32]
