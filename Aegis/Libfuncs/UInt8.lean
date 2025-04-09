@@ -33,7 +33,7 @@ def u8_to_felt252 : FuncData where
   inputTypes := [U8]
   branches := [{ outputTypes := [Felt252]
                  condition := fun (a : Q(UInt8)) (ρ : Q(F)) =>
-                   q($(ρ) = $(a).toNat) }]
+                   q($(ρ) = Fin.castLE (Nat.le_add_left (2 ^ 8) 3618502788666131213697322783095070105623107215331596699973092056135872020225) $(a).toFin) }]
 
 def u8_is_zero : FuncData where
   inputTypes := [U8]

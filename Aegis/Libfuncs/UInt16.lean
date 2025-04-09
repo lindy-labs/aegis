@@ -29,11 +29,12 @@ def u16_safe_divmod : FuncData where
                  condition := fun _ (a b : Q(UInt16)) _ (ρ_div ρ_mod : Q(UInt16)) =>
                    q($ρ_div = $a / $b ∧ $ρ_mod = $a % $b) }]
 
+
 def u16_to_felt252 : FuncData where
   inputTypes := [U16]
   branches := [{ outputTypes := [Felt252]
                  condition := fun (a : Q(UInt16)) (ρ : Q(F)) =>
-                   q($(ρ) = $(a).toNat.cast) }]
+                   q($(ρ) = Fin.castLE (Nat.le_add_left (2 ^ 16) 3618502788666131213697322783095070105623107215331596699973092056135871954945) $(a).toFin) }]
 
 def u16_is_zero : FuncData where
   inputTypes := [U16]
