@@ -87,7 +87,7 @@ def uint32Libfuncs : Identifier → Option FuncData
 | .name "u32_safe_divmod" [] .none          => u32_safe_divmod
 | .name "u32_to_felt252" [] .none           => u32_to_felt252
 | .name "u32_is_zero" [] .none              => u32_is_zero
-| .name "u32_const" [.const n] .none        => u32_const q($n)
+| .name "u32_const" [.const n] .none        => u32_const (Lean.toExpr (α := BitVec 32) n)
 | .name "u32_eq" [] .none                   => u32_eq
 | .name "u32_try_from_felt252" [] .none     => u32_try_from_felt252
 | .name "u32_wide_mul" [] .none             => u32_wide_mul

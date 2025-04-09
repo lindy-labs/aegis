@@ -84,7 +84,7 @@ def uint8Libfuncs : Identifier → Option FuncData
 | .name "u8_safe_divmod" [] .none          => u8_safe_divmod
 | .name "u8_to_felt252" [] .none           => u8_to_felt252
 | .name "u8_is_zero" [] .none              => u8_is_zero
-| .name "u8_const" [.const n] .none        => u8_const q($n)
+| .name "u8_const" [.const n] .none        => u8_const (Lean.toExpr (α := BitVec 8) n)
 | .name "u8_eq" [] .none                   => u8_eq
 | .name "u8_try_from_felt252" [] .none     => u8_try_from_felt252
 | .name "u8_wide_mul" [] .none             => u8_wide_mul

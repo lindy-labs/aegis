@@ -83,7 +83,7 @@ def uint64Libfuncs : Identifier → Option FuncData
 | .name "u64_safe_divmod" [] .none          => u64_safe_divmod
 | .name "u64_to_felt252" [] .none           => u64_to_felt252
 | .name "u64_is_zero" [] .none              => u64_is_zero
-| .name "u64_const" [.const n] .none        => u64_const q($n)
+| .name "u64_const" [.const n] .none        => u64_const (Lean.toExpr (α := BitVec 64) n)
 | .name "u64_eq" [] .none                   => u64_eq
 | .name "u64_try_from_felt252" [] .none     => u64_try_from_felt252
 | .name "u64_wide_mul" [] .none             => u64_wide_mul

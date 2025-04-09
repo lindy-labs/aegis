@@ -84,7 +84,7 @@ def uint16Libfuncs : Identifier → Option FuncData
 | .name "u16_safe_divmod" [] .none          => u16_safe_divmod
 | .name "u16_to_felt252" [] .none           => u16_to_felt252
 | .name "u16_is_zero" [] .none              => u16_is_zero
-| .name "u16_const" [.const n] .none        => u16_const q($n)
+| .name "u16_const" [.const n] .none        => u16_const (Lean.toExpr (α := BitVec 16) n)
 | .name "u16_eq" [] .none                   => u16_eq
 | .name "u16_try_from_felt252" [] .none     => u16_try_from_felt252
 | .name "u16_wide_mul" [] .none             => u16_wide_mul

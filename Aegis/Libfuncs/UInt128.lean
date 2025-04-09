@@ -94,7 +94,7 @@ def uint128Libfuncs : Identifier → Option FuncData
 | .name "u128_safe_divmod" [] .none          => u128_safe_divmod
 | .name "u128_to_felt252" [] .none           => u128_to_felt252
 | .name "u128_is_zero" [] .none              => u128_is_zero
-| .name "u128_const" [.const n] .none        => u128_const q($n)
+| .name "u128_const" [.const n] .none        => u128_const (Lean.toExpr (α := BitVec 128) n)
 | .name "u128_eq" [] .none                   => u128_eq
 | .name "bitwise" [] .none                   => bitwise
 | .name "u128_sqrt" [] .none                 => u128_sqrt
