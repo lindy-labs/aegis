@@ -9,11 +9,11 @@ variable (metadataRef : FVarId) (typeRefs : Std.HashMap Identifier SierraType)
 def const_quote_of_num (ty : SierraType) (val : ℤ) : Q($(⟦ty⟧)) :=
 match ty with
 | .Felt252 => (q($val) : Q(Sierra.F))
-| .U8 => (q($val) : Q(Sierra.UInt8))
-| .U16 => (q($val) : Q(Sierra.UInt16))
-| .U32 => (q($val) : Q(Sierra.UInt32))
-| .U64 => (q($val) : Q(Sierra.UInt64))
-| .U128 => (q($val) : Q(Sierra.UInt128))
+| .U8 => (toExpr (α := BitVec 8) val)
+| .U16 => (toExpr (α := BitVec 16) val)
+| .U32 => (toExpr (α := BitVec 32) val)
+| .U64 => (toExpr (α := BitVec 64) val)
+| .U128 => (toExpr (α := BitVec 128) val)
 | _ => panic "no conversion from object level `Nat` to numeral Sierra type found!"
 
 -- Const<Tuple<felt252, felt252, felt252>, Const<felt252, 10>, Const<felt252, 20>, Const<felt252, 30>>
