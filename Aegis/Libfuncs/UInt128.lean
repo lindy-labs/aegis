@@ -10,19 +10,19 @@ def u128_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U128, U128]
   branches := [{ outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
-                   q(($a).toNat + ($b).toNat < U128_MOD ∧ $ρ = $a + $b) },
+                   q(¬ BitVec.uaddOverflow $a $b ∧ $ρ = $a + $b) },
                { outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
-                   q(U128_MOD ≤ ($a).toNat + ($b).toNat ∧ $ρ = $a + $b) }]
+                   q(BitVec.uaddOverflow $a $b ∧ $ρ = $a + $b) }]
 
 def u128_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U128, U128]
   branches := [{ outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
-                   q($b ≤ $a ∧ $ρ = $a - $b) },
+                   q(¬ BitVec.usubOverflow $a $b ∧ $ρ = $a - $b) },
                { outputTypes := [RangeCheck, U128]
                  condition := fun _ (a b : Q(UInt128)) _ (ρ : Q(UInt128)) =>
-                   q($a < $b ∧ $ρ = $a - $b) }]
+                   q(BitVec.usubOverflow $a $b ∧ $ρ = $a - $b) }]
 
 def u128_guarantee_mul : FuncData where
   inputTypes := [U128, U128]

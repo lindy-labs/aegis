@@ -9,19 +9,19 @@ def u64_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U64, U64]
   branches := [{ outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
-                   q(($a).toNat + ($b).toNat < U64_MOD ∧ $ρ = $a + $b) },
+                   q(¬ BitVec.uaddOverflow $a $b ∧ $ρ = $a + $b) },
                { outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
-                   q(U64_MOD ≤ ($a).toNat + ($b).toNat ∧ $ρ = $a + $b) }]
+                   q(BitVec.uaddOverflow $a $b ∧ $ρ = $a + $b) }]
 
 def u64_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U64, U64]
   branches := [{ outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
-                   q($b ≤ $a ∧ $ρ = $a - $b) },
+                   q(¬ BitVec.usubOverflow $a $b ∧ $ρ = $a - $b) },
                { outputTypes := [RangeCheck, U64]
                  condition := fun _ (a b : Q(UInt64)) _ (ρ : Q(UInt64)) =>
-                   q($a < $b ∧ $ρ = $a - $b) }]
+                   q(BitVec.usubOverflow $a $b ∧ $ρ = $a - $b) }]
 
 def u64_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U64, NonZero U64]

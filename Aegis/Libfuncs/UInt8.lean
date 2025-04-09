@@ -9,19 +9,19 @@ def u8_overflowing_add : FuncData where
   inputTypes := [RangeCheck, U8, U8]
   branches := [{ outputTypes := [RangeCheck, U8]
                  condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) =>
-                   q(($a).toNat + ($b).toNat < U8_MOD ∧ $ρ = $a + $b) },
+                   q(¬ BitVec.uaddOverflow $a $b ∧ $ρ = $a + $b) },
                { outputTypes := [RangeCheck, U8]
                  condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) =>
-                   q(U8_MOD ≤ ($a).toNat + ($b).toNat ∧ $ρ = $a + $b) }]
+                   q(BitVec.uaddOverflow $a $b ∧ $ρ = $a + $b) }]
 
 def u8_overflowing_sub : FuncData where
   inputTypes := [RangeCheck, U8, U8]
   branches := [{ outputTypes := [RangeCheck, U8]
                  condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) =>
-                   q($b ≤ $a ∧ $ρ = $a - $b) },
+                   q(¬ BitVec.usubOverflow $a $b ∧ $ρ = $a - $b) },
                { outputTypes := [RangeCheck, U8]
                  condition := fun _ (a b : Q(UInt8)) _ (ρ : Q(UInt8)) =>
-                   q($a < $b ∧ $ρ = $a - $b) }]
+                   q(BitVec.usubOverflow $a $b ∧ $ρ = $a - $b) }]
 
 def u8_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U8, NonZero U8]
