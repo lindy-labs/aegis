@@ -119,7 +119,7 @@ partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Iden
       if lvs.contains i then .ok (lvs.removeAll [i], .Mu <| .Nullable ty)
       else .ok (lvs, .Nullable <| decreaseRefs 0 ty)
     | .some <| .name "Enum" (_ :: ps) .none =>
-      let idents ← flip mapM ps fun x => match x with
+      let idents ← flip List.mapM ps fun x => match x with
       | .identifier ident => pure ident
       | _ => throw "Expected Enum parameters to refer a to a type"
       let x ← idents.mapM <| translate raw (i :: ctx)
@@ -127,7 +127,7 @@ partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Iden
       if lvs.flatten.contains i then .ok (lvs.flatten.removeAll [i], .Mu <| .Enum tys)
       else .ok (lvs.flatten, .Enum <| tys.map <| decreaseRefs 0)
     | .some <| .name "Struct" (_ :: ps) .none =>
-      let idents ← flip mapM ps fun x => match x with
+      let idents ← flip List.mapM ps fun x => match x with
       | .identifier ident => pure ident
       | _ => throw "Expected Struct parameters to refer a to a type"
       let x ← idents.mapM <| translate raw (i :: ctx)
@@ -141,7 +141,7 @@ partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Iden
       let (lvsty, ty) ← translate raw (i :: ctx) ident
       match ty with
       | .Struct _ =>
-        let idents ← flip mapM ps fun x => match x with
+        let idents ← flip List.mapM ps fun x => match x with
         | .identifier ident => pure ident
         | _ => throw "Expected Const parameters to refer a to a type"
         let x ← idents.mapM <| translate raw (i :: ident :: ctx)  -- really add `ident`?
