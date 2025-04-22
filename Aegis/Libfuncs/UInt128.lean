@@ -28,7 +28,7 @@ def u128_guarantee_mul : FuncData where
   inputTypes := [U128, U128]
   branches := [{ outputTypes := [U128, U128, U128MulGuarantee]
                  condition := fun (a b ρ_high ρ_low : Q(UInt128)) _ =>
-                   q($(ρ_high).append $ρ_low = $(a).zeroExtend _ * $(b).zeroExtend _) }]
+                   q($ρ_high ++ $ρ_low = $(a).zeroExtend _ * $(b).zeroExtend _) }]
 
 def u128_mul_guarantee_verify : FuncData where
   inputTypes := [RangeCheck, U128MulGuarantee]
@@ -42,7 +42,7 @@ def u128s_from_felt252 : FuncData where
                    q(($a).val < U128_MOD ∧ $ρ = ($a).val) },
                { outputTypes := [RangeCheck, U128, U128]
                  condition := fun _ (a : Q(F)) _ (ρ_high ρ_low : Q(UInt128)) =>
-                   q(U128_MOD ≤ ($a).val ∧ $(ρ_high).append $ρ_low = $(a).val) }]
+                   q(U128_MOD ≤ ($a).val ∧ $ρ_high ++ $ρ_low = BitVec.ofNat _ $(a).val) }]
 
 def u128_safe_divmod : FuncData where
   inputTypes := [RangeCheck, U128, NonZero U128]
