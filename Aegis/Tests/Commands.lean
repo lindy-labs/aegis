@@ -62,8 +62,10 @@ libfunc is_zero = felt252_is_zero;
 libfunc call = function_call<user@rec>;
 libfunc drop = drop<felt252>;
 
-is_zero([0]) { fallthrough() 2([1]) };
+is_zero([0]) { Z() NZ([1]) };
+Z:
 return([0]);
+NZ:
 call([0]) -> ([2]);
 return([2]);
 

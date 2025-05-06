@@ -93,9 +93,18 @@ def processAndOrTree (finputs : List (Nat × Identifier)) (cs : AndOrTree) :
     let e ← mkLambdaFVars #[.fvar s.metadataRef] e
     return e
 
+def buildLabelMap (stmts : List Statement) (offset : ℕ := 0)
+      (acc : Std.HashMap Identifier Nat := Std.HashMap.emptyWithCapacity stmts.length):
+    Std.HashMap Identifier Nat :=
+  match stmts with
+  | [] => acc
+  | s::stmts => buildLabelMap stmts (offset + 1)
+      (s.label.elim acc fun l => acc.insert l offset)
+
 partial def processState
   (typeDefs : Std.HashMap Identifier SierraType)
   (funcSigs : Std.HashMap Identifier FuncData)
+  (labelMap : Std.HashMap Identifier Nat)
   (f : SierraFile)
   (finputs : List (Nat × Identifier))
   (gas : ℕ := 2500) : M AndOrTree := do
@@ -132,9 +141,13 @@ partial def processState
       let fvs := .fvar <$> (← getOrMkNewRefs inOutArgs.reverse (types.map SierraType.toQuote).reverse)
       -- The new condition to be added
       let c := headBeta <| bd.condition.apply fvs  -- Apply fvars to condition and beta reduce
-      let pc' := bi.target.getD <| (← get).pc + 1  -- Fallthrough is the default
+      let pc := (← get).pc
+      let pc' := match bi.target with
+        | .none => pc + 1
+        | .some (.inl n) => n
+        | .some (.inr i) => labelMap.get! i
       set { ← get with pc := pc' }
-      let es ← processState typeDefs funcSigs f finputs (gas - 1)
+      let es ← processState typeDefs funcSigs labelMap f finputs (gas - 1)
       bes := bes ++ [.cons c [es]]
     match bes with
     | []   => return .nil
@@ -191,6 +204,7 @@ partial def getFuncCondition (ident : Identifier) (pc : ℕ) (inputArgs : List (
                      metadataRef := metadataRef }
   -- Build the function signatures for the declared libfuncs
   let funcSigs ← buildFuncSignatures ident typeDefs sf.libfuncs specs metadataRef
+  let labelMap := buildLabelMap sf.statements
   let es ← StateT.run (do
     let mut refs : RefTable := ∅
     -- Add input arguments to initial local context and refs table
@@ -199,7 +213,7 @@ partial def getFuncCondition (ident : Identifier) (pc : ℕ) (inputArgs : List (
         | throwError "Could not find type def for {t}"
       refs := refs.insert i <| ← getOrMkNewRef i <| SierraType.toQuote [] st
     set { (← get) with refs := refs }
-    let cs ← processState typeDefs funcSigs sf inputArgs
+    let cs ← processState typeDefs funcSigs labelMap sf inputArgs
     processAndOrTree inputArgs cs) s
   return es.1
 

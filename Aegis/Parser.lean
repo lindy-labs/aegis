@@ -26,7 +26,7 @@ inductive Parameter where
 end
 
 structure BranchInfo where
-  (target : Option Nat)  -- Is set to `.none` if statement is fallthrough
+  (target : Option (Nat ⊕ Identifier))  -- Is set to `.none` if statement is fallthrough
   (results : List Nat)
   deriving Repr, Inhabited
 
@@ -162,9 +162,14 @@ end
 
 def elabBranchInfo : TSyntax `branch_info → Except String BranchInfo
 | `(branch_info|fallthrough($[[$rs]],*)) =>
-  .ok { target := .none, results := (rs.map TSyntax.getNat).toList }
+  .ok { target := .none
+        results := (rs.map TSyntax.getNat).toList }
 | `(branch_info|$t:num($[[$rs]],*)) =>
-  .ok { target := .some t.getNat, results := (rs.map TSyntax.getNat).toList }
+  .ok { target := .some (.inl t.getNat)
+        results := (rs.map TSyntax.getNat).toList }
+| `(branch_info|$t:identifier($[[$rs]],*)) => do
+  .ok { target := .some (.inr (← elabIdentifier t))
+        results := (rs.map TSyntax.getNat).toList }
 | _ => .error "Could not elab branch info"
 
 def elabStmtLoc : Option (TSyntax `identifier) → Except String (Option Identifier)
