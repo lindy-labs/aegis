@@ -16,6 +16,11 @@ inductive SierraType : Type
 | U32
 | U64
 | U128
+| I8
+| I16
+| I32
+| I64
+| I128
 | RangeCheck
 | Enum (fields : List SierraType)
 | Struct (fields : List SierraType)
@@ -72,6 +77,11 @@ partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Iden
     | .some <| .name "u32" [] .none => .ok ([], .U32)
     | .some <| .name "u64" [] .none => .ok ([], .U64)
     | .some <| .name "u128" [] .none => .ok ([], .U128)
+    | .some <| .name "i8" [] .none => .ok ([], .I8)
+    | .some <| .name "i16" [] .none => .ok ([], .I16)
+    | .some <| .name "i32" [] .none => .ok ([], .I32)
+    | .some <| .name "i64" [] .none => .ok ([], .I64)
+    | .some <| .name "i128" [] .none => .ok ([], .I128)
     | .some <| .name "RangeCheck" [] .none => .ok ([], .RangeCheck)
     | .some <| .name "Pedersen" [] .none => .ok ([], .Pedersen)
     | .some <| .name "BuiltinCosts" [] .none => .ok ([], .BuiltinCosts)
@@ -198,6 +208,11 @@ abbrev UInt16 := BitVec 16
 abbrev UInt32 := BitVec 32
 abbrev UInt64 := BitVec 64
 abbrev UInt128 := BitVec 128
+abbrev Int8 := BitVec 8
+abbrev Int16 := BitVec 16
+abbrev Int32 := BitVec 32
+abbrev Int64 := BitVec 64
+abbrev Int128 := BitVec 128
 abbrev StorageBaseAddress := ZMod BASE_MOD
 abbrev StorageAddress := ZMod ADDRESS_MOD
 abbrev ContractAddress := ZMod CONTRACT_ADDRESS_MOD
@@ -230,6 +245,11 @@ def SierraType.toType (ctx : List Type := []) : SierraType → Type
   | .U32 => UInt32
   | .U64 => UInt64
   | .U128 => UInt128
+  | .I8 => Int8
+  | .I16 => Int16
+  | .I32 => Int32
+  | .I64 => Int64
+  | .I128 => Int128
   | .RangeCheck => Nat  -- TODO
   | .Enum []      => Unit
   | .Enum [t]     => toType ctx t
@@ -264,6 +284,11 @@ partial def SierraType.toQuote (ctx : List SierraType := []) : SierraType → Q(
   | .U32 => q(UInt32)
   | .U64 => q(UInt64)
   | .U128 => q(UInt128)
+  | .I8 => q(Int8)
+  | .I16 => q(Int16)
+  | .I32 => q(Int32)
+  | .I64 => q(Int64)
+  | .I128 => q(Int128)
   | .RangeCheck => q(Nat)  -- TODO
   | .Enum []      => q(Unit)
   | .Enum [t]     => toQuote ctx t

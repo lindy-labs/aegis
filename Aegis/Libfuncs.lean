@@ -5,6 +5,11 @@ import Aegis.Libfuncs.UInt16
 import Aegis.Libfuncs.UInt32
 import Aegis.Libfuncs.UInt64
 import Aegis.Libfuncs.UInt128
+import Aegis.Libfuncs.Int8
+import Aegis.Libfuncs.Int16
+import Aegis.Libfuncs.Int32
+import Aegis.Libfuncs.Int64
+import Aegis.Libfuncs.Int128
 import Aegis.Libfuncs.Bool
 import Aegis.Libfuncs.Enum
 import Aegis.Libfuncs.Struct
@@ -54,9 +59,17 @@ private def libfuncs_aux2 :=
   <|> uint8Libfuncs i
   <|> hashLibfuncs metadataRef i
 
+private def libfuncs_aux3 :=
+  libfuncs_aux2 currentFunc typeRefs specs metadataRef i
+  <|> int8Libfuncs i
+  <|> int16Libfuncs i
+  <|> int32Libfuncs i
+  <|> int64Libfuncs i
+  <|> int128Libfuncs i
+
 /-- Compile-time function data registry -/
 def libfuncs : Option FuncData :=
-  libfuncs_aux2 currentFunc typeRefs specs metadataRef i
+  libfuncs_aux3 currentFunc typeRefs specs metadataRef i
   <|> uint16Libfuncs i
   <|> uint32Libfuncs i
   <|> uint64Libfuncs i

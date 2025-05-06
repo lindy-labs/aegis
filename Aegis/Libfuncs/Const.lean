@@ -14,6 +14,11 @@ match ty with
 | .U32 => (toExpr (α := BitVec 32) val)
 | .U64 => (toExpr (α := BitVec 64) val)
 | .U128 => (toExpr (α := BitVec 128) val)
+| .I8 => (toExpr (α := BitVec 8) val)
+| .I16 => (toExpr (α := BitVec 16) val)
+| .I32 => (toExpr (α := BitVec 32) val)
+| .I64 => (toExpr (α := BitVec 64) val)
+| .I128 => (toExpr (α := BitVec 128) val)
 | _ => panic "no conversion from object level `Nat` to numeral Sierra type found!"
 
 -- Const<Tuple<felt252, felt252, felt252>, Const<felt252, 10>, Const<felt252, 20>, Const<felt252, 30>>

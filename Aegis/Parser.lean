@@ -214,7 +214,7 @@ def elabSierraFile : Syntax → Except String SierraFile
 
 -- TODO solve this in a better way
 def replaceNaughtyBrackets (s : String) : String :=
-  ((s.replace ">" "> ").replace "<" " <").replace "<-" "< -"
+  (((s.replace ">" "> ").replace "<" " <").replace "<-" "< -").replace "<i" "< i"
 
 def parseGrammar (input : String) : CoreM (Except String SierraFile) := do
   let env ← getEnv
