@@ -21,6 +21,7 @@ inductive SierraType : Type
 | I32
 | I64
 | I128
+| BoundedInt (min max : Nat)
 | RangeCheck
 | Enum (fields : List SierraType)
 | Struct (fields : List SierraType)
@@ -82,6 +83,8 @@ partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Iden
     | .some <| .name "i32" [] .none => .ok ([], .I32)
     | .some <| .name "i64" [] .none => .ok ([], .I64)
     | .some <| .name "i128" [] .none => .ok ([], .I128)
+    | .some <| .name "BoundedInt" [.const (.ofNat min), .const (.ofNat max)] .none =>
+      .ok ([], .BoundedInt min max)
     | .some <| .name "RangeCheck" [] .none => .ok ([], .RangeCheck)
     | .some <| .name "Pedersen" [] .none => .ok ([], .Pedersen)
     | .some <| .name "BuiltinCosts" [] .none => .ok ([], .BuiltinCosts)
@@ -250,6 +253,7 @@ def SierraType.toType (ctx : List Type := []) : SierraType → Type
   | .I32 => Int32
   | .I64 => Int64
   | .I128 => Int128
+  | .BoundedInt _ _ => F  -- Don't want dependent types so we just erase bounds
   | .RangeCheck => Nat  -- TODO
   | .Enum []      => Unit
   | .Enum [t]     => toType ctx t
@@ -289,6 +293,7 @@ partial def SierraType.toQuote (ctx : List SierraType := []) : SierraType → Q(
   | .I32 => q(Int32)
   | .I64 => q(Int64)
   | .I128 => q(Int128)
+  | .BoundedInt _ _ => q(F)
   | .RangeCheck => q(Nat)  -- TODO
   | .Enum []      => q(Unit)
   | .Enum [t]     => toQuote ctx t
