@@ -62,6 +62,7 @@ libfunc is_zero = felt252_is_zero;
 libfunc call = function_call<user@rec>;
 libfunc drop = drop<felt252>;
 
+F:
 is_zero([0]) { Z() NZ([1]) };
 Z:
 return([0]);
@@ -69,7 +70,7 @@ NZ:
 call([0]) -> ([2]);
 return([2]);
 
-rec@0([0]: F) -> (F);"
+rec@F([0]: F) -> (F);"
 
 aegis_spec "rec" := fun _ _ ρ => ρ = 0
 

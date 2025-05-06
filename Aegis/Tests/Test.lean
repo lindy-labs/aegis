@@ -38,7 +38,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
                    args := [0, 1],
                    branches := [{ target := none, results := [2] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [2], branches := [] }],
-  declarations := [(Sierra.Identifier.name "negparam" [] none, 0, [], [Sierra.Identifier.name "F" [] none])] }
+  declarations := [(Sierra.Identifier.name "negparam" [] none, Sum.inl 0, [], [Sierra.Identifier.name "F" [] none])] }
 -/
 #guard_msgs in
 #eval parseGrammar negParam
@@ -184,7 +184,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name 
                    branches := [{ target := none, results := [5] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [5], branches := [] }],
   declarations := [(Sierra.Identifier.name "foo" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.ref 0), (1, Sierra.Identifier.ref 0)],
                     [Sierra.Identifier.ref 0])] } -/
 #guard_msgs in
@@ -325,7 +325,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name 
                    args := [6],
                    branches := [{ target := none, results := [7] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [7], branches := [] }],
-  declarations := [(Sierra.Identifier.ref 0, 0, [(0, Sierra.Identifier.ref 0)], [Sierra.Identifier.ref 0])] }
+  declarations := [(Sierra.Identifier.ref 0, Sum.inl 0, [(0, Sierra.Identifier.ref 0)], [Sierra.Identifier.ref 0])] }
 -/
 #guard_msgs in
 #eval parseGrammar code04
@@ -362,7 +362,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name 
                    branches := [{ target := none, results := [0] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [1], branches := [] }],
   declarations := [(Sierra.Identifier.name "foo" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.ref 0)],
                     [Sierra.Identifier.ref 0])] } -/
 #guard_msgs in
@@ -455,7 +455,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "felt252" [] none, Sierra
                    branches := [{ target := none, results := [6] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [6], branches := [] }],
   declarations := [(Sierra.Identifier.name "test" [] (some (Sierra.Identifier.name "foo" [] none)),
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.name "felt252" [] none), (1, Sierra.Identifier.name "felt252" [] none)],
                     [Sierra.Identifier.name "felt252" [] none])] } -/
 #guard_msgs in
@@ -515,7 +515,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.ref 0, Sierra.Identifier.name 
                    branches := [{ target := none, results := [2] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [2], branches := [] }],
   declarations := [(Sierra.Identifier.name "foo" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.ref 0)],
                     [Sierra.Identifier.ref 2])] } -/
 #guard_msgs in
@@ -569,7 +569,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [2], branches := [] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [3], branches := [] }],
   declarations := [(Sierra.Identifier.name "foo" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none])] } -/
 #guard_msgs in
@@ -610,7 +610,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
                    branches := [{ target := none, results := [2] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [2], branches := [] }],
   declarations := [(Sierra.Identifier.name "foo" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.name "F" [] none), (1, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none])] } -/
 #guard_msgs in
@@ -662,7 +662,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
                    branches := [{ target := none, results := [3, 4] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [3], branches := [] }],
   declarations := [(Sierra.Identifier.name "foo" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.name "F" [] none), (1, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none])] } -/
 #guard_msgs in
@@ -714,7 +714,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
                    branches := [{ target := none, results := [2, 3] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [0], branches := [] }],
   declarations := [(Sierra.Identifier.name "foo" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none])] } -/
 #guard_msgs in
@@ -883,11 +883,11 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
                    branches := [{ target := none, results := [3] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [3], branches := [] }],
   declarations := [(Sierra.Identifier.name "foo" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none]),
                    (Sierra.Identifier.name "bar" [] none,
-                    2,
+                    Sum.inl 2,
                     [(2, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none])] } -/
 #guard_msgs in
@@ -931,11 +931,11 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
                    branches := [{ target := none, results := [3] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [3], branches := [] }],
   declarations := [(Sierra.Identifier.name "bar" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none]),
                    (Sierra.Identifier.name "baz" [] none,
-                    2,
+                    Sum.inl 2,
                     [(2, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none])] } -/
 #guard_msgs in
@@ -975,11 +975,11 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
                    branches := [{ target := none, results := [3] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [3], branches := [] }],
   declarations := [(Sierra.Identifier.name "bar[expr42]" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none]),
                    (Sierra.Identifier.name "baz" [] none,
-                    2,
+                    Sum.inl 2,
                     [(2, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none])] } -/
 #guard_msgs in
@@ -1045,7 +1045,7 @@ info: Except.ok { typedefs := [(Sierra.Identifier.name "F" [] none, Sierra.Ident
                    branches := [{ target := none, results := [2] }] },
                  { label := none, libfunc_id := Sierra.Identifier.name "return" [] none, args := [2], branches := [] }],
   declarations := [(Sierra.Identifier.name "foo" [] none,
-                    0,
+                    Sum.inl 0,
                     [(0, Sierra.Identifier.name "F" [] none)],
                     [Sierra.Identifier.name "F" [] none])] } -/
 #guard_msgs in

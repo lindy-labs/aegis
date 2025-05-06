@@ -161,7 +161,10 @@ def withFindByIdentifier (ident : Identifier)
     (k : (pc : ℕ) → List (ℕ × Identifier) → List Identifier → n α) : n α := do
   match (sf.declarations.filter (·.1 == ident)) with
   | [] => throwError "No function with matching identifier found in Sierra file"
-  | [⟨_, pc, inputArgs, outputTypes⟩] => k pc inputArgs outputTypes
+  | [⟨_, .inl pc, inputArgs, outputTypes⟩] => k pc inputArgs outputTypes
+  | [⟨_, .inr lbl, inputArgs, outputTypes⟩] =>
+    let labelMap := buildLabelMap sf.statements
+    k (labelMap.get! lbl) inputArgs outputTypes
   | _ => throwError "Ambiguous identifier, please edit Sierra file to make them unique"
 
 def funcDataFromCondition (typeDefs : Std.HashMap Identifier SierraType)
@@ -296,6 +299,8 @@ def analyzeFile (s : String) (idx : ℕ := 0) : MetaM Format := do
   match ← parseGrammar s with
   | .ok sf =>
     let ⟨ident, pc, inputArgs, outputTypes⟩ := sf.declarations[idx]!
+    let labelMap := buildLabelMap sf.statements
+    let pc := pc.elim id labelMap.get!
     let e ← getFuncCondition sf ∅ ident pc inputArgs outputTypes
     let esType ← inferType e
     return (← ppExpr e) ++ "\n Inferred Type:" ++ (← ppExpr esType)

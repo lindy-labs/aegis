@@ -41,7 +41,7 @@ structure SierraFile where
   (typedefs : List (Identifier × Identifier))
   (libfuncs : List (Identifier × Identifier))
   (statements : List Statement)
-  (declarations : List (Identifier × Nat × List (Nat × Identifier) × List Identifier))
+  (declarations : List (Identifier × (Nat ⊕ Identifier) × List (Nat × Identifier) × List Identifier))
   deriving Repr, Inhabited
 
 mutual
@@ -113,7 +113,7 @@ syntax "{" branch_info* "}" : statement_lhs
 syntax typedefLine := &"type" identifier "=" identifier (typeInfo)? ";" ("//" num)?
 syntax libfuncLine := "libfunc" identifier "=" identifier ";"  ("//" num)?
 syntax statementLine := atomic(identifier noWs ":")? identifier refTuple (statement_lhs)? ";"  ("//" num)?
-syntax declarationLine := identifier "@" num "(" declarationArg,* ")" "->" "(" identifier,* ")" ";"  ("//" num)?
+syntax declarationLine := identifier "@" (num <|> identifier) "(" declarationArg,* ")" "->" "(" identifier,* ")" ";"  ("//" num)?
 
 syntax typedefLine* libfuncLine* atomic(statementLine)* declarationLine* : sierra_file
 
@@ -206,12 +206,17 @@ def elabDeclarationArg : TSyntax `Sierra.declarationArg → Except String (Nat �
 | _ => .error "Could not elab declaration argument"
 
 def elabDeclarationLine : TSyntax `Sierra.declarationLine →
-    Except String (Identifier × Nat × List (Nat × Identifier) × List Identifier)
-| `(declarationLine|$i:identifier@$n($args,*) -> ($rets,*); $[//$n]?) => do
+    Except String (Identifier × (Nat ⊕ Identifier) × List (Nat × Identifier) × List Identifier)
+| `(declarationLine|$i:identifier@$n:num($args,*) -> ($rets,*); $[//$n]?) => do
   let i ← elabIdentifier i
   let rets ← rets.getElems.mapM elabIdentifier
   let args ← args.getElems.mapM elabDeclarationArg
-  .ok (i, n.getNat, args.toList, rets.toList)
+  .ok (i, .inl n.getNat, args.toList, rets.toList)
+| `(declarationLine|$i:identifier@$n:identifier($args,*) -> ($rets,*); $[//$n]?) => do
+  let i ← elabIdentifier i
+  let rets ← rets.getElems.mapM elabIdentifier
+  let args ← args.getElems.mapM elabDeclarationArg
+  .ok (i, .inr (← elabIdentifier n), args.toList, rets.toList)
 | _ => .error "Could not elab declaration"
 
 def elabTypedefLine : TSyntax `Sierra.typedefLine → Except String (Identifier × Identifier)
