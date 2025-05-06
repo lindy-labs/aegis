@@ -31,6 +31,7 @@ structure BranchInfo where
   deriving Repr, Inhabited
 
 structure Statement where
+  (label : Option Identifier)
   (libfunc_id : Identifier)
   (args : List Nat)
   (branches : List BranchInfo)
@@ -98,19 +99,20 @@ syntax identifier : parameter
 syntax boolLit := "false" <|> "true"
 syntax typeInfo := "[storable:" boolLit "," "drop:" boolLit "," "dup:" boolLit "," "zero_sized:" boolLit "]"
 
+syntax stmtLoc := num <|> identifier
 
 syntax refTuple := "(" ("[" num "]"),* ")"
 syntax declarationArg := "[" num "]" ":" identifier
 
 syntax "fallthrough" refTuple : branch_info
-syntax num refTuple : branch_info
+syntax stmtLoc refTuple : branch_info
 
 syntax "->" refTuple : statement_lhs
 syntax "{" branch_info* "}" : statement_lhs
 
 syntax typedefLine := &"type" identifier "=" identifier (typeInfo)? ";" ("//" num)?
 syntax libfuncLine := "libfunc" identifier "=" identifier ";"  ("//" num)?
-syntax statementLine := identifier refTuple (statement_lhs)? ";"  ("//" num)?
+syntax statementLine := atomic(identifier noWs ":")? identifier refTuple (statement_lhs)? ";"  ("//" num)?
 syntax declarationLine := identifier "@" num "(" declarationArg,* ")" "->" "(" identifier,* ")" ";"  ("//" num)?
 
 syntax typedefLine* libfuncLine* atomic(statementLine)* declarationLine* : sierra_file
@@ -165,21 +167,33 @@ def elabBranchInfo : TSyntax `branch_info → Except String BranchInfo
   .ok { target := .some t.getNat, results := (rs.map TSyntax.getNat).toList }
 | _ => .error "Could not elab branch info"
 
+def elabStmtLoc : Option (TSyntax `identifier) → Except String (Option Identifier)
+| .none => .ok .none
+| .some stx =>  do .ok <| .some <| ← elabIdentifier stx
+
 def elabStatementLine : TSyntax `Sierra.statementLine → Except String Statement
-| `(statementLine|return($[[$args]],*); $[//$n]?) => do
-  .ok { libfunc_id := .name "return" [] none, args := (args.map (·.getNat)).toList, branches := [] }
-| `(statementLine|$i:identifier($[[$args]],*) -> ($[[$ress]],*); $[//$n]?) => do
-  let i ← elabIdentifier i
-  .ok { libfunc_id := i, args := (args.map (·.getNat)).toList,
+| `(statementLine|$[$loc:identifier:]? return($[[$args]],*); $[//$n]?) => do
+  .ok { label := ← elabStmtLoc loc
+        libfunc_id := .name "return" [] none
+        args := (args.map (·.getNat)).toList
+        branches := [] }
+| `(statementLine|$[$loc:identifier:]? $i:identifier($[[$args]],*) -> ($[[$ress]],*); $[//$n]?) => do
+  .ok { label := ← elabStmtLoc loc
+        libfunc_id := ← elabIdentifier i
+        args := (args.map (·.getNat)).toList
         branches := [{ target := .none, results := (ress.map (·.getNat)).toList }] }
-| `(statementLine|$i:identifier($[[$args]],*) $[{ $bs* }]?; $[//$n]?) => do
-  let i ← elabIdentifier i
+| `(statementLine|$[$loc:identifier:]? $i:identifier($[[$args]],*) $[{ $bs* }]?; $[//$n]?) => do
   let bs := bs.getD #[]
   let b ← (bs.mapM elabBranchInfo)
-  .ok { libfunc_id := i, args := (args.map (·.getNat)).toList, branches := b.toList }
-| `(statementLine|$i:identifier($[[$args]],*); $[//$n]?) => do
-  let i ← elabIdentifier i
-  .ok { libfunc_id := i, args := (args.map (·.getNat)).toList, branches := [] }
+  .ok { label := ← elabStmtLoc loc
+        libfunc_id := ← elabIdentifier i
+        args := (args.map (·.getNat)).toList
+        branches := b.toList }
+| `(statementLine|$[$loc:identifier:]? $i:identifier($[[$args]],*); $[//$n]?) => do
+  .ok { label := ← elabStmtLoc loc
+        libfunc_id := ← elabIdentifier i
+        args := (args.map (·.getNat)).toList,
+        branches := [] }
 | x => .error s!"Could not elab statement {x}"
 
 def elabDeclarationArg : TSyntax `Sierra.declarationArg → Except String (Nat × Identifier)
