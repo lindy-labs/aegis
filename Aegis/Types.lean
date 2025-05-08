@@ -21,7 +21,7 @@ inductive SierraType : Type
 | I32
 | I64
 | I128
-| BoundedInt (min max : Nat)
+| BoundedInt (min max : Int)
 | RangeCheck
 | Enum (fields : List SierraType)
 | Struct (fields : List SierraType)
@@ -85,8 +85,7 @@ partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Iden
     | .some <| .name "i32" [] .none => .ok ([], .I32)
     | .some <| .name "i64" [] .none => .ok ([], .I64)
     | .some <| .name "i128" [] .none => .ok ([], .I128)
-    | .some <| .name "BoundedInt" [.const (.ofNat min), .const (.ofNat max)] .none =>
-      .ok ([], .BoundedInt min max)
+    | .some <| .name "BoundedInt" [.const min, .const max] .none => .ok ([], .BoundedInt min max)
     | .some <| .name "RangeCheck" [] .none => .ok ([], .RangeCheck)
     | .some <| .name "Pedersen" [] .none => .ok ([], .Pedersen)
     | .some <| .name "BuiltinCosts" [] .none => .ok ([], .BuiltinCosts)

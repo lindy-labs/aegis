@@ -28,6 +28,7 @@ import Aegis.Libfuncs.ContractAddress
 import Aegis.Libfuncs.UInt256
 import Aegis.Libfuncs.Casts
 import Aegis.Libfuncs.Const
+import Aegis.Libfuncs.BoundedInt
 
 open Lean Qq
 
@@ -66,6 +67,7 @@ private def libfuncs_aux3 :=
   <|> int32Libfuncs i
   <|> int64Libfuncs i
   <|> int128Libfuncs i
+  <|> boundedIntLibfuncs typeRefs i
 
 /-- Compile-time function data registry -/
 def libfuncs : Option FuncData :=

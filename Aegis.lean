@@ -7,6 +7,7 @@ import Aegis.ExprUtil
 import Aegis.Libfuncs
 import Aegis.Libfuncs.Array
 import Aegis.Libfuncs.Bool
+import Aegis.Libfuncs.BoundedInt
 import Aegis.Libfuncs.Box
 import Aegis.Libfuncs.BuiltinCosts
 import Aegis.Libfuncs.Casts
@@ -39,6 +40,7 @@ import Aegis.Macros
 import Aegis.Options
 import Aegis.Parser
 import Aegis.Tactic
+import Aegis.Tests.BoundedInt
 import Aegis.Tests.Commands
 import Aegis.Tests.CommandsImport
 import Aegis.Tests.CommandsImport2
