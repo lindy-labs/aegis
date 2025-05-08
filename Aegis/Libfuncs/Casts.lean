@@ -1,4 +1,5 @@
 import Aegis.Types
+import Mathlib.Data.ZMod.ValMinAbs
 
 open Qq Sierra.SierraType
 
@@ -183,6 +184,56 @@ def u128u64_downcast : FuncData where
                  condition := fun _ (a : Q(UInt128)) _ =>
                    q(U64_MOD ≤ $(a).toNat)}]
 
+def BoundedIntu8_upcast (min max : ℤ) : FuncData where
+  inputTypes := [BoundedInt min max]
+  branches := [{ outputTypes := [U8]
+                 condition := fun (a : Q(F)) (ρ : Q(UInt8)) => q($ρ = $(a).val) }]
+
+def BoundedIntu16_upcast (min max : ℤ) : FuncData where
+  inputTypes := [BoundedInt min max]
+  branches := [{ outputTypes := [U16]
+                 condition := fun (a : Q(F)) (ρ : Q(UInt16)) => q($ρ = $(a).val) }]
+
+def BoundedIntu32_upcast (min max : ℤ) : FuncData where
+  inputTypes := [BoundedInt min max]
+  branches := [{ outputTypes := [U32]
+                 condition := fun (a : Q(F)) (ρ : Q(UInt32)) => q($ρ = $(a).val) }]
+
+def BoundedIntu64_upcast (min max : ℤ) : FuncData where
+  inputTypes := [BoundedInt min max]
+  branches := [{ outputTypes := [U64]
+                 condition := fun (a : Q(F)) (ρ : Q(UInt64)) => q($ρ = $(a).val) }]
+
+def BoundedIntu128_upcast (min max : ℤ) : FuncData where
+  inputTypes := [BoundedInt min max]
+  branches := [{ outputTypes := [U128]
+                 condition := fun (a : Q(F)) (ρ : Q(UInt128)) => q($ρ = $(a).val) }]
+
+def BoundedInti8_upcast (min max : ℤ) : FuncData where
+  inputTypes := [BoundedInt min max]
+  branches := [{ outputTypes := [I8]
+                 condition := fun (a : Q(F)) (ρ : Q(Int8)) => q($ρ = $(a).valMinAbs) }]
+
+def BoundedInti16_upcast (min max : ℤ) : FuncData where
+  inputTypes := [BoundedInt min max]
+  branches := [{ outputTypes := [I16]
+                 condition := fun (a : Q(F)) (ρ : Q(Int16)) => q($ρ = $(a).valMinAbs) }]
+
+def BoundedInti32_upcast (min max : ℤ) : FuncData where
+  inputTypes := [BoundedInt min max]
+  branches := [{ outputTypes := [I32]
+                 condition := fun (a : Q(F)) (ρ : Q(Int32)) => q($ρ = $(a).valMinAbs) }]
+
+def BoundedInti64_upcast (min max : ℤ) : FuncData where
+  inputTypes := [BoundedInt min max]
+  branches := [{ outputTypes := [I64]
+                 condition := fun (a : Q(F)) (ρ : Q(Int64)) => q($ρ = $(a).valMinAbs) }]
+
+def BoundedInti128_upcast (min max : ℤ) : FuncData where
+  inputTypes := [BoundedInt min max]
+  branches := [{ outputTypes := [I128]
+                 condition := fun (a : Q(F)) (ρ : Q(UInt128)) => q($ρ = $(a).valMinAbs) }]
+
 def castsLibfuncs : Identifier → Option FuncData
 | .name "upcast" [.identifier (.name "u8" [] .none), .identifier (.name "u8" [] .none)] .none =>
   u8u8_upcast
@@ -214,6 +265,26 @@ def castsLibfuncs : Identifier → Option FuncData
   u64u128_upcast
 | .name "upcast" [.identifier (.name "u128" [] .none), .identifier (.name "u128" [] .none)] .none =>
   u128u128_upcast
+| .name "upcast" [.identifier (.name "BoundedInt" [.const min, .const max] .none), .identifier (.name "u8" [] .none)] .none =>
+  BoundedIntu8_upcast min max
+| .name "upcast" [.identifier (.name "BoundedInt" [.const min, .const max] .none), .identifier (.name "u16" [] .none)] .none =>
+  BoundedIntu16_upcast min max
+| .name "upcast" [.identifier (.name "BoundedInt" [.const min, .const max] .none), .identifier (.name "u32" [] .none)] .none =>
+  BoundedIntu32_upcast min max
+| .name "upcast" [.identifier (.name "BoundedInt" [.const min, .const max] .none), .identifier (.name "u64" [] .none)] .none =>
+  BoundedIntu64_upcast min max
+| .name "upcast" [.identifier (.name "BoundedInt" [.const min, .const max] .none), .identifier (.name "u128" [] .none)] .none =>
+  BoundedIntu128_upcast min max
+| .name "upcast" [.identifier (.name "BoundedInt" [.const min, .const max] .none), .identifier (.name "i8" [] .none)] .none =>
+  BoundedInti8_upcast min max
+| .name "upcast" [.identifier (.name "BoundedInt" [.const min, .const max] .none), .identifier (.name "i16" [] .none)] .none =>
+  BoundedInti16_upcast min max
+| .name "upcast" [.identifier (.name "BoundedInt" [.const min, .const max] .none), .identifier (.name "i32" [] .none)] .none =>
+  BoundedInti32_upcast min max
+| .name "upcast" [.identifier (.name "BoundedInt" [.const min, .const max] .none), .identifier (.name "i64" [] .none)] .none =>
+  BoundedInti64_upcast min max
+| .name "upcast" [.identifier (.name "BoundedInt" [.const min, .const max] .none), .identifier (.name "i128" [] .none)] .none =>
+  BoundedInti128_upcast min max
 | .name "downcast" [.identifier (.name "u16" [] .none), .identifier (.name "u8" [] .none)] .none =>
   u16u8_downcast
 | .name "downcast" [.identifier (.name "u32" [] .none), .identifier (.name "u8" [] .none)] .none =>
