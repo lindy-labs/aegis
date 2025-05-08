@@ -8,7 +8,7 @@ variable (metadataRef : FVarId) (typeRefs : Std.HashMap Identifier SierraType)
 
 def const_quote_of_num (ty : SierraType) (val : ℤ) : Q($(⟦ty⟧)) :=
 match ty with
-| .Felt252 => (q($val) : Q(Sierra.F))
+| .Felt252 | .BoundedInt _ _ => (q($val) : Q(Sierra.F))
 | .U8 => (toExpr (α := BitVec 8) val)
 | .U16 => (toExpr (α := BitVec 16) val)
 | .U32 => (toExpr (α := BitVec 32) val)
