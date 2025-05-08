@@ -25,7 +25,12 @@ def withdraw_gas : FuncData where
                    let m : Q(Metadata) := .fvar metadataRef
                    q($g < ($m).costs $currentFunc) }]
 
+def redeposit_gas : FuncData where
+  inputTypes := [.GasBuiltin]
+  branches := [{ outputTypes := [.GasBuiltin] }]
+
 def gasBuiltinLibfuncs : Identifier → Option FuncData
 | .name "withdraw_gas_all" [] .none => withdraw_gas_all
 | .name "withdraw_gas" [] .none => withdraw_gas currentFunc metadataRef
+| .name "redeposit_gas" [] .none => redeposit_gas
 | _ => .none
