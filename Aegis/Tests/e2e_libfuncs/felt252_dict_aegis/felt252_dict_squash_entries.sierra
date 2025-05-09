@@ -1,0 +1,14 @@
+type SquashedFelt252Dict<felt252> = SquashedFelt252Dict<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type Array<Tuple<felt252, felt252, felt252>> = Array<Tuple<felt252, felt252, felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
+type Tuple<felt252, felt252, felt252> = Struct<ut@Tuple, felt252, felt252, felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc squashed_felt252_dict_entries<felt252> = squashed_felt252_dict_entries<felt252>;
+libfunc store_temp<Array<Tuple<felt252, felt252, felt252>>> = store_temp<Array<Tuple<felt252, felt252, felt252>>>;
+
+F0:
+squashed_felt252_dict_entries<felt252>([0]) -> ([1]);
+store_temp<Array<Tuple<felt252, felt252, felt252>>>([1]) -> ([1]);
+return([1]);
+
+test::test_squashed_dict_entries@F0([0]: SquashedFelt252Dict<felt252>) -> (Array<Tuple<felt252, felt252, felt252>>);

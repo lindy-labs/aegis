@@ -1,0 +1,26 @@
+type i8 = i8 [storable: true, drop: true, dup: true, zero_sized: false];
+type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
+type BoundedInt<-127, 127> = BoundedInt<-127, 127> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::internal::OptionRev::<test::BoundedInt::<-127, 127>> = Enum<ut@core::internal::OptionRev::<test::BoundedInt::<-127, 127>>, Unit, BoundedInt<-127, 127>> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc bounded_int_trim_min<i8> = bounded_int_trim_min<i8>;
+libfunc branch_align = branch_align;
+libfunc struct_construct<Unit> = struct_construct<Unit>;
+libfunc enum_init<core::internal::OptionRev::<test::BoundedInt::<-127, 127>>, 0> = enum_init<core::internal::OptionRev::<test::BoundedInt::<-127, 127>>, 0>;
+libfunc store_temp<core::internal::OptionRev::<test::BoundedInt::<-127, 127>>> = store_temp<core::internal::OptionRev::<test::BoundedInt::<-127, 127>>>;
+libfunc enum_init<core::internal::OptionRev::<test::BoundedInt::<-127, 127>>, 1> = enum_init<core::internal::OptionRev::<test::BoundedInt::<-127, 127>>, 1>;
+
+F0:
+bounded_int_trim_min<i8>([0]) { fallthrough() F0_B0([1]) };
+branch_align() -> ();
+struct_construct<Unit>() -> ([2]);
+enum_init<core::internal::OptionRev::<test::BoundedInt::<-127, 127>>, 0>([2]) -> ([3]);
+store_temp<core::internal::OptionRev::<test::BoundedInt::<-127, 127>>>([3]) -> ([3]);
+return([3]);
+F0_B0:
+branch_align() -> ();
+enum_init<core::internal::OptionRev::<test::BoundedInt::<-127, 127>>, 1>([1]) -> ([4]);
+store_temp<core::internal::OptionRev::<test::BoundedInt::<-127, 127>>>([4]) -> ([4]);
+return([4]);
+
+test::foo@F0([0]: i8) -> (core::internal::OptionRev::<test::BoundedInt::<-127, 127>>);

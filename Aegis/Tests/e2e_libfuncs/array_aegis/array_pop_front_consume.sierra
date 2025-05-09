@@ -1,9 +1,9 @@
 type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
 type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
-type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
 type Box<felt252> = Box<felt252> [storable: true, drop: true, dup: true, zero_sized: false];
 type Tuple<Array<felt252>, Box<felt252>> = Struct<ut@Tuple, Array<felt252>, Box<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
 type core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)> = Enum<ut@core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>, Tuple<Array<felt252>, Box<felt252>>, Unit> [storable: true, drop: true, dup: false, zero_sized: false];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
 
 libfunc array_pop_front_consume<felt252> = array_pop_front_consume<felt252>;
 libfunc branch_align = branch_align;
@@ -13,16 +13,18 @@ libfunc store_temp<core::option::Option::<(core::array::Array::<core::felt252>, 
 libfunc struct_construct<Unit> = struct_construct<Unit>;
 libfunc enum_init<core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>, 1> = enum_init<core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>, 1>;
 
-array_pop_front_consume<felt252>([0]) { fallthrough([1], [2]) 6() }; // 0
-branch_align() -> (); // 1
-struct_construct<Tuple<Array<felt252>, Box<felt252>>>([1], [2]) -> ([3]); // 2
-enum_init<core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>, 0>([3]) -> ([4]); // 3
-store_temp<core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>>([4]) -> ([4]); // 4
-return([4]); // 5
-branch_align() -> (); // 6
-struct_construct<Unit>() -> ([5]); // 7
-enum_init<core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>, 1>([5]) -> ([6]); // 8
-store_temp<core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>>([6]) -> ([6]); // 9
-return([6]); // 10
+F0:
+array_pop_front_consume<felt252>([0]) { fallthrough([1], [2]) F0_B0() };
+branch_align() -> ();
+struct_construct<Tuple<Array<felt252>, Box<felt252>>>([1], [2]) -> ([3]);
+enum_init<core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>, 0>([3]) -> ([4]);
+store_temp<core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>>([4]) -> ([4]);
+return([4]);
+F0_B0:
+branch_align() -> ();
+struct_construct<Unit>() -> ([5]);
+enum_init<core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>, 1>([5]) -> ([6]);
+store_temp<core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>>([6]) -> ([6]);
+return([6]);
 
-test::foo@0([0]: Array<felt252>) -> (core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>);
+test::foo@F0([0]: Array<felt252>) -> (core::option::Option::<(core::array::Array::<core::felt252>, core::box::Box::<core::felt252>)>);

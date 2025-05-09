@@ -4,8 +4,9 @@ type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false
 libfunc i16_to_felt252 = i16_to_felt252;
 libfunc store_temp<felt252> = store_temp<felt252>;
 
-i16_to_felt252([0]) -> ([1]); // 0
-store_temp<felt252>([1]) -> ([1]); // 1
-return([1]); // 2
+F0:
+i16_to_felt252([0]) -> ([1]);
+store_temp<felt252>([1]) -> ([1]);
+return([1]);
 
-test::foo@0([0]: i16) -> (felt252);
+test::foo@F0([0]: i16) -> (felt252);

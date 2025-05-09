@@ -1,0 +1,31 @@
+type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
+type BoundedInt<0, 127> = BoundedInt<0, 127> [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<BoundedInt<0, 127>> = NonZero<BoundedInt<0, 127>> [storable: true, drop: true, dup: true, zero_sized: false];
+type BoundedInt<128, 255> = BoundedInt<128, 255> [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<BoundedInt<128, 255>> = NonZero<BoundedInt<128, 255>> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>> = Enum<ut@core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>, NonZero<BoundedInt<0, 127>>, NonZero<BoundedInt<128, 255>>> [storable: true, drop: true, dup: true, zero_sized: false];
+type u8 = u8 [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<u8> = NonZero<u8> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc bounded_int_constrain<NonZero<u8>, 128> = bounded_int_constrain<NonZero<u8>, 128>;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>, 0> = enum_init<core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>, 0>;
+libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
+libfunc store_temp<core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>> = store_temp<core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>>;
+libfunc enum_init<core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>, 1> = enum_init<core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>, 1>;
+
+F0:
+bounded_int_constrain<NonZero<u8>, 128>([0], [1]) { fallthrough([2], [3]) F0_B0([4], [5]) };
+branch_align() -> ();
+enum_init<core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>, 0>([3]) -> ([6]);
+store_temp<RangeCheck>([2]) -> ([2]);
+store_temp<core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>>([6]) -> ([6]);
+return([2], [6]);
+F0_B0:
+branch_align() -> ();
+enum_init<core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>, 1>([5]) -> ([7]);
+store_temp<RangeCheck>([4]) -> ([4]);
+store_temp<core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>>([7]) -> ([7]);
+return([4], [7]);
+
+test::foo@F0([0]: RangeCheck, [1]: NonZero<u8>) -> (RangeCheck, core::result::Result::<core::zeroable::NonZero::<test::BoundedInt::<0, 127>>, core::zeroable::NonZero::<test::BoundedInt::<128, 255>>>);

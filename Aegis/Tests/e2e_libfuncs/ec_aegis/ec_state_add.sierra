@@ -4,12 +4,11 @@ type EcPoint = EcPoint [storable: true, drop: true, dup: true, zero_sized: false
 type NonZero<EcPoint> = NonZero<EcPoint> [storable: true, drop: true, dup: true, zero_sized: false];
 
 libfunc ec_state_add = ec_state_add;
-libfunc struct_construct<Unit> = struct_construct<Unit>;
 libfunc store_temp<EcState> = store_temp<EcState>;
 
-ec_state_add([0], [1]) -> ([2]); // 0
-struct_construct<Unit>() -> ([3]); // 1
-store_temp<EcState>([2]) -> ([2]); // 2
-return([2], [3]); // 3
+F0:
+ec_state_add([0], [1]) -> ([2]);
+store_temp<EcState>([2]) -> ([2]);
+return([2]);
 
-test::foo@0([0]: EcState, [1]: NonZero<EcPoint>) -> (EcState, Unit);
+test::foo@F0([0]: EcState, [1]: NonZero<EcPoint>) -> (EcState);

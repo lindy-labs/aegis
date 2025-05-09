@@ -6,9 +6,10 @@ libfunc u64_sqrt = u64_sqrt;
 libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
 libfunc store_temp<u32> = store_temp<u32>;
 
-u64_sqrt([0], [1]) -> ([2], [3]); // 0
-store_temp<RangeCheck>([2]) -> ([2]); // 1
-store_temp<u32>([3]) -> ([3]); // 2
-return([2], [3]); // 3
+F0:
+u64_sqrt([0], [1]) -> ([2], [3]);
+store_temp<RangeCheck>([2]) -> ([2]);
+store_temp<u32>([3]) -> ([3]);
+return([2], [3]);
 
-test::foo@0([0]: RangeCheck, [1]: u64) -> (RangeCheck, u32);
+test::foo@F0([0]: RangeCheck, [1]: u64) -> (RangeCheck, u32);

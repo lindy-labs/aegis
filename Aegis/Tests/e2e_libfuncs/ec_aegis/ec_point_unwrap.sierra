@@ -7,9 +7,10 @@ libfunc ec_point_unwrap = ec_point_unwrap;
 libfunc struct_construct<Tuple<felt252, felt252>> = struct_construct<Tuple<felt252, felt252>>;
 libfunc store_temp<Tuple<felt252, felt252>> = store_temp<Tuple<felt252, felt252>>;
 
-ec_point_unwrap([0]) -> ([1], [2]); // 0
-struct_construct<Tuple<felt252, felt252>>([1], [2]) -> ([3]); // 1
-store_temp<Tuple<felt252, felt252>>([3]) -> ([3]); // 2
-return([3]); // 3
+F0:
+ec_point_unwrap([0]) -> ([1], [2]);
+struct_construct<Tuple<felt252, felt252>>([1], [2]) -> ([3]);
+store_temp<Tuple<felt252, felt252>>([3]) -> ([3]);
+return([3]);
 
-test::foo@0([0]: NonZero<EcPoint>) -> (Tuple<felt252, felt252>);
+test::foo@F0([0]: NonZero<EcPoint>) -> (Tuple<felt252, felt252>);

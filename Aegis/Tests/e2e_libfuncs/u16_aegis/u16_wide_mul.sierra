@@ -4,8 +4,9 @@ type u32 = u32 [storable: true, drop: true, dup: true, zero_sized: false];
 libfunc u16_wide_mul = u16_wide_mul;
 libfunc store_temp<u32> = store_temp<u32>;
 
-u16_wide_mul([0], [1]) -> ([2]); // 0
-store_temp<u32>([2]) -> ([2]); // 1
-return([2]); // 2
+F0:
+u16_wide_mul([0], [1]) -> ([2]);
+store_temp<u32>([2]) -> ([2]);
+return([2]);
 
-test::foo@0([0]: u16, [1]: u16) -> (u32);
+test::foo@F0([0]: u16, [1]: u16) -> (u32);
