@@ -4,8 +4,9 @@ type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false
 libfunc null<felt252> = null<felt252>;
 libfunc store_temp<Nullable<felt252>> = store_temp<Nullable<felt252>>;
 
-null<felt252>() -> ([0]); // 0
-store_temp<Nullable<felt252>>([0]) -> ([0]); // 1
-return([0]); // 2
+F0:
+null<felt252>() -> ([0]);
+store_temp<Nullable<felt252>>([0]) -> ([0]);
+return([0]);
 
-test::foo@0() -> (Nullable<felt252>);
+test::foo@F0() -> (Nullable<felt252>);

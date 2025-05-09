@@ -1,0 +1,12 @@
+type BoundedInt<-680564733841876926926749214863536422911, -1> = BoundedInt<-680564733841876926926749214863536422911, -1> [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<BoundedInt<-680564733841876926926749214863536422911, -1>> = NonZero<BoundedInt<-680564733841876926926749214863536422911, -1>> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc bounded_int_wrap_non_zero<BoundedInt<-680564733841876926926749214863536422911, -1>> = bounded_int_wrap_non_zero<BoundedInt<-680564733841876926926749214863536422911, -1>>;
+libfunc store_temp<NonZero<BoundedInt<-680564733841876926926749214863536422911, -1>>> = store_temp<NonZero<BoundedInt<-680564733841876926926749214863536422911, -1>>>;
+
+F0:
+bounded_int_wrap_non_zero<BoundedInt<-680564733841876926926749214863536422911, -1>>([0]) -> ([1]);
+store_temp<NonZero<BoundedInt<-680564733841876926926749214863536422911, -1>>>([1]) -> ([1]);
+return([1]);
+
+test::foo@F0([0]: BoundedInt<-680564733841876926926749214863536422911, -1>) -> (NonZero<BoundedInt<-680564733841876926926749214863536422911, -1>>);

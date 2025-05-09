@@ -4,8 +4,9 @@ type core::bool = Enum<ut@core::bool, Unit, Unit> [storable: true, drop: true, d
 libfunc bool_xor_impl = bool_xor_impl;
 libfunc store_temp<core::bool> = store_temp<core::bool>;
 
-bool_xor_impl([0], [1]) -> ([2]); // 0
-store_temp<core::bool>([2]) -> ([2]); // 1
-return([2]); // 2
+F0:
+bool_xor_impl([0], [1]) -> ([2]);
+store_temp<core::bool>([2]) -> ([2]);
+return([2]);
 
-test::foo@0([0]: core::bool, [1]: core::bool) -> (core::bool);
+test::foo@F0([0]: core::bool, [1]: core::bool) -> (core::bool);

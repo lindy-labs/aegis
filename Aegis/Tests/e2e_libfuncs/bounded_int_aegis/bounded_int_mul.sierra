@@ -1,0 +1,14 @@
+type i8 = i8 [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<i8> = NonZero<i8> [storable: true, drop: true, dup: true, zero_sized: false];
+type BoundedInt<-16256, 16384> = BoundedInt<-16256, 16384> [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<BoundedInt<-16256, 16384>> = NonZero<BoundedInt<-16256, 16384>> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc bounded_int_mul<NonZero<i8>, NonZero<i8>> = bounded_int_mul<NonZero<i8>, NonZero<i8>>;
+libfunc store_temp<NonZero<BoundedInt<-16256, 16384>>> = store_temp<NonZero<BoundedInt<-16256, 16384>>>;
+
+F0:
+bounded_int_mul<NonZero<i8>, NonZero<i8>>([0], [1]) -> ([2]);
+store_temp<NonZero<BoundedInt<-16256, 16384>>>([2]) -> ([2]);
+return([2]);
+
+test::foo@F0([0]: NonZero<i8>, [1]: NonZero<i8>) -> (NonZero<BoundedInt<-16256, 16384>>);

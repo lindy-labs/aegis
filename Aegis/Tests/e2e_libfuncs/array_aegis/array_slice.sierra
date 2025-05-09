@@ -3,8 +3,8 @@ type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized:
 type Array<Array<felt252>> = Array<Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
 type Snapshot<Array<Array<felt252>>> = Snapshot<Array<Array<felt252>>> [storable: true, drop: true, dup: true, zero_sized: false];
 type core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>> = Enum<ut@core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>, Snapshot<Array<Array<felt252>>>, Unit> [storable: true, drop: true, dup: true, zero_sized: false];
-type u32 = u32 [storable: true, drop: true, dup: true, zero_sized: false];
 type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type u32 = u32 [storable: true, drop: true, dup: true, zero_sized: false];
 type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
 
 libfunc array_slice<Array<felt252>> = array_slice<Array<felt252>>;
@@ -15,17 +15,19 @@ libfunc store_temp<core::option::Option::<@core::array::Array::<core::array::Arr
 libfunc struct_construct<Unit> = struct_construct<Unit>;
 libfunc enum_init<core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>, 1> = enum_init<core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>, 1>;
 
-array_slice<Array<felt252>>([0], [1], [2], [3]) { fallthrough([4], [5]) 6([6]) }; // 0
-branch_align() -> (); // 1
-enum_init<core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>, 0>([5]) -> ([7]); // 2
-store_temp<RangeCheck>([4]) -> ([4]); // 3
-store_temp<core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>>([7]) -> ([7]); // 4
-return([4], [7]); // 5
-branch_align() -> (); // 6
-struct_construct<Unit>() -> ([8]); // 7
-enum_init<core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>, 1>([8]) -> ([9]); // 8
-store_temp<RangeCheck>([6]) -> ([6]); // 9
-store_temp<core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>>([9]) -> ([9]); // 10
-return([6], [9]); // 11
+F0:
+array_slice<Array<felt252>>([0], [1], [2], [3]) { fallthrough([4], [5]) F0_B0([6]) };
+branch_align() -> ();
+enum_init<core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>, 0>([5]) -> ([7]);
+store_temp<RangeCheck>([4]) -> ([4]);
+store_temp<core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>>([7]) -> ([7]);
+return([4], [7]);
+F0_B0:
+branch_align() -> ();
+struct_construct<Unit>() -> ([8]);
+enum_init<core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>, 1>([8]) -> ([9]);
+store_temp<RangeCheck>([6]) -> ([6]);
+store_temp<core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>>([9]) -> ([9]);
+return([6], [9]);
 
-test::foo@0([0]: RangeCheck, [1]: Snapshot<Array<Array<felt252>>>, [2]: u32, [3]: u32) -> (RangeCheck, core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>);
+test::foo@F0([0]: RangeCheck, [1]: Snapshot<Array<Array<felt252>>>, [2]: u32, [3]: u32) -> (RangeCheck, core::option::Option::<@core::array::Array::<core::array::Array::<core::felt252>>>);

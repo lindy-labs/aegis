@@ -3,8 +3,9 @@ type EcPoint = EcPoint [storable: true, drop: true, dup: true, zero_sized: false
 libfunc ec_neg = ec_neg;
 libfunc store_temp<EcPoint> = store_temp<EcPoint>;
 
-ec_neg([0]) -> ([1]); // 0
-store_temp<EcPoint>([1]) -> ([1]); // 1
-return([1]); // 2
+F0:
+ec_neg([0]) -> ([1]);
+store_temp<EcPoint>([1]) -> ([1]);
+return([1]);
 
-test::foo@0([0]: EcPoint) -> (EcPoint);
+test::foo@F0([0]: EcPoint) -> (EcPoint);
