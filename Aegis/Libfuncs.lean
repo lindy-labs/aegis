@@ -10,6 +10,7 @@ import Aegis.Libfuncs.Int16
 import Aegis.Libfuncs.Int32
 import Aegis.Libfuncs.Int64
 import Aegis.Libfuncs.Int128
+import Aegis.Libfuncs.Bytes31
 import Aegis.Libfuncs.Bool
 import Aegis.Libfuncs.Enum
 import Aegis.Libfuncs.Struct
@@ -67,6 +68,7 @@ private def libfuncs_aux3 :=
   <|> int32Libfuncs i
   <|> int64Libfuncs i
   <|> int128Libfuncs i
+  <|> bytes31Libfuncs i
   <|> boundedIntLibfuncs typeRefs i
 
 /-- Compile-time function data registry -/

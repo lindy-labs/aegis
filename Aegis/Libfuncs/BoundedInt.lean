@@ -25,6 +25,7 @@ def SierraType.maxBound : SierraType → Int
 | U64 => 18446744073709551615
 | U128 => 340282366920938463463374607431768211455
 | Felt252 => 3618502788666131213697322783095070105623107215331596699973092056135872020480
+| Bytes31 => 452312848583266388373324160190187140051835877600158453279131187530910662655
 | BoundedInt _ max => max
 | _ => 0
 
@@ -39,6 +40,7 @@ def SierraType.toFelt : (ty : SierraType) → Lean.Expr → Q(F)
 | U32, (val : Q(UInt32)) => q($(val).toNat)
 | U64, (val : Q(UInt64)) => q($(val).toNat)
 | U128, (val : Q(UInt128)) => q($(val).toNat)
+| Bytes31, (val : Q(Sierra.Bytes31)) => q($(val).toNat)
 | Felt252, val
 | BoundedInt _ _, val => val
 | _, _ => q(0)

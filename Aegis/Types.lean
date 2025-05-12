@@ -21,6 +21,7 @@ inductive SierraType : Type
 | I32
 | I64
 | I128
+| Bytes31
 | BoundedInt (min max : Int)
 | RangeCheck
 | Enum (fields : List SierraType)
@@ -85,6 +86,7 @@ partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Iden
     | .some <| .name "i32" [] .none => .ok ([], .I32)
     | .some <| .name "i64" [] .none => .ok ([], .I64)
     | .some <| .name "i128" [] .none => .ok ([], .I128)
+    | .some <| .name "bytes31" [] .none => .ok ([], .Bytes31)
     | .some <| .name "BoundedInt" [.const min, .const max] .none => .ok ([], .BoundedInt min max)
     | .some <| .name "RangeCheck" [] .none => .ok ([], .RangeCheck)
     | .some <| .name "Pedersen" [] .none => .ok ([], .Pedersen)
@@ -220,6 +222,7 @@ abbrev Int16 := BitVec 16
 abbrev Int32 := BitVec 32
 abbrev Int64 := BitVec 64
 abbrev Int128 := BitVec 128
+abbrev Bytes31 := BitVec 248
 abbrev StorageBaseAddress := ZMod BASE_MOD
 abbrev StorageAddress := ZMod ADDRESS_MOD
 abbrev ContractAddress := ZMod CONTRACT_ADDRESS_MOD
@@ -257,6 +260,7 @@ def SierraType.toType (ctx : List Type := []) : SierraType → Type
   | .I32 => Int32
   | .I64 => Int64
   | .I128 => Int128
+  | .Bytes31 => Sierra.Bytes31
   | .BoundedInt _ _ => F  -- Don't want dependent types so we just erase bounds
   | .RangeCheck => Nat  -- TODO
   | .Enum []      => Unit
@@ -297,6 +301,7 @@ partial def SierraType.toQuote (ctx : List SierraType := []) : SierraType → Q(
   | .I32 => q(Int32)
   | .I64 => q(Int64)
   | .I128 => q(Int128)
+  | .Bytes31 => q(Sierra.Bytes31)
   | .BoundedInt _ _ => q(F)
   | .RangeCheck => q(Nat)  -- TODO
   | .Enum []      => q(Unit)
