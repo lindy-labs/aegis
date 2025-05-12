@@ -1,0 +1,21 @@
+type RangeCheck = RangeCheck [storable: true, drop: false, dup: false, zero_sized: false];
+type BoundedInt<0, 15> = BoundedInt<0, 15> [storable: true, drop: true, dup: true, zero_sized: false];
+type BoundedInt<0, 21267647932558653966460912964485513215> = BoundedInt<0, 21267647932558653966460912964485513215> [storable: true, drop: true, dup: true, zero_sized: false];
+type Tuple<BoundedInt<0, 15>, BoundedInt<0, 21267647932558653966460912964485513215>> = Struct<ut@Tuple, BoundedInt<0, 15>, BoundedInt<0, 21267647932558653966460912964485513215>> [storable: true, drop: true, dup: true, zero_sized: false];
+type BoundedInt<21267647932558653966460912964485513216, 21267647932558653966460912964485513216> = BoundedInt<21267647932558653966460912964485513216, 21267647932558653966460912964485513216> [storable: true, drop: true, dup: true, zero_sized: false];
+type NonZero<BoundedInt<21267647932558653966460912964485513216, 21267647932558653966460912964485513216>> = NonZero<BoundedInt<21267647932558653966460912964485513216, 21267647932558653966460912964485513216>> [storable: true, drop: true, dup: true, zero_sized: false];
+type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc bounded_int_div_rem<u128, BoundedInt<21267647932558653966460912964485513216, 21267647932558653966460912964485513216>> = bounded_int_div_rem<u128, BoundedInt<21267647932558653966460912964485513216, 21267647932558653966460912964485513216>>;
+libfunc struct_construct<Tuple<BoundedInt<0, 15>, BoundedInt<0, 21267647932558653966460912964485513215>>> = struct_construct<Tuple<BoundedInt<0, 15>, BoundedInt<0, 21267647932558653966460912964485513215>>>;
+libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
+libfunc store_temp<Tuple<BoundedInt<0, 15>, BoundedInt<0, 21267647932558653966460912964485513215>>> = store_temp<Tuple<BoundedInt<0, 15>, BoundedInt<0, 21267647932558653966460912964485513215>>>;
+
+F0:
+bounded_int_div_rem<u128, BoundedInt<21267647932558653966460912964485513216, 21267647932558653966460912964485513216>>([0], [1], [2]) -> ([3], [4], [5]);
+struct_construct<Tuple<BoundedInt<0, 15>, BoundedInt<0, 21267647932558653966460912964485513215>>>([4], [5]) -> ([6]);
+store_temp<RangeCheck>([3]) -> ([3]);
+store_temp<Tuple<BoundedInt<0, 15>, BoundedInt<0, 21267647932558653966460912964485513215>>>([6]) -> ([6]);
+return([3], [6]);
+
+test::foo@F0([0]: RangeCheck, [1]: u128, [2]: NonZero<BoundedInt<21267647932558653966460912964485513216, 21267647932558653966460912964485513216>>) -> (RangeCheck, Tuple<BoundedInt<0, 15>, BoundedInt<0, 21267647932558653966460912964485513215>>);

@@ -1,0 +1,12 @@
+type i8 = i8 [storable: true, drop: true, dup: true, zero_sized: false];
+type BoundedInt<-255, 255> = BoundedInt<-255, 255> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc bounded_int_sub<i8, i8> = bounded_int_sub<i8, i8>;
+libfunc store_temp<BoundedInt<-255, 255>> = store_temp<BoundedInt<-255, 255>>;
+
+F0:
+bounded_int_sub<i8, i8>([0], [1]) -> ([2]);
+store_temp<BoundedInt<-255, 255>>([2]) -> ([2]);
+return([2]);
+
+test::foo@F0([0]: i8, [1]: i8) -> (BoundedInt<-255, 255>);

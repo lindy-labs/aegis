@@ -7,10 +7,11 @@ libfunc struct_construct<Tuple<felt252, felt252, felt252>> = struct_construct<Tu
 libfunc store_temp<Poseidon> = store_temp<Poseidon>;
 libfunc store_temp<Tuple<felt252, felt252, felt252>> = store_temp<Tuple<felt252, felt252, felt252>>;
 
-hades_permutation([0], [1], [2], [3]) -> ([4], [5], [6], [7]); // 0
-struct_construct<Tuple<felt252, felt252, felt252>>([5], [6], [7]) -> ([8]); // 1
-store_temp<Poseidon>([4]) -> ([4]); // 2
-store_temp<Tuple<felt252, felt252, felt252>>([8]) -> ([8]); // 3
-return([4], [8]); // 4
+F0:
+hades_permutation([0], [1], [2], [3]) -> ([4], [5], [6], [7]);
+struct_construct<Tuple<felt252, felt252, felt252>>([5], [6], [7]) -> ([8]);
+store_temp<Poseidon>([4]) -> ([4]);
+store_temp<Tuple<felt252, felt252, felt252>>([8]) -> ([8]);
+return([4], [8]);
 
-test::foo@0([0]: Poseidon, [1]: felt252, [2]: felt252, [3]: felt252) -> (Poseidon, Tuple<felt252, felt252, felt252>);
+test::foo@F0([0]: Poseidon, [1]: felt252, [2]: felt252, [3]: felt252) -> (Poseidon, Tuple<felt252, felt252, felt252>);

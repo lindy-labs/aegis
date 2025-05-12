@@ -11,11 +11,12 @@ libfunc struct_construct<Tuple<core::integer::u256, core::integer::u256>> = stru
 libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
 libfunc store_temp<Tuple<core::integer::u256, core::integer::u256>> = store_temp<Tuple<core::integer::u256, core::integer::u256>>;
 
-u256_safe_divmod([0], [1], [2]) -> ([3], [4], [5], [6]); // 0
-u128_mul_guarantee_verify([3], [6]) -> ([7]); // 1
-struct_construct<Tuple<core::integer::u256, core::integer::u256>>([4], [5]) -> ([8]); // 2
-store_temp<RangeCheck>([7]) -> ([7]); // 3
-store_temp<Tuple<core::integer::u256, core::integer::u256>>([8]) -> ([8]); // 4
-return([7], [8]); // 5
+F0:
+u256_safe_divmod([0], [1], [2]) -> ([3], [4], [5], [6]);
+u128_mul_guarantee_verify([3], [6]) -> ([7]);
+struct_construct<Tuple<core::integer::u256, core::integer::u256>>([4], [5]) -> ([8]);
+store_temp<RangeCheck>([7]) -> ([7]);
+store_temp<Tuple<core::integer::u256, core::integer::u256>>([8]) -> ([8]);
+return([7], [8]);
 
-test::foo@0([0]: RangeCheck, [1]: core::integer::u256, [2]: NonZero<core::integer::u256>) -> (RangeCheck, Tuple<core::integer::u256, core::integer::u256>);
+test::foo@F0([0]: RangeCheck, [1]: core::integer::u256, [2]: NonZero<core::integer::u256>) -> (RangeCheck, Tuple<core::integer::u256, core::integer::u256>);

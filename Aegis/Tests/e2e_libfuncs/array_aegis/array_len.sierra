@@ -1,7 +1,7 @@
 type Array<core::integer::u256> = Array<core::integer::u256> [storable: true, drop: true, dup: false, zero_sized: false];
-type u32 = u32 [storable: true, drop: true, dup: true, zero_sized: false];
 type u128 = u128 [storable: true, drop: true, dup: true, zero_sized: false];
 type core::integer::u256 = Struct<ut@core::integer::u256, u128, u128> [storable: true, drop: true, dup: true, zero_sized: false];
+type u32 = u32 [storable: true, drop: true, dup: true, zero_sized: false];
 type Snapshot<Array<core::integer::u256>> = Snapshot<Array<core::integer::u256>> [storable: true, drop: true, dup: true, zero_sized: false];
 
 libfunc snapshot_take<Array<core::integer::u256>> = snapshot_take<Array<core::integer::u256>>;
@@ -9,10 +9,11 @@ libfunc array_len<core::integer::u256> = array_len<core::integer::u256>;
 libfunc store_temp<Array<core::integer::u256>> = store_temp<Array<core::integer::u256>>;
 libfunc store_temp<u32> = store_temp<u32>;
 
-snapshot_take<Array<core::integer::u256>>([0]) -> ([1], [2]); // 0
-array_len<core::integer::u256>([2]) -> ([3]); // 1
-store_temp<Array<core::integer::u256>>([1]) -> ([1]); // 2
-store_temp<u32>([3]) -> ([3]); // 3
-return([1], [3]); // 4
+F0:
+snapshot_take<Array<core::integer::u256>>([0]) -> ([1], [2]);
+array_len<core::integer::u256>([2]) -> ([3]);
+store_temp<Array<core::integer::u256>>([1]) -> ([1]);
+store_temp<u32>([3]) -> ([3]);
+return([1], [3]);
 
-test::foo@0([0]: Array<core::integer::u256>) -> (Array<core::integer::u256>, u32);
+test::foo@F0([0]: Array<core::integer::u256>) -> (Array<core::integer::u256>, u32);

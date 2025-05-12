@@ -3,7 +3,8 @@ type test::Empty = Struct<ut@test::Empty> [storable: true, drop: true, dup: true
 
 libfunc unbox<test::Empty> = unbox<test::Empty>;
 
-unbox<test::Empty>([0]) -> ([1]); // 0
-return([1]); // 1
+F0:
+unbox<test::Empty>([0]) -> ([1]);
+return([1]);
 
-test::foo@0([0]: Box<test::Empty>) -> (test::Empty);
+test::foo@F0([0]: Box<test::Empty>) -> (test::Empty);

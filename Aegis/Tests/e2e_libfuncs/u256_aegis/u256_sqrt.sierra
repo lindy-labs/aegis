@@ -6,9 +6,10 @@ libfunc u256_sqrt = u256_sqrt;
 libfunc store_temp<RangeCheck> = store_temp<RangeCheck>;
 libfunc store_temp<u128> = store_temp<u128>;
 
-u256_sqrt([0], [1]) -> ([2], [3]); // 0
-store_temp<RangeCheck>([2]) -> ([2]); // 1
-store_temp<u128>([3]) -> ([3]); // 2
-return([2], [3]); // 3
+F0:
+u256_sqrt([0], [1]) -> ([2], [3]);
+store_temp<RangeCheck>([2]) -> ([2]);
+store_temp<u128>([3]) -> ([3]);
+return([2], [3]);
 
-test::foo@0([0]: RangeCheck, [1]: core::integer::u256) -> (RangeCheck, u128);
+test::foo@F0([0]: RangeCheck, [1]: core::integer::u256) -> (RangeCheck, u128);
