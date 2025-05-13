@@ -45,6 +45,22 @@ def SierraType.toInt : (ty : SierraType) → Lean.Expr → Q(Int)
 | BoundedInt _ _, val => val
 | _, _ => q(0)
 
+def SierraType.zero : (ty : SierraType) → Q($(⟦ty⟧))
+| I8 => (q(0) : Q(Int8))
+| I16 => (q(0) : Q(Int16))
+| I32 => (q(0) : Q(Int32))
+| I64 => (q(0) : Q(Int64))
+| I128 => (q(0) : Q(Int128))
+| U8 => (q(0) : Q(UInt8))
+| U16 => (q(0) : Q(UInt16))
+| U32 => (q(0) : Q(UInt32))
+| U64 => (q(0) : Q(UInt64))
+| U128 => (q(0) : Q(UInt128))
+| Bytes31 => (q(0) : Q(Sierra.Bytes31))
+| Felt252 => (q(0) : Q(F))
+| BoundedInt _ _ => (q(0) : Q(Int))
+| _ => Lean.Expr.lit (.natVal 0)
+
 namespace FuncData
 
 def bounded_int_add (ty1 ty2 : SierraType) : FuncData where
@@ -72,6 +88,15 @@ def bounded_int_mul (ty1 ty2 : SierraType) : FuncData where
                  condition := fun (a b : Lean.Expr) (ρ : Q(Int)) =>
                    q($ρ = $(ty1.toInt a) * $(ty2.toInt b)) }]
 
+def bounded_int_is_zero (ty : SierraType) : FuncData where
+  inputTypes := [ty]
+  branches := [{ outputTypes := []
+                 condition := fun (a : Q($(⟦ty⟧))) => q($a = $(SierraType.zero ty)) },
+               { outputTypes := [.NonZero ty]
+                 condition := fun (a ρ : Q($(⟦ty⟧))) =>
+                   q($a ≠ $(SierraType.zero ty) ∧ $ρ = $a) }]
+
+
 -- TODO fix implementation for `Nonzero<T>`
 def boundedIntLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "bounded_int_add" [.identifier i1, .identifier i2] .none => do
@@ -86,4 +111,7 @@ def boundedIntLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifi
   let ty1 ← typeRefs[i1]?
   let ty2 ← typeRefs[i2]?
   .some <| bounded_int_mul ty1 ty2
+| .name "bounded_int_is_zero" [.identifier i] .none => do
+  let ty ← typeRefs[i]?
+  .some <| bounded_int_is_zero ty
 | _ => .none

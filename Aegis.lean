@@ -42,6 +42,7 @@ import Aegis.Options
 import Aegis.Parser
 import Aegis.Tactic
 import Aegis.Tests.BoundedInt
+import Aegis.Tests.BoundedIntIsZero
 import Aegis.Tests.Commands
 import Aegis.Tests.CommandsImport
 import Aegis.Tests.CommandsImport2
