@@ -163,6 +163,10 @@ partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Iden
         let x ← idents.mapM <| translate raw (i :: ident :: ctx)  -- really add `ident`?
         let (lvs, tys) := x.unzip
         .ok (lvs.flatten, .ConstStruct ty tys)
+      | .NonZero _ =>
+        match ps with
+        | [.identifier ident] => translate raw ctx ident
+        | _ => throw "second parameter of const on NonZero must be a type identifier"
       | _ =>
         let num : ℤ ← match ps with
         | [.const n] => pure n
