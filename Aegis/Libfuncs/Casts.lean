@@ -279,6 +279,51 @@ def u128BoundedInt_downcast (min max : ℤ) : FuncData where
                  condition := fun _ (a : Q(UInt128)) _ =>
                    q($(a).toNat > $min ∨ $max < $(a).toNat)}]
 
+def i8u8_downcast : FuncData where
+  inputTypes := [.RangeCheck, .I8]
+  branches := [{ outputTypes := [.RangeCheck, .U8]
+                 condition := fun _ (a : Q(Int8)) _ (ρ : Q(UInt8)) =>
+                   q(0 ≤ $(a).toInt ∧ $ρ = $(a).abs) },
+               { outputTypes := [.RangeCheck]
+                 condition := fun _ (a : Q(UInt8)) _ =>
+                   q($(a).toInt < 0)}]
+
+def i16u16_downcast : FuncData where
+  inputTypes := [.RangeCheck, .I16]
+  branches := [{ outputTypes := [.RangeCheck, .U16]
+                 condition := fun _ (a : Q(Int16)) _ (ρ : Q(UInt16)) =>
+                   q(0 ≤ $(a).toInt ∧ $ρ = $(a).abs) },
+               { outputTypes := [.RangeCheck]
+                 condition := fun _ (a : Q(UInt16)) _ =>
+                   q($(a).toInt < 0)}]
+
+def i32u32_downcast : FuncData where
+  inputTypes := [.RangeCheck, .I32]
+  branches := [{ outputTypes := [.RangeCheck, .U32]
+                 condition := fun _ (a : Q(Int32)) _ (ρ : Q(UInt32)) =>
+                   q(0 ≤ $(a).toInt ∧ $ρ = $(a).abs) },
+               { outputTypes := [.RangeCheck]
+                 condition := fun _ (a : Q(UInt32)) _ =>
+                   q($(a).toInt < 0)}]
+
+def i64u64_downcast : FuncData where
+  inputTypes := [.RangeCheck, .I64]
+  branches := [{ outputTypes := [.RangeCheck, .U64]
+                 condition := fun _ (a : Q(Int64)) _ (ρ : Q(UInt64)) =>
+                   q(0 ≤ $(a).toInt ∧ $ρ = $(a).abs) },
+               { outputTypes := [.RangeCheck]
+                 condition := fun _ (a : Q(UInt64)) _ =>
+                   q($(a).toInt < 0)}]
+
+def i128u128_downcast : FuncData where
+  inputTypes := [.RangeCheck, .I128]
+  branches := [{ outputTypes := [.RangeCheck, .U128]
+                 condition := fun _ (a : Q(Int128)) _ (ρ : Q(UInt128)) =>
+                   q(0 ≤ $(a).toInt ∧ $ρ = $(a).abs) },
+               { outputTypes := [.RangeCheck]
+                 condition := fun _ (a : Q(UInt128)) _ =>
+                   q($(a).toInt < 0)}]
+
 def castsLibfuncs : Identifier → Option FuncData
 | .name "upcast" [.identifier (.name "u8" [] .none), .identifier (.name "u8" [] .none)] .none =>
   u8u8_upcast
@@ -350,6 +395,16 @@ def castsLibfuncs : Identifier → Option FuncData
   u128u32_downcast
 | .name "downcast" [.identifier (.name "u128" [] .none), .identifier (.name "u64" [] .none)] .none =>
   u128u64_downcast
+| .name "downcast" [.identifier (.name "i8" [] .none), .identifier (.name "u8" [] .none)] .none =>
+  i8u8_downcast
+| .name "downcast" [.identifier (.name "i16" [] .none), .identifier (.name "u16" [] .none)] .none =>
+  i16u16_downcast
+| .name "downcast" [.identifier (.name "i32" [] .none), .identifier (.name "u32" [] .none)] .none =>
+  i32u32_downcast
+| .name "downcast" [.identifier (.name "i64" [] .none), .identifier (.name "u64" [] .none)] .none =>
+  i64u64_downcast
+| .name "downcast" [.identifier (.name "i128" [] .none), .identifier (.name "u128" [] .none)] .none =>
+  i128u128_downcast
 | .name "downcast" [.identifier (.name "u8" [] .none), .identifier (.name "BoundedInt" [.const min, .const max] .none)] .none =>
   u8BoundedInt_downcast min max
 | .name "downcast" [.identifier (.name "u16" [] .none), .identifier (.name "BoundedInt" [.const min, .const max] .none)] .none =>
