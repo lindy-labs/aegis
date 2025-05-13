@@ -26,27 +26,27 @@ def i128_eq : FuncData where
 
 -- in range / underflow / overflow
 def i128_overflowing_add_impl : FuncData where
-  inputTypes := [I128, I128]
+  inputTypes := [RangeCheck, I128, I128]
   branches := [{ outputTypes := [RangeCheck, I128]
-                 condition := fun (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
+                 condition := fun _ (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
                    q(¬ BitVec.saddOverflow $a $b ∧ $ρ = $a + $b) },
                { outputTypes := [RangeCheck, I128]
-                 condition := fun (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
+                 condition := fun _ (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
                    q(BitVec.saddOverflow $a $b ∧ $ρ = $a + $b) },
                { outputTypes := [RangeCheck, I128]
-                 condition := fun (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
+                 condition := fun _ (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
                    q(BitVec.saddOverflow $a $b ∧ $ρ = $a + $b) }]
 
 def i128_overflowing_sub_impl : FuncData where
-  inputTypes := [I128, I128]
+  inputTypes := [RangeCheck, I128, I128]
   branches := [{ outputTypes := [RangeCheck, I128]
-                 condition := fun (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
+                 condition := fun _ (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
                    q(¬ BitVec.ssubOverflow $a $b ∧ $ρ = $a - $b) },
                { outputTypes := [RangeCheck, I128]
-                 condition := fun (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
+                 condition := fun _ (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
                    q(BitVec.ssubOverflow $a $b ∧ $ρ = $a - $b) },
                { outputTypes := [RangeCheck, I128]
-                 condition := fun (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
+                 condition := fun _ (a b : Q(Int128)) _ (ρ : Q(Int128)) =>
                    q(BitVec.ssubOverflow $a $b ∧ $ρ = $a - $b) }]
 
 def i128_to_felt252 : FuncData where

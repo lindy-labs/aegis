@@ -26,27 +26,27 @@ def i32_eq : FuncData where
 
 -- in range / underflow / overflow
 def i32_overflowing_add_impl : FuncData where
-  inputTypes := [I32, I32]
+  inputTypes := [RangeCheck, I32, I32]
   branches := [{ outputTypes := [RangeCheck, I32]
-                 condition := fun (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
+                 condition := fun _ (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
                    q(¬ BitVec.saddOverflow $a $b ∧ $ρ = $a + $b) },
                { outputTypes := [RangeCheck, I32]
-                 condition := fun (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
+                 condition := fun _ (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
                    q(BitVec.saddOverflow $a $b ∧ $ρ = $a + $b) },
                { outputTypes := [RangeCheck, I32]
-                 condition := fun (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
+                 condition := fun _ (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
                    q(BitVec.saddOverflow $a $b ∧ $ρ = $a + $b) }]
 
 def i32_overflowing_sub_impl : FuncData where
-  inputTypes := [I32, I32]
+  inputTypes := [RangeCheck, I32, I32]
   branches := [{ outputTypes := [RangeCheck, I32]
-                 condition := fun (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
+                 condition := fun _ (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
                    q(¬ BitVec.ssubOverflow $a $b ∧ $ρ = $a - $b) },
                { outputTypes := [RangeCheck, I32]
-                 condition := fun (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
+                 condition := fun _ (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
                    q(BitVec.ssubOverflow $a $b ∧ $ρ = $a - $b) },
                { outputTypes := [RangeCheck, I32]
-                 condition := fun (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
+                 condition := fun _ (a b : Q(Int32)) _ (ρ : Q(Int32)) =>
                    q(BitVec.ssubOverflow $a $b ∧ $ρ = $a - $b) }]
 
 def i32_to_felt252 : FuncData where
