@@ -29,7 +29,7 @@ def SierraType.maxBound : SierraType → Int
 | BoundedInt _ max => max
 | _ => 0
 
-def SierraType.toFelt : (ty : SierraType) → Lean.Expr → Q(F)
+def SierraType.toInt : (ty : SierraType) → Lean.Expr → Q(Int)
 | I8, (val : Q(Int8)) => q($(val).toInt)
 | I16, (val : Q(Int16)) => q($(val).toInt)
 | I32, (val : Q(Int32)) => q($(val).toInt)
@@ -41,7 +41,7 @@ def SierraType.toFelt : (ty : SierraType) → Lean.Expr → Q(F)
 | U64, (val : Q(UInt64)) => q($(val).toNat)
 | U128, (val : Q(UInt128)) => q($(val).toNat)
 | Bytes31, (val : Q(Sierra.Bytes31)) => q($(val).toNat)
-| Felt252, val
+| Felt252, (val : Q(F)) => q($(val).val)
 | BoundedInt _ _, val => val
 | _, _ => q(0)
 
@@ -50,14 +50,14 @@ namespace FuncData
 def bounded_int_add (ty1 ty2 : SierraType) : FuncData where
   inputTypes := [ty1, ty2]
   branches := [{ outputTypes := [BoundedInt (ty1.minBound + ty2.minBound) (ty1.maxBound + ty2.maxBound)]
-                 condition := fun (a b : Lean.Expr) (ρ : Q(F)) =>
-                   q($ρ = $(ty1.toFelt a) + $(ty2.toFelt b)) }]
+                 condition := fun (a b : Lean.Expr) (ρ : Q(Int)) =>
+                   q($ρ = $(ty1.toInt a) + $(ty2.toInt b)) }]
 
 def bounded_int_sub (ty1 ty2 : SierraType) : FuncData where
   inputTypes := [ty1, ty2]
   branches := [{ outputTypes := [BoundedInt (ty1.minBound - ty2.minBound) (ty1.maxBound - ty2.maxBound)]
-                 condition := fun (a b : Lean.Expr) (ρ : Q(F)) =>
-                   q($ρ = $(ty1.toFelt a) - $(ty2.toFelt b)) }]
+                 condition := fun (a b : Lean.Expr) (ρ : Q(Int)) =>
+                   q($ρ = $(ty1.toInt a) - $(ty2.toInt b)) }]
 
 def bounded_int_mul (ty1 ty2 : SierraType) : FuncData where
   inputTypes := [ty1, ty2]
@@ -69,8 +69,8 @@ def bounded_int_mul (ty1 ty2 : SierraType) : FuncData where
                                              max (ty1.minBound * ty2.maxBound) <|
                                              max (ty1.maxBound * ty2.minBound) <|
                                                  (ty1.maxBound * ty2.maxBound))]
-                 condition := fun (a b : Lean.Expr) (ρ : Q(F)) =>
-                   q($ρ = $(ty1.toFelt a) * $(ty2.toFelt b)) }]
+                 condition := fun (a b : Lean.Expr) (ρ : Q(Int)) =>
+                   q($ρ = $(ty1.toInt a) * $(ty2.toInt b)) }]
 
 -- TODO fix implementation for `Nonzero<T>`
 def boundedIntLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier → Option FuncData

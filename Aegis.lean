@@ -10,6 +10,7 @@ import Aegis.Libfuncs.Bool
 import Aegis.Libfuncs.BoundedInt
 import Aegis.Libfuncs.Box
 import Aegis.Libfuncs.BuiltinCosts
+import Aegis.Libfuncs.Bytes31
 import Aegis.Libfuncs.Casts
 import Aegis.Libfuncs.Const
 import Aegis.Libfuncs.ContractAddress
@@ -44,6 +45,7 @@ import Aegis.Tests.BoundedInt
 import Aegis.Tests.Commands
 import Aegis.Tests.CommandsImport
 import Aegis.Tests.CommandsImport2
+import Aegis.Tests.EnumIdx
 import Aegis.Tests.Libfuncs.Array.ArrayAppend
 import Aegis.Tests.Libfuncs.Array.ArrayGet
 import Aegis.Tests.Libfuncs.Array.ArrayLen

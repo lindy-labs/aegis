@@ -2,6 +2,26 @@ import Aegis.Types
 
 open Qq Lean Sierra
 
+namespace Sierra
+
+/-- Generalization of `SierraBool`. The index denotes the number of `⊕`, *not* the number of fields! -/
+abbrev UnitEnum : ℕ → Type
+| 0 => Unit
+| Nat.succ n => Unit ⊕ UnitEnum n
+
+instance : Inhabited (UnitEnum n) :=
+  ⟨match n with
+  | 0 => ()
+  | _ + 1 => Sum.inl ()⟩
+
+def UnitEnum.fromIdx : (size : ℕ) → (n : ℕ) → UnitEnum size
+| 0, 0 => ()
+| _ + 1, 0 => Sum.inl ()
+| n + 1, i + 1 => Sum.inr (.fromIdx n i)
+| _, _ => panic!"foo"
+
+end Sierra
+
 namespace Sierra.FuncData
 
 private def enum_selector (fields : List SierraType) (idx : ℕ) (a : Expr) : Expr :=
@@ -37,6 +57,15 @@ def enum_snapshot_match (fields : List SierraType) : FuncData where
       condition := fun (a : Q($(⟦.Enum fields⟧))) ρ =>
         Expr.mkEq q($(⟦.Enum fields⟧)) (enum_selector fields idx ρ) a }
 
+def enum_from_bounded_int (fields : List SierraType) : FuncData where
+  inputTypes := [.BoundedInt 0 (fields.length - 1)]
+  branches := [{ outputTypes := [.Enum fields]
+                 condition := fun (a : Q(Int)) (ρ : Q($(⟦.Enum fields⟧))) =>
+                   let idx : Q(Nat) := q($(a).toNat)
+                   let size : Nat := fields.length - 1
+                   let size : Q(Nat) := q($size)
+                   Expr.mkEq q($(⟦.Enum fields⟧)) ρ q(UnitEnum.fromIdx $size $idx) }]
+
 def enumLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier → Option FuncData
 | .name "enum_init" [.identifier ident, .const (.ofNat n)] .none =>
   match getMuBody <$> typeRefs[ident]? with
@@ -53,5 +82,10 @@ def enumLibfuncs (typeRefs : Std.HashMap Identifier SierraType) : Identifier →
   match getMuBody <$> typeRefs[ident]? with
   | .some (.Enum fields) =>
     enum_snapshot_match fields
+  | _ => .none
+| .name "enum_from_bounded_int" [.identifier ident] .none =>
+  match getMuBody <$> typeRefs[ident]? with
+  | .some (.Enum fields) =>
+    enum_from_bounded_int fields
   | _ => .none
 | _ => .none
