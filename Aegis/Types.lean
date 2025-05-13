@@ -163,15 +163,11 @@ partial def translate (raw : Std.HashMap Identifier Identifier) (ctx : List Iden
         let x ← idents.mapM <| translate raw (i :: ident :: ctx)  -- really add `ident`?
         let (lvs, tys) := x.unzip
         .ok (lvs.flatten, .ConstStruct ty tys)
-      | .U8 | .U16 | .U32 | .U64 | .U128
-      | .I8 | .I16 | .I32 | .I64 | .I128
-      | .Felt252
-      | .BoundedInt _ _ =>
+      | _ =>
         let num : ℤ ← match ps with
         | [.const n] => pure n
         | _ => throw "parameter to numerical constant type must be a numeral"
         .ok (lvsty, .ConstNum ty num)  -- really `lvsty`?
-      | _ => throw s!"type {ty} not able to form constant types"
     | _ => throw s!"Type not translatable: {i}"
 
 def buildTypeDefs (typedefs : List (Identifier × Identifier)) :
