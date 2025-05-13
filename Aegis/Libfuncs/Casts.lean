@@ -187,57 +187,57 @@ def u128u64_downcast : FuncData where
 def BoundedIntu8_upcast (min max : ℤ) : FuncData where
   inputTypes := [BoundedInt min max]
   branches := [{ outputTypes := [U8]
-                 condition := fun (a : Q(F)) (ρ : Q(UInt8)) => q($ρ = $(a).val) }]
+                 condition := fun (a : Q(Int)) (ρ : Q(UInt8)) => q($ρ = $a) }]
 
 def BoundedIntu16_upcast (min max : ℤ) : FuncData where
   inputTypes := [BoundedInt min max]
   branches := [{ outputTypes := [U16]
-                 condition := fun (a : Q(F)) (ρ : Q(UInt16)) => q($ρ = $(a).val) }]
+                 condition := fun (a : Q(Int)) (ρ : Q(UInt16)) => q($ρ = $a) }]
 
 def BoundedIntu32_upcast (min max : ℤ) : FuncData where
   inputTypes := [BoundedInt min max]
   branches := [{ outputTypes := [U32]
-                 condition := fun (a : Q(F)) (ρ : Q(UInt32)) => q($ρ = $(a).val) }]
+                 condition := fun (a : Q(Int)) (ρ : Q(UInt32)) => q($ρ = $a) }]
 
 def BoundedIntu64_upcast (min max : ℤ) : FuncData where
   inputTypes := [BoundedInt min max]
   branches := [{ outputTypes := [U64]
-                 condition := fun (a : Q(F)) (ρ : Q(UInt64)) => q($ρ = $(a).val) }]
+                 condition := fun (a : Q(Int)) (ρ : Q(UInt64)) => q($ρ = $a) }]
 
 def BoundedIntu128_upcast (min max : ℤ) : FuncData where
   inputTypes := [BoundedInt min max]
   branches := [{ outputTypes := [U128]
-                 condition := fun (a : Q(F)) (ρ : Q(UInt128)) => q($ρ = $(a).val) }]
+                 condition := fun (a : Q(Int)) (ρ : Q(UInt128)) => q($ρ = $a) }]
 
 def BoundedInti8_upcast (min max : ℤ) : FuncData where
   inputTypes := [BoundedInt min max]
   branches := [{ outputTypes := [I8]
-                 condition := fun (a : Q(F)) (ρ : Q(Int8)) => q($ρ = $(a).valMinAbs) }]
+                 condition := fun (a : Q(Int)) (ρ : Q(Int8)) => q($ρ = $a) }]
 
 def BoundedInti16_upcast (min max : ℤ) : FuncData where
   inputTypes := [BoundedInt min max]
   branches := [{ outputTypes := [I16]
-                 condition := fun (a : Q(F)) (ρ : Q(Int16)) => q($ρ = $(a).valMinAbs) }]
+                 condition := fun (a : Q(Int)) (ρ : Q(Int16)) => q($ρ = $a) }]
 
 def BoundedInti32_upcast (min max : ℤ) : FuncData where
   inputTypes := [BoundedInt min max]
   branches := [{ outputTypes := [I32]
-                 condition := fun (a : Q(F)) (ρ : Q(Int32)) => q($ρ = $(a).valMinAbs) }]
+                 condition := fun (a : Q(Int)) (ρ : Q(Int32)) => q($ρ = $a) }]
 
 def BoundedInti64_upcast (min max : ℤ) : FuncData where
   inputTypes := [BoundedInt min max]
   branches := [{ outputTypes := [I64]
-                 condition := fun (a : Q(F)) (ρ : Q(Int64)) => q($ρ = $(a).valMinAbs) }]
+                 condition := fun (a : Q(Int)) (ρ : Q(Int64)) => q($ρ = $a) }]
 
 def BoundedInti128_upcast (min max : ℤ) : FuncData where
   inputTypes := [BoundedInt min max]
   branches := [{ outputTypes := [I128]
-                 condition := fun (a : Q(F)) (ρ : Q(UInt128)) => q($ρ = $(a).valMinAbs) }]
+                 condition := fun (a : Q(Int)) (ρ : Q(UInt128)) => q($ρ = $a) }]
 
 def u8BoundedInt_downcast (min max : ℤ) : FuncData where
   inputTypes := [.RangeCheck, .U8]
   branches := [{ outputTypes := [.RangeCheck, .BoundedInt min max]
-                 condition := fun _ (a : Q(UInt8)) _ (ρ : Q(F)) =>
+                 condition := fun _ (a : Q(UInt8)) _ (ρ : Q(Int)) =>
                    q($min ≤ $(a).toNat ∧ $(a).toNat ≤ $max ∧ $ρ = $(a).toNat) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt8)) _ =>
@@ -246,7 +246,7 @@ def u8BoundedInt_downcast (min max : ℤ) : FuncData where
 def u16BoundedInt_downcast (min max : ℤ) : FuncData where
   inputTypes := [.RangeCheck, .U16]
   branches := [{ outputTypes := [.RangeCheck, .BoundedInt min max]
-                 condition := fun _ (a : Q(UInt16)) _ (ρ : Q(F)) =>
+                 condition := fun _ (a : Q(UInt16)) _ (ρ : Q(Int)) =>
                    q($min ≤ $(a).toNat ∧ $(a).toNat ≤ $max ∧ $ρ = $(a).toNat) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt16)) _ =>
@@ -255,7 +255,7 @@ def u16BoundedInt_downcast (min max : ℤ) : FuncData where
 def u32BoundedInt_downcast (min max : ℤ) : FuncData where
   inputTypes := [.RangeCheck, .U32]
   branches := [{ outputTypes := [.RangeCheck, .BoundedInt min max]
-                 condition := fun _ (a : Q(UInt32)) _ (ρ : Q(F)) =>
+                 condition := fun _ (a : Q(UInt32)) _ (ρ : Q(Int)) =>
                    q($min ≤ $(a).toNat ∧ $(a).toNat ≤ $max ∧ $ρ = $(a).toNat) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt32)) _ =>
@@ -264,7 +264,7 @@ def u32BoundedInt_downcast (min max : ℤ) : FuncData where
 def u64BoundedInt_downcast (min max : ℤ) : FuncData where
   inputTypes := [.RangeCheck, .U64]
   branches := [{ outputTypes := [.RangeCheck, .BoundedInt min max]
-                 condition := fun _ (a : Q(UInt64)) _ (ρ : Q(F)) =>
+                 condition := fun _ (a : Q(UInt64)) _ (ρ : Q(Int)) =>
                    q($min ≤ $(a).toNat ∧ $(a).toNat ≤ $max ∧ $ρ = $(a).toNat) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt64)) _ =>
@@ -273,7 +273,7 @@ def u64BoundedInt_downcast (min max : ℤ) : FuncData where
 def u128BoundedInt_downcast (min max : ℤ) : FuncData where
   inputTypes := [.RangeCheck, .U128]
   branches := [{ outputTypes := [.RangeCheck, .BoundedInt min max]
-                 condition := fun _ (a : Q(UInt128)) _ (ρ : Q(F)) =>
+                 condition := fun _ (a : Q(UInt128)) _ (ρ : Q(Int)) =>
                    q($min ≤ $(a).toNat ∧ $(a).toNat ≤ $max ∧ $ρ = $(a).toNat) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt128)) _ =>
