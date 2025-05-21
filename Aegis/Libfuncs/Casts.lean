@@ -241,7 +241,7 @@ def u8BoundedInt_downcast (min max : ℤ) : FuncData where
                    q($min ≤ $(a).toNat ∧ $(a).toNat ≤ $max ∧ $ρ = $(a).toNat) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt8)) _ =>
-                   q($(a).toNat > $min ∨ $max < $(a).toNat)}]
+                   q($(a).toNat < $min ∨ $max < $(a).toNat)}]
 
 def u16BoundedInt_downcast (min max : ℤ) : FuncData where
   inputTypes := [.RangeCheck, .U16]
@@ -250,7 +250,7 @@ def u16BoundedInt_downcast (min max : ℤ) : FuncData where
                    q($min ≤ $(a).toNat ∧ $(a).toNat ≤ $max ∧ $ρ = $(a).toNat) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt16)) _ =>
-                   q($(a).toNat > $min ∨ $max < $(a).toNat)}]
+                   q($(a).toNat < $min ∨ $max < $(a).toNat)}]
 
 def u32BoundedInt_downcast (min max : ℤ) : FuncData where
   inputTypes := [.RangeCheck, .U32]
@@ -259,7 +259,7 @@ def u32BoundedInt_downcast (min max : ℤ) : FuncData where
                    q($min ≤ $(a).toNat ∧ $(a).toNat ≤ $max ∧ $ρ = $(a).toNat) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt32)) _ =>
-                   q($(a).toNat > $min ∨ $max < $(a).toNat)}]
+                   q($(a).toNat < $min ∨ $max < $(a).toNat)}]
 
 def u64BoundedInt_downcast (min max : ℤ) : FuncData where
   inputTypes := [.RangeCheck, .U64]
@@ -268,7 +268,7 @@ def u64BoundedInt_downcast (min max : ℤ) : FuncData where
                    q($min ≤ $(a).toNat ∧ $(a).toNat ≤ $max ∧ $ρ = $(a).toNat) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt64)) _ =>
-                   q($(a).toNat > $min ∨ $max < $(a).toNat)}]
+                   q($(a).toNat < $min ∨ $max < $(a).toNat)}]
 
 def u128BoundedInt_downcast (min max : ℤ) : FuncData where
   inputTypes := [.RangeCheck, .U128]
@@ -277,7 +277,7 @@ def u128BoundedInt_downcast (min max : ℤ) : FuncData where
                    q($min ≤ $(a).toNat ∧ $(a).toNat ≤ $max ∧ $ρ = $(a).toNat) },
                { outputTypes := [.RangeCheck]
                  condition := fun _ (a : Q(UInt128)) _ =>
-                   q($(a).toNat > $min ∨ $max < $(a).toNat)}]
+                   q($(a).toNat < $min ∨ $max < $(a).toNat)}]
 
 def i8u8_downcast : FuncData where
   inputTypes := [.RangeCheck, .I8]
