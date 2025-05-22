@@ -21,8 +21,8 @@ def bytes31_to_felt252 : FuncData where
   inputTypes := [.Bytes31]
   branches := [{ outputTypes := [.Felt252]
                  condition := fun (a : Q(Bytes31)) (ρ : Q(F)) =>
-                   q($(ρ) = Fin.castLE (Nat.le_add_left 452312848583266388373324160190187140051835877600158453279131187530910662656
-                     3618502788666131213697322783095070105623107215331596699973092056135872020225) $(a).toFin) }]
+                   Expr.mkEq q(F) ρ
+                     q(Fin.castLE (m := PRIME) (by simp [PRIME]) $(a).toFin) }]
 
 def bytes31Libfuncs : Identifier → Option FuncData
 | .name "bytes31_const" [.const n] .none    => bytes31_const (Lean.toExpr (α := BitVec 248) n)
