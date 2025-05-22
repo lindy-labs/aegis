@@ -1,20 +1,23 @@
 type u16 = u16 [storable: true, drop: true, dup: true, zero_sized: false];
+type Const<u16, 1234> = Const<u16, 1234> [storable: false, drop: false, dup: false, zero_sized: false];
 type NonZero<u16> = NonZero<u16> [storable: true, drop: true, dup: true, zero_sized: false];
 
 libfunc u16_is_zero = u16_is_zero;
 libfunc branch_align = branch_align;
-libfunc u16_const<1234> = u16_const<1234>;
+libfunc const_as_immediate<Const<u16, 1234>> = const_as_immediate<Const<u16, 1234>>;
 libfunc store_temp<u16> = store_temp<u16>;
 libfunc unwrap_non_zero<u16> = unwrap_non_zero<u16>;
 
-u16_is_zero([0]) { fallthrough() 5([1]) }; // 0
-branch_align() -> (); // 1
-u16_const<1234>() -> ([2]); // 2
-store_temp<u16>([2]) -> ([2]); // 3
-return([2]); // 4
-branch_align() -> (); // 5
-unwrap_non_zero<u16>([1]) -> ([3]); // 6
-store_temp<u16>([3]) -> ([3]); // 7
-return([3]); // 8
+F0:
+u16_is_zero([0]) { fallthrough() F0_B0([1]) };
+branch_align() -> ();
+const_as_immediate<Const<u16, 1234>>() -> ([2]);
+store_temp<u16>([2]) -> ([2]);
+return([2]);
+F0_B0:
+branch_align() -> ();
+unwrap_non_zero<u16>([1]) -> ([3]);
+store_temp<u16>([3]) -> ([3]);
+return([3]);
 
-test::foo@0([0]: u16) -> (u16);
+test::foo@F0([0]: u16) -> (u16);

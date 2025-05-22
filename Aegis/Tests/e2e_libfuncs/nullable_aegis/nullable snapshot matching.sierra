@@ -1,8 +1,8 @@
 type Nullable<Array<felt252>> = Nullable<Array<felt252>> [storable: true, drop: true, dup: false, zero_sized: false];
 type Snapshot<Nullable<Array<felt252>>> = Snapshot<Nullable<Array<felt252>>> [storable: true, drop: true, dup: true, zero_sized: false];
-type Box<Snapshot<Array<felt252>>> = Box<Snapshot<Array<felt252>>> [storable: true, drop: true, dup: true, zero_sized: false];
 type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
 type Snapshot<Array<felt252>> = Snapshot<Array<felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
+type Box<Snapshot<Array<felt252>>> = Box<Snapshot<Array<felt252>>> [storable: true, drop: true, dup: true, zero_sized: false];
 type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
 type Nullable<Snapshot<Array<felt252>>> = Nullable<Snapshot<Array<felt252>>> [storable: true, drop: true, dup: true, zero_sized: false];
 
@@ -12,14 +12,16 @@ libfunc branch_align = branch_align;
 libfunc store_temp<Box<Snapshot<Array<felt252>>>> = store_temp<Box<Snapshot<Array<felt252>>>>;
 libfunc drop<Box<Snapshot<Array<felt252>>>> = drop<Box<Snapshot<Array<felt252>>>>;
 
-nullable_forward_snapshot<Array<felt252>>([0]) -> ([2]); // 0
-match_nullable<Snapshot<Array<felt252>>>([2]) { fallthrough() 5([3]) }; // 1
-branch_align() -> (); // 2
-store_temp<Box<Snapshot<Array<felt252>>>>([1]) -> ([1]); // 3
-return([1]); // 4
-branch_align() -> (); // 5
-drop<Box<Snapshot<Array<felt252>>>>([1]) -> (); // 6
-store_temp<Box<Snapshot<Array<felt252>>>>([3]) -> ([3]); // 7
-return([3]); // 8
+F0:
+nullable_forward_snapshot<Array<felt252>>([0]) -> ([2]);
+match_nullable<Snapshot<Array<felt252>>>([2]) { fallthrough() F0_B0([3]) };
+branch_align() -> ();
+store_temp<Box<Snapshot<Array<felt252>>>>([1]) -> ([1]);
+return([1]);
+F0_B0:
+branch_align() -> ();
+drop<Box<Snapshot<Array<felt252>>>>([1]) -> ();
+store_temp<Box<Snapshot<Array<felt252>>>>([3]) -> ([3]);
+return([3]);
 
-test::foo@0([0]: Snapshot<Nullable<Array<felt252>>>, [1]: Box<Snapshot<Array<felt252>>>) -> (Box<Snapshot<Array<felt252>>>);
+test::foo@F0([0]: Snapshot<Nullable<Array<felt252>>>, [1]: Box<Snapshot<Array<felt252>>>) -> (Box<Snapshot<Array<felt252>>>);

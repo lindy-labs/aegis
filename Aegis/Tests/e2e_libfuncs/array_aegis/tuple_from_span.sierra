@@ -1,0 +1,29 @@
+type Array<felt252> = Array<felt252> [storable: true, drop: true, dup: false, zero_sized: false];
+type Snapshot<Array<felt252>> = Snapshot<Array<felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
+type Unit = Struct<ut@Tuple> [storable: true, drop: true, dup: true, zero_sized: true];
+type felt252 = felt252 [storable: true, drop: true, dup: true, zero_sized: false];
+type Box<Tuple<felt252, felt252, felt252>> = Box<Tuple<felt252, felt252, felt252>> [storable: true, drop: true, dup: true, zero_sized: false];
+type core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>> = Enum<ut@core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>, Box<Tuple<felt252, felt252, felt252>>, Unit> [storable: true, drop: true, dup: true, zero_sized: false];
+type Tuple<felt252, felt252, felt252> = Struct<ut@Tuple, felt252, felt252, felt252> [storable: true, drop: true, dup: true, zero_sized: false];
+
+libfunc tuple_from_span<Tuple<felt252, felt252, felt252>> = tuple_from_span<Tuple<felt252, felt252, felt252>>;
+libfunc branch_align = branch_align;
+libfunc enum_init<core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>, 0> = enum_init<core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>, 0>;
+libfunc store_temp<core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>> = store_temp<core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>>;
+libfunc struct_construct<Unit> = struct_construct<Unit>;
+libfunc enum_init<core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>, 1> = enum_init<core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>, 1>;
+
+F0:
+tuple_from_span<Tuple<felt252, felt252, felt252>>([0]) { fallthrough([1]) F0_B0() };
+branch_align() -> ();
+enum_init<core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>, 0>([1]) -> ([2]);
+store_temp<core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>>([2]) -> ([2]);
+return([2]);
+F0_B0:
+branch_align() -> ();
+struct_construct<Unit>() -> ([3]);
+enum_init<core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>, 1>([3]) -> ([4]);
+store_temp<core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>>([4]) -> ([4]);
+return([4]);
+
+test::foo@F0([0]: Snapshot<Array<felt252>>) -> (core::option::Option::<@core::box::Box::<(core::felt252, core::felt252, core::felt252)>>);

@@ -10,10 +10,10 @@ TEST_MARKER = "//! > ===========================================================
 class TestFunData:
     name: str
     test_runner_name: str
-    cairo: str
     casm: str
     function_costs: str
     sierra_code: str
+    cairo_code: str
     test_comments: str | None
 
 @dataclass
